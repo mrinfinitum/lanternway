@@ -46,7 +46,7 @@ Sample family (fictional): **Maya**, age 10, autistic + ADHD. Diagnosed autism a
 - [ ] Lumi moments: cheering on wins, comforting on hard-day logs, sleeping on sleep log, thinking on empty states
 - [ ] Respect `prefers-reduced-motion`; check color contrast (WCAG AA)
 - [ ] Test at 390px and desktop widths
-- [ ] Deploy to Vercel; add a "Prototype — sample data" banner
+- [x] Deploy to Vercel; add a "Prototype — sample data" banner (dev.lanternway.co, from the `dev` branch)
 
 ## Stage 2: Working MVP (real accounts)
 - [ ] Supabase project: auth (email magic link), schema, RLS on every table
