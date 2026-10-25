@@ -55,6 +55,7 @@ Sample family (fictional): **Maya**, age 10, autistic + ADHD. Diagnosed autism a
 - [x] Deploy to Vercel; add a "Prototype — sample data" banner (dev.lanternway.co, from the `dev` branch)
 
 ## Stage 2: Working MVP (real accounts)
+- [x] Neon Postgres project `lanternway` (NSoul Co org, aws-us-east-1) with `medication_catalog` (type-ahead for medication names) and a read-only `lanternway_app` role. `pnpm db:setup` runs migrations + seed. Decide: Neon + separate auth/storage, or Supabase as planned
 - [ ] Supabase project: auth (email magic link), schema, RLS on every table
 - [ ] Replace mock data layer with Supabase queries
 - [ ] Real check-in links (tokens, expiry, revoke) + email delivery (Resend)

@@ -12,8 +12,8 @@ import { providerTypeLabels } from "@/lib/labels";
 import { refillDueDate } from "@/lib/insights";
 import type { IsoDate, Medication, MedicationChange, Provider } from "@/lib/types";
 import { newId, useRecordActions, useRecords } from "../_components/records-store";
+import { MedicationNameAndForm } from "./medication-name-field";
 
-const FORMS = ["Tablet", "Extended-release tablet", "Capsule", "Extended-release capsule", "Chewable", "Liquid", "Patch", "Other"];
 const OTHER = "__other";
 
 type Props = {
@@ -276,12 +276,9 @@ function AddMedication({ childId, childName, today, team, announce }: Ctx) {
         announce(`Added ${name}.`);
       }}
     >
-      <Field name="name" label="Medication name" required autoComplete="off" placeholder="As it's written on the label" />
+      <MedicationNameAndForm />
+      <Field name="dose" label="Dose (mg)" required inputMode="decimal" hint="As written on the prescription." />
       <Field name="purpose" label="What it's for" placeholder="In your own words" />
-      <div className="grid grid-cols-2 gap-3">
-        <Field name="dose" label="Dose (mg)" required inputMode="decimal" />
-        <SelectField name="form" label="Form" options={FORMS.map((f) => ({ value: f, label: f }))} />
-      </div>
       <Field name="schedule" label="When it's taken" required placeholder="e.g. Once daily, morning" />
       <PrescriberField team={team} />
       <Field name="startDate" label="Started on" type="date" required max={today} defaultValue={today} />
@@ -441,14 +438,8 @@ function EditMedication({ med, team, today, historyOf, announce }: Ctx & { med: 
         )
       }
     >
-      <Field name="name" label="Medication name" required defaultValue={med.name} />
+      <MedicationNameAndForm defaultName={med.name} defaultForm={med.form} />
       <Field name="purpose" label="What it's for" defaultValue={med.purpose} />
-      <SelectField
-        name="form"
-        label="Form"
-        defaultValue={med.form || FORMS[0]}
-        options={[...FORMS, ...(FORMS.includes(med.form) || !med.form ? [] : [med.form])].map((f) => ({ value: f, label: f }))}
-      />
       <PrescriberField team={team} defaultId={med.prescriberId} defaultName={med.prescriberName} />
       <Field name="pharmacy" label="Pharmacy" defaultValue={med.pharmacy} />
       <div className="grid grid-cols-2 gap-3">
