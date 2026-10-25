@@ -2,15 +2,15 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
-import { ArrowLeft, Mail, Phone } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { SectionHeading } from "@/components/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { getAllProviderIds, getChildren, getCurrentChild, getProvider, getTherapyGoals, getTherapySessions } from "@/lib/data";
+import { getAllProviderIds, getChildren, getCurrentChild, getProvider, getTherapyGoals, getTherapySessions, getToday } from "@/lib/data";
 import { formatDate } from "@/lib/format";
-import { providerTypeLabels } from "@/lib/labels";
 import type { GoalStatus } from "@/lib/types";
+import { ProviderAddedThisVisit, ProviderHeader } from "../care-team";
 import { SessionList } from "./session-list";
 
 export async function generateStaticParams() {
@@ -49,47 +49,18 @@ export default function ProviderPage({ params }: PageProps<"/therapy/[providerId
 async function ProviderDetails({ params }: { params: PageProps<"/therapy/[providerId]">["params"] }) {
   const { providerId } = await params;
   const child = await getCurrentChild();
-  const provider = await getProvider(child.id, providerId);
-  if (!provider) notFound();
+  const [provider, today] = await Promise.all([getProvider(child.id, providerId), getToday()]);
+  if (!provider) {
+    // Providers added during this visit only exist in the browser for now.
+    if (providerId.includes("-local-")) return <ProviderAddedThisVisit id={providerId} childName={child.firstName} today={today} />;
+    notFound();
+  }
   const [goals, sessions] = await Promise.all([getTherapyGoals(provider.id), getTherapySessions(provider.id)]);
   const goalTitles = Object.fromEntries(goals.map((g) => [g.id, g.title]));
 
   return (
     <div className="space-y-8">
-      <div>
-        <Badge variant="secondary" className="mb-2 block w-fit">{providerTypeLabels[provider.type]}</Badge>
-        <h1 className="text-2xl font-extrabold md:text-3xl">
-          {provider.name}
-          {provider.credentials && <span className="text-lg font-semibold text-muted-foreground">, {provider.credentials}</span>}
-        </h1>
-        <p className="text-muted-foreground">{provider.practice}</p>
-      </div>
-
-      <Card>
-        <CardContent className="grid gap-4 sm:grid-cols-3">
-          <div>
-            <p className="text-sm text-muted-foreground">Schedule</p>
-            <p className="font-semibold">{provider.schedule ?? "—"}</p>
-          </div>
-          <div>
-            <p className="text-sm text-muted-foreground">With {child.firstName} since</p>
-            <p className="font-semibold">
-              {formatDate(provider.startDate)}
-              {provider.endDate && ` – ${formatDate(provider.endDate)}`}
-            </p>
-          </div>
-          <div className="flex flex-col gap-1">
-            <a href={`tel:${provider.phone.replace(/[^\d+]/g, "")}`} className="inline-flex items-center gap-2 font-semibold hover:underline">
-              <Phone className="size-4" aria-hidden /> {provider.phone}
-            </a>
-            {provider.email && (
-              <a href={`mailto:${provider.email}`} className="inline-flex items-center gap-2 font-semibold break-all hover:underline">
-                <Mail className="size-4 shrink-0" aria-hidden /> {provider.email}
-              </a>
-            )}
-          </div>
-        </CardContent>
-      </Card>
+      <ProviderHeader provider={provider} childName={child.firstName} today={today} />
 
       {goals.length > 0 && (
         <section aria-labelledby="goals">
