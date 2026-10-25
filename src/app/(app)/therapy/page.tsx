@@ -67,11 +67,11 @@ function ProviderRow({
         href={`/therapy/${provider.id}`}
         className="flex items-center gap-4 rounded-2xl bg-cream p-4 transition-colors hover:bg-amber/25"
       >
-        <span className="flex size-12 shrink-0 items-center justify-center rounded-full bg-paper text-lg font-extrabold">
+        <span className="flex size-12 shrink-0 items-center justify-center rounded-full bg-white text-lg font-extrabold">
           {provider.name.replace("Dr. ", "")[0]}
         </span>
         <span className="min-w-0 flex-1">
-          <Badge variant="secondary" className="mb-1 bg-paper">{providerTypeLabels[provider.type]}</Badge>
+          <Badge variant="secondary" className="mb-1 bg-white">{providerTypeLabels[provider.type]}</Badge>
           <span className="block font-extrabold">
             {provider.name}
             {provider.credentials && <span className="font-semibold text-muted-foreground">, {provider.credentials}</span>}

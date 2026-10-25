@@ -86,7 +86,7 @@ export function LogForm({ today, childId, childName, triggers, calmingStrategies
         })}
       </div>
 
-      <div className="rounded-2xl bg-cream p-5">
+      <div className="rounded-2xl bg-card ring-1 ring-border p-5">
         {saved === kind ? (
           <Saved message={confirmations[kind]} onAgain={() => setSaved(null)} />
         ) : (
@@ -193,7 +193,7 @@ function RatingPicker({
               type="button"
               aria-pressed={value === rating}
               onClick={() => onChange(rating)}
-              className="flex min-h-16 flex-col items-center justify-center gap-1 rounded-xl border-2 border-transparent bg-paper px-1 py-2 text-xs font-semibold leading-tight transition-colors hover:border-amber aria-pressed:border-teal aria-pressed:bg-amber/40"
+              className="flex min-h-16 flex-col items-center justify-center gap-1 rounded-xl border-2 border-transparent bg-white px-1 py-2 text-xs font-semibold leading-tight transition-colors hover:border-amber aria-pressed:border-teal aria-pressed:bg-amber/40"
             >
               <span className="text-base font-extrabold">{rating}</span>
               {text}
@@ -226,7 +226,7 @@ function Chips({
             type="button"
             aria-pressed={selected.includes(o)}
             onClick={() => onToggle(o)}
-            className="rounded-full border bg-paper px-3 py-1.5 text-sm font-semibold transition-colors hover:border-amber aria-pressed:border-teal aria-pressed:bg-teal aria-pressed:text-paper"
+            className="rounded-full border bg-white px-3 py-1.5 text-sm font-semibold transition-colors hover:border-amber aria-pressed:border-teal aria-pressed:bg-teal aria-pressed:text-paper"
           >
             {o}
           </button>
@@ -317,11 +317,11 @@ function SleepForm({ onSave }: { onSave: OnSave }) {
       <div className="grid grid-cols-2 gap-4">
         <div>
           <Label htmlFor="bedtime" className="mb-2 font-bold">Bedtime</Label>
-          <Input id="bedtime" type="time" value={bedtime} onChange={(e) => setBedtime(e.target.value)} className="h-11 bg-paper" />
+          <Input id="bedtime" type="time" value={bedtime} onChange={(e) => setBedtime(e.target.value)} className="h-11 bg-white" />
         </div>
         <div>
           <Label htmlFor="wake" className="mb-2 font-bold">Woke up</Label>
-          <Input id="wake" type="time" value={wakeTime} onChange={(e) => setWakeTime(e.target.value)} className="h-11 bg-paper" />
+          <Input id="wake" type="time" value={wakeTime} onChange={(e) => setWakeTime(e.target.value)} className="h-11 bg-white" />
         </div>
       </div>
       <div className="flex flex-wrap gap-6">
@@ -404,7 +404,7 @@ function MeltdownForm({
         placeholder="Something else…"
         value={otherTrigger}
         onChange={(e) => setOtherTrigger(e.target.value)}
-        className="h-11 bg-paper"
+        className="h-11 bg-white"
       />
       <RatingPicker label="How big was it?" labels={intensityLabels} value={intensity} onChange={setIntensity} />
       <fieldset>
@@ -416,7 +416,7 @@ function MeltdownForm({
               type="button"
               aria-pressed={duration === d}
               onClick={() => setDuration(d)}
-              className="rounded-full border bg-paper px-4 py-1.5 text-sm font-semibold transition-colors hover:border-amber aria-pressed:border-teal aria-pressed:bg-teal aria-pressed:text-paper"
+              className="rounded-full border bg-white px-4 py-1.5 text-sm font-semibold transition-colors hover:border-amber aria-pressed:border-teal aria-pressed:bg-teal aria-pressed:text-paper"
             >
               {d === 60 ? "60+ min" : `${d} min`}
             </button>
@@ -456,7 +456,7 @@ function TextForm({ kind, childName, onSave }: { kind: "win" | "note"; childName
           value={text}
           onChange={(e) => setText(e.target.value)}
           placeholder={isWin ? "Big or small — tried a new food, asked for help, a calm morning…" : "Anything worth noting today"}
-          className="bg-paper"
+          className="bg-white"
         />
       </div>
       <SaveButton disabled={!text.trim()} />
@@ -476,7 +476,7 @@ function OptionalNote({
   return (
     <div>
       <Label htmlFor="note" className="mb-2 font-bold">Note</Label>
-      <Textarea id="note" rows={2} value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} className="bg-paper" />
+      <Textarea id="note" rows={2} value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} className="bg-white" />
     </div>
   );
 }

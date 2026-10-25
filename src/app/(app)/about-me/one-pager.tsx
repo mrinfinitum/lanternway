@@ -13,7 +13,7 @@ export function OnePager({ profile }: { profile: SharedProfile }) {
   const lists = profile.sections.filter((s) => s !== communication && s !== contacts);
 
   return (
-    <article className="rounded-2xl border bg-white/60 p-5 text-teal">
+    <article className="rounded-2xl border bg-white p-5 text-teal">
       <header className="flex items-start justify-between gap-3 border-b pb-3">
         <div>
           <p className="text-xs font-bold tracking-wide text-muted-foreground uppercase">All about me</p>

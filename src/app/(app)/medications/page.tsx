@@ -101,7 +101,7 @@ export default async function MedicationsPage() {
             <Card key={med.id}>
               <CardContent className="space-y-3">
                 <div className="flex items-start gap-3">
-                  <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-paper">
+                  <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-white">
                     <Pill className="size-5" aria-hidden />
                   </span>
                   <div className="min-w-0">
@@ -130,7 +130,7 @@ export default async function MedicationsPage() {
                   </div>
                 </dl>
                 {due && daysLeft != null && (
-                  <p className="flex items-center gap-2 rounded-xl bg-paper px-3 py-2 text-sm">
+                  <p className="flex items-center gap-2 rounded-xl bg-white px-3 py-2 text-sm">
                     <CalendarClock className="size-4 shrink-0" aria-hidden />
                     <span>
                       Refill due <strong>{formatDate(due)}</strong> ({formatRelativeDays(due, today)})
@@ -168,7 +168,7 @@ export default async function MedicationsPage() {
                 </li>
               ))}
             </ol>
-            <details className="rounded-xl bg-paper px-4 py-3 text-sm">
+            <details className="rounded-xl bg-white px-4 py-3 text-sm">
               <summary className="cursor-pointer font-bold">See the numbers as a table</summary>
               <div className="mt-3 overflow-x-auto">
                 <table className="w-full text-left tabular-nums">
@@ -252,7 +252,7 @@ function ChangeCard({
             {n}
           </span>
           <h3 className="font-extrabold">{describeChange(change, medicationName)}</h3>
-          <Badge variant="secondary" className="bg-paper">
+          <Badge variant="secondary" className="bg-white">
             {change.schedule}
           </Badge>
         </div>
@@ -268,7 +268,7 @@ function ChangeCard({
         )}
         {change.notes && <p className="text-sm text-muted-foreground">{change.notes}</p>}
 
-        <div className="overflow-x-auto rounded-xl bg-paper p-3">
+        <div className="overflow-x-auto rounded-xl bg-white p-3">
           <table className="w-full text-sm tabular-nums">
             <caption className="mb-2 text-left text-xs font-semibold text-muted-foreground">
               {comparison.windowDays / 7} weeks before vs. after

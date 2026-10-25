@@ -19,7 +19,7 @@ export default function CheckInPage({ params }: PageProps<"/c/[token]">) {
   return (
     <main className="mx-auto flex w-full max-w-md flex-1 flex-col px-5 py-8">
       <Image {...logoLockup} alt={logoLockup.alt} className="mb-8 h-auto w-36" loading="eager" />
-      <Suspense fallback={<div className="h-96 rounded-2xl bg-cream" />}>
+      <Suspense fallback={<div className="h-96 rounded-2xl bg-card" />}>
         <CheckIn params={params} />
       </Suspense>
       <p className="mt-auto pt-10 text-center text-xs text-muted-foreground">
@@ -35,7 +35,7 @@ async function CheckIn({ params }: { params: PageProps<"/c/[token]">["params"] }
 
   if (!context) {
     return (
-      <div className="rounded-2xl bg-cream p-6 text-center">
+      <div className="rounded-2xl bg-card ring-1 ring-border p-6 text-center">
         <h1 className="text-xl font-extrabold">This link isn&apos;t active</h1>
         <p className="mt-2 text-muted-foreground">
           It may have expired or been turned off. If you&apos;d still like to check in, ask the family for a new link.

@@ -91,7 +91,7 @@ export default async function AboutMePage() {
       </div>
 
       <HealthDetails>
-        <section className="rounded-xl bg-paper p-4">
+        <section className="rounded-xl bg-white p-4">
           <h3 className="mb-2 font-extrabold">Diagnoses</h3>
           <ul className="space-y-1 text-sm">
             {child.diagnoses.map((d) => (
@@ -108,7 +108,7 @@ export default async function AboutMePage() {
             </p>
           )}
         </section>
-        <section className="rounded-xl bg-paper p-4">
+        <section className="rounded-xl bg-white p-4">
           <h3 className="mb-2 font-extrabold">Medications</h3>
           <ul className="space-y-1 text-sm">
             {meds.map((m) => (
@@ -116,7 +116,7 @@ export default async function AboutMePage() {
             ))}
           </ul>
         </section>
-        <section className="rounded-xl bg-paper p-4">
+        <section className="rounded-xl bg-white p-4">
           <h3 className="mb-2 font-extrabold">Allergies</h3>
           {child.allergies.length > 0 ? (
             <BulletList items={child.allergies} />
@@ -124,7 +124,7 @@ export default async function AboutMePage() {
             <p className="text-sm text-muted-foreground">None recorded.</p>
           )}
         </section>
-        <section className="rounded-xl bg-paper p-4">
+        <section className="rounded-xl bg-white p-4">
           <h3 className="mb-2 font-extrabold">Emergency contacts</h3>
           <ul className="space-y-2 text-sm">
             {child.emergencyContacts.map((c) => (

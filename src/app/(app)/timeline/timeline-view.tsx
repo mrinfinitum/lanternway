@@ -30,11 +30,11 @@ const categoryStyle: Record<TimelineEvent["category"], { icon: LucideIcon; class
   therapy: { icon: HeartHandshake, className: "bg-teal/15 text-teal" },
   milestone: { icon: Baby, className: "bg-amber text-teal" },
   win: { icon: Star, className: "bg-amber text-teal" },
-  meltdown: { icon: Waves, className: "bg-paper text-teal ring-1 ring-border" },
+  meltdown: { icon: Waves, className: "bg-white text-teal ring-1 ring-border" },
   "check-in": { icon: ClipboardCheck, className: "bg-teal/15 text-teal" },
-  note: { icon: StickyNote, className: "bg-paper text-teal ring-1 ring-border" },
+  note: { icon: StickyNote, className: "bg-white text-teal ring-1 ring-border" },
   visit: { icon: Stethoscope, className: "bg-coral/40 text-teal" },
-  day: { icon: CalendarDays, className: "bg-paper text-muted-foreground ring-1 ring-border" },
+  day: { icon: CalendarDays, className: "bg-white text-muted-foreground ring-1 ring-border" },
 };
 
 const zoomOptions: { value: Zoom; label: string; days?: number }[] = [
@@ -108,7 +108,7 @@ export function TimelineView({
               type="button"
               aria-pressed={zoom === o.value}
               onClick={() => setZoom(o.value)}
-              className="rounded-full py-2 text-sm font-bold text-teal/70 transition-colors aria-pressed:bg-teal aria-pressed:text-paper"
+              className="rounded-full py-2 text-sm font-bold text-teal/80 transition-colors aria-pressed:bg-teal aria-pressed:text-paper"
             >
               {o.label}
             </button>

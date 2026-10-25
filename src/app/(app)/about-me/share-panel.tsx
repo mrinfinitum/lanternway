@@ -51,7 +51,7 @@ export function SharePanel({ profile }: { profile: AboutMeProfile }) {
           <Eye /> Share About Me
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-h-[90dvh] overflow-y-auto bg-paper sm:max-w-2xl">
+      <DialogContent className="max-h-[90dvh] overflow-y-auto sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle>Share {profile.firstName}&apos;s About Me</DialogTitle>
           <DialogDescription>
@@ -80,7 +80,7 @@ export function SharePanel({ profile }: { profile: AboutMeProfile }) {
           </div>
         </fieldset>
 
-        <details className="rounded-2xl bg-cream px-4 py-3">
+        <details className="rounded-2xl bg-card ring-1 ring-border px-4 py-3">
           <summary className="cursor-pointer font-bold">
             Sections{" "}
             <span className="font-semibold text-muted-foreground">
@@ -93,7 +93,7 @@ export function SharePanel({ profile }: { profile: AboutMeProfile }) {
           </fieldset>
         </details>
 
-        <fieldset className="rounded-2xl bg-cream p-4">
+        <fieldset className="rounded-2xl bg-card ring-1 ring-border p-4">
           <legend className="sr-only">Private information to include</legend>
           <p className="mb-1 flex items-center gap-2 font-bold">
             <Lock className="size-4" aria-hidden /> Private
@@ -105,18 +105,18 @@ export function SharePanel({ profile }: { profile: AboutMeProfile }) {
           <div className="grid gap-3 sm:grid-cols-2">{privateDefs.map(toggle)}</div>
         </fieldset>
 
-        <div className="rounded-2xl bg-cream p-4">
+        <div className="rounded-2xl bg-card ring-1 ring-border p-4">
           <p className="mb-2 flex items-center gap-2 font-bold">
             <LinkIcon className="size-4" aria-hidden /> Private link
           </p>
           {linkOn ? (
             <>
-              <p className="rounded-lg bg-paper px-3 py-2 font-mono text-xs break-all">{SAMPLE_LINK}</p>
+              <p className="rounded-lg bg-white px-3 py-2 font-mono text-xs break-all">{SAMPLE_LINK}</p>
               <div className="mt-3 flex flex-wrap gap-2">
                 <Button
                   size="sm"
                   variant="outline"
-                  className="rounded-full bg-paper"
+                  className="rounded-full bg-white"
                   onClick={async () => {
                     await navigator.clipboard?.writeText(SAMPLE_LINK);
                     setCopied(true);
@@ -136,7 +136,7 @@ export function SharePanel({ profile }: { profile: AboutMeProfile }) {
           ) : (
             <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
               <span>Link is off. Anyone who had it can no longer open it.</span>
-              <Button size="sm" variant="outline" className="rounded-full bg-paper" onClick={() => setLinkOn(true)}>
+              <Button size="sm" variant="outline" className="rounded-full bg-white" onClick={() => setLinkOn(true)}>
                 Make a new link
               </Button>
             </div>

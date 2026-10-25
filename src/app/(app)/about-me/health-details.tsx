@@ -12,9 +12,9 @@ export function HealthDetails({ children }: { children: React.ReactNode }) {
   }, []);
 
   return (
-    <details ref={ref} className="group rounded-2xl bg-card p-4 ring-1 ring-foreground/10">
+    <details ref={ref} className="group rounded-2xl bg-card ring-1 ring-border p-4">
       <summary className="flex cursor-pointer list-none items-start gap-3 [&::-webkit-details-marker]:hidden">
-        <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-paper">
+        <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-white">
           <Lock className="size-4" aria-hidden />
         </span>
         <span className="min-w-0 flex-1">

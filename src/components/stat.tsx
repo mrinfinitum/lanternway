@@ -14,7 +14,7 @@ export function Stat({
   className?: string;
 }) {
   return (
-    <div className={cn("rounded-2xl bg-cream p-4", className)}>
+    <div className={cn("rounded-2xl bg-card ring-1 ring-border p-4", className)}>
       <p className="text-sm font-semibold text-muted-foreground">{label}</p>
       <p className="mt-1 text-2xl font-extrabold">
         {value}

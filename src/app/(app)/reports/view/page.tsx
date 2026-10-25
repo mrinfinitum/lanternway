@@ -21,7 +21,7 @@ export default function ReportViewPage({ searchParams }: PageProps<"/reports/vie
         </Link>
         <PrintButton />
       </div>
-      <Suspense fallback={<div className="h-[60vh] rounded-2xl bg-cream" />}>
+      <Suspense fallback={<div className="h-[60vh] rounded-2xl bg-card" />}>
         <ReportFromParams searchParams={searchParams} />
       </Suspense>
     </div>

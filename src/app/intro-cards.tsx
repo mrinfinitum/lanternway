@@ -34,7 +34,7 @@ export function IntroCards() {
       <section
         aria-live="polite"
         aria-label={`Intro ${step + 1} of ${cards.length}`}
-        className="flex min-h-56 flex-col items-center rounded-2xl bg-cream p-6"
+        className="flex min-h-56 flex-col items-center rounded-2xl bg-card ring-1 ring-border p-6"
       >
         <span className="flex size-12 items-center justify-center rounded-full bg-amber/40">
           <card.icon className="size-6" aria-hidden />

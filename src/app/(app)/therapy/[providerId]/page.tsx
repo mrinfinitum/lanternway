@@ -38,7 +38,7 @@ export default function ProviderPage({ params }: PageProps<"/therapy/[providerId
       <Link href="/therapy" className="mb-4 inline-flex items-center gap-1 text-sm font-semibold text-muted-foreground hover:text-teal">
         <ArrowLeft className="size-4" aria-hidden /> Therapy & care team
       </Link>
-      <Suspense fallback={<div className="h-96 rounded-2xl bg-cream" />}>
+      <Suspense fallback={<div className="h-96 rounded-2xl bg-card" />}>
         <ProviderDetails params={params} />
       </Suspense>
     </div>
@@ -103,7 +103,7 @@ async function ProviderDetails({ params }: { params: PageProps<"/therapy/[provid
                   <CardContent className="space-y-3">
                     <div className="flex items-start justify-between gap-2">
                       <h3 className="font-extrabold">{goal.title}</h3>
-                      <Badge variant={goal.status === "met" ? "default" : "secondary"} className={goal.status === "met" ? "bg-amber text-teal" : "bg-paper"}>
+                      <Badge variant={goal.status === "met" ? "default" : "secondary"} className={goal.status === "met" ? "bg-amber text-teal" : "bg-white"}>
                         {statusLabels[goal.status]}
                       </Badge>
                     </div>
@@ -114,7 +114,7 @@ async function ProviderDetails({ params }: { params: PageProps<"/therapy/[provid
                           <span>Progress toward goal</span>
                           <span className="font-bold text-teal">{latest.percent}%</span>
                         </div>
-                        <Progress value={latest.percent} className="h-2 bg-paper [&>*]:bg-amber" aria-label={`${goal.title}: ${latest.percent}%`} />
+                        <Progress value={latest.percent} className="h-2 bg-white [&>*]:bg-amber" aria-label={`${goal.title}: ${latest.percent}%`} />
                         <p className="mt-1 text-xs text-muted-foreground">
                           {first && first !== latest && `Started at ${first.percent}% on ${formatDate(first.date)}. `}
                           Last update {formatDate(latest.date)}.

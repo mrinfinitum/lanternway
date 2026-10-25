@@ -34,13 +34,13 @@ export function CheckInLinks({ links, today }: { links: Row[]; today: IsoDate })
         const s = status(l);
         const active = s === "Active";
         return (
-          <li key={l.token} className="rounded-2xl bg-cream p-4">
+          <li key={l.token} className="rounded-2xl bg-card ring-1 ring-border p-4">
             <div className="flex items-start justify-between gap-2">
               <div>
                 <p className="font-bold">{l.name}</p>
                 <p className="text-sm text-muted-foreground">{l.role}</p>
               </div>
-              <Badge variant={active ? "default" : "secondary"} className={active ? "" : "bg-paper"}>
+              <Badge variant={active ? "default" : "secondary"} className={active ? "" : "bg-white"}>
                 {s}
               </Badge>
             </div>
@@ -50,12 +50,12 @@ export function CheckInLinks({ links, today }: { links: Row[]; today: IsoDate })
             </p>
             {active && (
               <div className="mt-3 flex flex-wrap gap-2">
-                <Button asChild size="sm" variant="outline" className="rounded-full bg-paper">
+                <Button asChild size="sm" variant="outline" className="rounded-full bg-white">
                   <Link href={`/c/${l.token}`} target="_blank">
                     <ExternalLink /> Preview form
                   </Link>
                 </Button>
-                <Button size="sm" variant="outline" className="rounded-full bg-paper" onClick={() => copy(l.token)}>
+                <Button size="sm" variant="outline" className="rounded-full bg-white" onClick={() => copy(l.token)}>
                   {copied === l.token ? <Check /> : <Copy />} {copied === l.token ? "Copied" : "Copy link"}
                 </Button>
                 <Button size="sm" variant="ghost" className="rounded-full" onClick={() => setRevoked([...revoked, l.token])}>

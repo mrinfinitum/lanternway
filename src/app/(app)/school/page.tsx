@@ -155,9 +155,9 @@ export default async function SchoolPage() {
         <TabsContent value="messages" className="mt-4">
           <ol className="space-y-3">
             {[...messages].reverse().map((m) => (
-              <li key={m.id} className="rounded-2xl bg-cream p-4">
+              <li key={m.id} className="rounded-2xl bg-card ring-1 ring-border p-4">
                 <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                  <Badge variant="secondary" className="bg-paper">{schoolMessageTypeLabels[m.type]}</Badge>
+                  <Badge variant="secondary" className="bg-white">{schoolMessageTypeLabels[m.type]}</Badge>
                   <span>{formatDate(m.date)}</span>
                   <span>·</span>
                   <span>
@@ -169,7 +169,7 @@ export default async function SchoolPage() {
                 {m.attachments.length > 0 && (
                   <ul className="mt-2 flex flex-wrap gap-2">
                     {m.attachments.map((a) => (
-                      <li key={a.name} className="inline-flex items-center gap-1 rounded-full bg-paper px-2.5 py-1 text-xs font-semibold">
+                      <li key={a.name} className="inline-flex items-center gap-1 rounded-full bg-white px-2.5 py-1 text-xs font-semibold">
                         <Paperclip className="size-3" aria-hidden /> {a.name}
                       </li>
                     ))}
@@ -224,7 +224,7 @@ function GoalCard({ goal }: { goal: IepGoal }) {
           {met && <Badge className="bg-amber text-teal">Target reached</Badge>}
         </div>
         <div>
-          <div className="relative h-3 rounded-full bg-paper" role="img" aria-label={`${latest?.value ?? 0} ${goal.unit}, target ${goal.targetValue}`}>
+          <div className="relative h-3 rounded-full bg-white" role="img" aria-label={`${latest?.value ?? 0} ${goal.unit}, target ${goal.targetValue}`}>
             <div className="h-3 rounded-full bg-amber" style={{ width: `${pct}%` }} />
             <div className="absolute -top-1 h-5 w-0.5 rounded bg-teal" style={{ left: `${goal.targetValue}%` }} aria-hidden />
           </div>
@@ -235,7 +235,7 @@ function GoalCard({ goal }: { goal: IepGoal }) {
         </div>
         <ol className="grid grid-cols-2 gap-2 text-sm sm:grid-cols-4">
           {goal.progress.map((p) => (
-            <li key={p.date} className="rounded-xl bg-paper px-3 py-2">
+            <li key={p.date} className="rounded-xl bg-white px-3 py-2">
               <p className="text-xs text-muted-foreground">{formatShortDate(p.date)}, {p.date.slice(2, 4)}</p>
               <p className="font-extrabold">{p.value}%</p>
               {p.note && <p className="text-xs">{p.note}</p>}
@@ -256,7 +256,7 @@ const statusIcon: Record<DeliveryStatus, typeof CircleCheck> = {
 const statusSquare: Record<DeliveryStatus, string> = {
   delivered: "bg-amber",
   partial: "bg-amber/40",
-  missed: "bg-paper ring-2 ring-inset ring-coral",
+  missed: "bg-white ring-2 ring-inset ring-coral",
 };
 
 function DeliveryLegend() {

@@ -28,7 +28,7 @@ export function CheckInForm({
   if (sent) {
     const { lumiFull } = brandImages;
     return (
-      <div role="status" className="flex flex-col items-center rounded-2xl bg-cream p-8 text-center">
+      <div role="status" className="flex flex-col items-center rounded-2xl bg-card ring-1 ring-border p-8 text-center">
         <Image {...lumiFull} alt="" className="h-auto w-16" />
         <h1 className="mt-4 text-xl font-extrabold">Thank you, {respondentName}!</h1>
         <p className="mt-2 text-muted-foreground">
@@ -54,7 +54,7 @@ export function CheckInForm({
       </div>
 
       {checkInQuestions.map((q) => (
-        <fieldset key={q.key} className="rounded-2xl bg-cream p-4">
+        <fieldset key={q.key} className="rounded-2xl bg-card ring-1 ring-border p-4">
           <legend className="sr-only">{q.label}</legend>
           <p className="mb-3 font-bold" aria-hidden>
             {q.label}
@@ -67,7 +67,7 @@ export function CheckInForm({
                 aria-pressed={answers[q.key] === n}
                 aria-label={`${q.label}: ${n} of 5${n === 1 ? ` (${q.low})` : n === 5 ? ` (${q.high})` : ""}`}
                 onClick={() => setAnswers({ ...answers, [q.key]: n as Rating })}
-                className="h-12 rounded-xl border-2 border-transparent bg-paper text-lg font-extrabold transition-colors hover:border-amber aria-pressed:border-teal aria-pressed:bg-amber/50"
+                className="h-12 rounded-xl border-2 border-transparent bg-white text-lg font-extrabold transition-colors hover:border-amber aria-pressed:border-teal aria-pressed:bg-amber/50"
               >
                 {n}
               </button>
@@ -90,7 +90,7 @@ export function CheckInForm({
           value={note}
           onChange={(e) => setNote(e.target.value)}
           placeholder="A win, something that was tricky, or anything the family should know."
-          className="bg-cream"
+          className="bg-white"
         />
       </div>
 

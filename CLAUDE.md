@@ -33,11 +33,17 @@ Read `PRD.md` for the product and `BUILD_PLAN.md` for the current task list. Bra
 | Token | Hex | Use |
 |---|---|---|
 | `amber` | `#F7B341` | Lumi, heart, highlights, positive progress |
-| `coral` | `#F4825B` | Accents, sparkles, celebrations |
-| `teal` | `#034251` | Text, outlines, primary buttons, headers |
-| `cream` | `#F7E7CD` | Cards, panels |
-| `paper` | `#FDF3E6` | Light inner surfaces (icon circles, inputs, inset boxes inside cream cards) |
-| `white` | `#FFFFFF` | Page background (`bg-background`), for readability |
+| `coral` | `#F4825B` | Accents, sparkles, celebrations; missed/alert markers |
+| `teal` | `#034251` | Text, outlines, primary buttons, headers, selected state |
+| `cream` | `#F7E7CD` | **Tappable** fills: quick-log tiles, option cards, chips, segmented tracks, hover |
+| `paper` | `#FDF3E6` | Cards and panels (`bg-card`), sidebar |
+| `white` | `#FFFFFF` | Page background (`bg-background`), dialogs, boxes nested inside cards, inputs |
+
+**Surfaces (keep these consistent):**
+- Three levels: white page → paper card with a warm outline (`bg-card ring-1 ring-border`, or the `Card` component) → white boxes nested inside a card. Never nest a box in the same color as its parent.
+- A stronger fill (cream) means "you can tap this". Information containers stay paper.
+- One border color (`border` / `ring-border`). Selected = teal fill or teal border. Amber = highlight/progress. Coral = alert.
+- Keep text at WCAG AA: body text is teal, secondary text `text-muted-foreground` (#42636b, ≥ 5:1 on white, paper, and cream).
 
 Font: a rounded, friendly sans-serif — **Nunito** (Google Fonts via `next/font`).
 Corners: generous rounding (`rounded-2xl` on cards). Calm UI: no flashing animations; respect `prefers-reduced-motion`.

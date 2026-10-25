@@ -46,7 +46,7 @@ export function ChildAvatar({ child, size = 40 }: { child: Child; size?: number 
     <span
       aria-hidden
       style={{ width: size, height: size }}
-      className="flex items-center justify-center rounded-full bg-amber text-lg font-extrabold text-teal ring-2 ring-paper"
+      className="flex items-center justify-center rounded-full bg-amber text-lg font-extrabold text-teal ring-2 ring-background"
     >
       {child.firstName[0]}
     </span>

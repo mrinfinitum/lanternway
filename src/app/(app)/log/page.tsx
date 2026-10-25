@@ -14,7 +14,7 @@ export default async function LogPage() {
     <div className="mx-auto max-w-2xl">
       <PageHeader title="Quick log" description="A few taps is plenty. Every entry helps the bigger picture." />
       {/* The form reads ?kind= from the URL, so it renders in the browser. */}
-      <Suspense fallback={<div className="h-96 rounded-2xl bg-cream" />}>
+      <Suspense fallback={<div className="h-96 rounded-2xl bg-card" />}>
         <LogForm
           today={today}
           childId={child.id}

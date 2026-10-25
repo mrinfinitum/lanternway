@@ -103,7 +103,7 @@ export default async function HomePage() {
                 href={`/log?kind=${kind}`}
                 className="flex flex-col items-center gap-2 rounded-2xl bg-cream px-2 py-4 text-sm font-bold transition-colors hover:bg-amber/30"
               >
-                <span className="flex size-10 items-center justify-center rounded-full bg-paper">
+                <span className="flex size-10 items-center justify-center rounded-full bg-white">
                   <Icon className="size-5" aria-hidden />
                 </span>
                 {logKindLabels[kind]}
@@ -161,7 +161,7 @@ export default async function HomePage() {
             <CardContent className="divide-y">
               {soon.map((u) => (
                 <Link key={`${u.title}-${u.date}`} href={u.href} className="flex items-center gap-3 py-3">
-                  <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-paper">
+                  <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-white">
                     <u.icon className="size-4" aria-hidden />
                   </span>
                   <span className="min-w-0 flex-1">

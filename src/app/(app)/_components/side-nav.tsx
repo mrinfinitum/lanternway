@@ -11,7 +11,7 @@ export function SideNav() {
   const { logoLockup } = brandImages;
 
   return (
-    <aside className="sticky top-0 hidden h-dvh w-60 shrink-0 flex-col border-r bg-cream/60 px-4 py-6 md:flex print:hidden">
+    <aside className="sticky top-0 hidden h-dvh w-60 shrink-0 flex-col border-r bg-card px-4 py-6 md:flex print:hidden">
       <Link href="/home" className="mb-8 px-2">
         <Image {...logoLockup} alt={logoLockup.alt} className="h-auto w-40" loading="eager" />
       </Link>

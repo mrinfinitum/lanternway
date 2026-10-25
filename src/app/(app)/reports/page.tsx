@@ -14,7 +14,7 @@ export default async function ReportsPage() {
         title="Reports"
         description="Bring a clear summary to appointments and meetings. Print it or save it as a PDF."
       />
-      <Suspense fallback={<div className="h-96 rounded-2xl bg-cream" />}>
+      <Suspense fallback={<div className="h-96 rounded-2xl bg-card" />}>
         <ReportPicker today={today} />
       </Suspense>
     </div>

@@ -59,9 +59,9 @@
 :root {
   --background: #ffffff; /* white page background, easiest to read */
   --foreground: #034251; /* teal */
-  --card: #f7e7cd; /* cream */
+  --card: #fdf3e6; /* paper: cards and panels on the white page */
   --card-foreground: #034251;
-  --popover: #fdf3e6;
+  --popover: #ffffff; /* dialogs sit on white */
   --popover-foreground: #034251;
   --primary: #034251;
   --primary-foreground: #fdf3e6;
@@ -73,7 +73,7 @@
   --accent-foreground: #034251;
   --destructive: #b4472a; /* deep coral, AA on paper */
   --border: #e9d3b4;
-  --input: #e9d3b4;
+  --input: #978062; /* form-field and switch outlines: 3:1 on white, paper, and cream */
   --ring: #034251;
   --chart-1: #034251;
   --chart-2: #f7b341;

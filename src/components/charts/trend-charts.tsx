@@ -155,7 +155,7 @@ export function TrendCharts({
                       const value = payload.find((p) => p.dataKey === key)?.value;
                       const event = events.find((e) => e.week === label);
                       return (
-                        <div className="rounded-xl border bg-paper px-3 py-2 text-xs shadow-sm">
+                        <div className="rounded-xl border bg-white px-3 py-2 text-xs shadow-sm">
                           <p className="font-semibold text-muted-foreground">Week of {formatDate(String(label))}</p>
                           <p className="text-sm font-bold text-teal">
                             {typeof value === "number" ? `${value.toFixed(cfg.digits)} ${cfg.unit}` : "No entries"}
