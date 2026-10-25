@@ -39,6 +39,16 @@ export type EmergencyContact = {
   phone: string;
 };
 
+/** Where things stand with school, from the parent's point of view. */
+export type SchoolPlanStatus = "iep" | "504" | "evaluating" | "none" | "unsure";
+
+export type ChildSchool = {
+  name?: string;
+  /** Free text from the picker, e.g. "Kindergarten", "5th grade", "Not in school yet". */
+  grade?: string;
+  planStatus?: SchoolPlanStatus;
+};
+
 export type Child = {
   id: string;
   firstName: string;
@@ -58,6 +68,7 @@ export type Child = {
   /** Routines, eating, sleep, personal care, and safety notes. */
   dailyLife: string[];
   allergies: string[];
+  school?: ChildSchool;
   emergencyContacts: EmergencyContact[];
   /**
    * Short parent-written intro in the child's voice. Keep health details out of it;

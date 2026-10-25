@@ -100,12 +100,15 @@ export async function Report({
         (before.sleepHours != null ? ` (previous: ${formatAverage(before.sleepHours)} hours).` : "."),
     );
   }
-  insights.push(
+  if (logs.length === 0) {
+    // Nothing logged is not the same as "zero meltdowns": say so plainly.
+    insights.push("Nothing was logged at home in this period yet.");
+  } else insights.push(
     `${plural(now.meltdowns, "meltdown")} logged, about ${now.meltdownsPerWeek.toFixed(1)} a week` +
       (hadBefore ? ` (previous: ${before.meltdownsPerWeek.toFixed(1)} a week)` : "") +
       (now.topTriggers.length ? `. Most often after: ${now.topTriggers.map((t) => t.label.toLowerCase()).join(", ")}.` : "."),
   );
-  insights.push(`${plural(wins.length, "win")} recorded.`);
+  if (logs.length > 0) insights.push(`${plural(wins.length, "win")} recorded.`);
 
   const summaryRows = [
     { label: "Mood (1–5)", now: now.mood, before: before.mood },
@@ -201,6 +204,7 @@ export async function Report({
         </Section>
       )}
 
+      {(logs.length > 0 || checkIns.length > 0) && (
       <Section title={`This period vs. the ${days} days before`}>
         <Table
           head={["Measure", `${formatShortDate(from)} – ${formatShortDate(to)}`, "Previous period"]}
@@ -208,6 +212,7 @@ export async function Report({
           numeric
         />
       </Section>
+      )}
 
       {showCharts && (
         <Section title="Week by week">

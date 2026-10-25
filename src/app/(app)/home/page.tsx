@@ -159,6 +159,7 @@ export default async function HomePage() {
           <SectionHeading id="coming-up">Coming up</SectionHeading>
           <Card className="py-2">
             <CardContent className="divide-y">
+              {soon.length === 0 && <p className="py-3 text-muted-foreground">Nothing in the next 30 days.</p>}
               {soon.map((u) => (
                 <Link key={`${u.title}-${u.date}`} href={u.href} className="flex items-center gap-3 py-3">
                   <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-white">
@@ -196,6 +197,18 @@ export default async function HomePage() {
           </Card>
         </section>
       </div>
+
+      {weekLogs.length === 0 && (
+        <LumiTip title={`Welcome, ${child.firstName}!`}>
+          <p>
+            Start small: tap one of the buttons above to log how today went. A few taps a day is plenty, and{" "}
+            <Link href="/about-me" className="font-bold underline underline-offset-4">
+              {child.firstName}&apos;s About Me
+            </Link>{" "}
+            is ready to fill in whenever you have a minute.
+          </p>
+        </LumiTip>
+      )}
 
       {iepDays != null && iepDays >= 0 && iepDays <= 45 && (
         <LumiTip>

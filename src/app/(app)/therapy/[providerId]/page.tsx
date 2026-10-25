@@ -7,7 +7,7 @@ import { SectionHeading } from "@/components/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { getAllProviderIds, getChildren, getCurrentChild, getProvider, getTherapyGoals, getTherapySessions, getToday } from "@/lib/data";
+import { getAllProviderIds, getCurrentChild, getProvider, getProviderById, getTherapyGoals, getTherapySessions, getToday } from "@/lib/data";
 import { formatDate } from "@/lib/format";
 import type { GoalStatus } from "@/lib/types";
 import { ProviderAddedThisVisit, ProviderHeader } from "../care-team";
@@ -19,11 +19,8 @@ export async function generateStaticParams() {
 
 export async function generateMetadata({ params }: PageProps<"/therapy/[providerId]">): Promise<Metadata> {
   const { providerId } = await params;
-  for (const kid of await getChildren()) {
-    const provider = await getProvider(kid.id, providerId);
-    if (provider) return { title: `${provider.name} · Lanternway` };
-  }
-  return { title: "Care team · Lanternway" };
+  const provider = await getProviderById(providerId);
+  return { title: `${provider?.name ?? "Care team"} · Lanternway` };
 }
 
 const statusLabels: Record<GoalStatus, string> = {

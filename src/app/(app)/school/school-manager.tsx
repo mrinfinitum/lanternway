@@ -27,6 +27,7 @@ import { formatDate, formatRelativeDays, formatShortDate } from "@/lib/format";
 import { deliveryStatusLabels, schoolMessageTypeLabels } from "@/lib/labels";
 import type {
   Accommodation,
+  ChildSchool,
   DeliveryStatus,
   IepGoal,
   IepPlan,
@@ -41,6 +42,8 @@ import { newId, useRecordActions, useRecords } from "../_components/records-stor
 type Props = {
   childId: string;
   childName: string;
+  /** What the parent said when adding the child, if anything. */
+  school?: ChildSchool;
   today: IsoDate;
   plans: IepPlan[];
   goals: IepGoal[];
@@ -53,7 +56,7 @@ type Props = {
 const isDate = (v: string) => /^\d{4}-\d{2}-\d{2}$/.test(v);
 
 /** School: IEP/504 plan, goals, supports, messages, and team, all editable for this visit. */
-export function SchoolManager({ childId, childName, today, plans, goals, supports, messages, checkIns }: Props) {
+export function SchoolManager({ childId, childName, school, today, plans, goals, supports, messages, checkIns }: Props) {
   const plan = useRecords("iepPlans", plans)
     .filter((p) => p.childId === childId)
     .sort((a, b) => a.startDate.localeCompare(b.startDate))
@@ -67,11 +70,19 @@ export function SchoolManager({ childId, childName, today, plans, goals, support
   if (!plan) {
     return (
       <div className="space-y-8">
-        <PageHeader title="School" />
+        <PageHeader title="School" description={[school?.name, school?.grade].filter(Boolean).join(" · ") || undefined} />
         <EmptyState>
-          <p className="font-bold text-teal">No IEP or 504 plan for {childName} yet.</p>
+          <p className="font-bold text-teal">
+            {school?.planStatus === "evaluating"
+              ? `${childName} is being evaluated for a plan.`
+              : school?.planStatus === "none"
+                ? `${childName} doesn't have an IEP or 504 plan.`
+                : `No IEP or 504 plan for ${childName} yet.`}
+          </p>
           <p className="mt-1 mb-3 text-sm">
-            Add the plan the school shared to follow goal progress, services, and accommodations here.
+            {school?.planStatus === "evaluating"
+              ? "When the school shares the plan, add it here to follow goals, services, and accommodations."
+              : "If there's a plan, add it to follow goal progress, services, and accommodations here."}
           </p>
           <PlanForm childId={childId} today={today} />
         </EmptyState>

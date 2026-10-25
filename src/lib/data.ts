@@ -9,6 +9,7 @@
  */
 
 import { cookies } from "next/headers";
+import { ADDED_CHILD_COOKIE_PREFIX, parseAddedChild } from "@/lib/added-children";
 import { isInRange } from "@/lib/dates";
 import type {
   Accommodation,
@@ -55,9 +56,19 @@ export async function getToday(): Promise<IsoDate> {
 /** Cookie holding the id of the child the parent last picked. */
 export const CURRENT_CHILD_COOKIE = "lw-child";
 
-/** The family's kids, oldest first. Stage 2: the signed-in parent's family only (RLS). */
+/**
+ * The family's kids, oldest first: the sample kids plus any added with
+ * "Add a child" (kept in cookies for now). Stage 2: the signed-in parent's
+ * family only (RLS). Reads cookies, so callers render inside <Suspense>.
+ */
 export async function getChildren(): Promise<Child[]> {
-  return mock.children;
+  const [store, today] = await Promise.all([cookies(), getToday()]);
+  const added = store
+    .getAll()
+    .filter((c) => c.name.startsWith(ADDED_CHILD_COOKIE_PREFIX))
+    .map((c) => parseAddedChild(c.value, today))
+    .filter((c): c is Child => c !== null);
+  return [...mock.children, ...added].sort((a, b) => a.birthDate.localeCompare(b.birthDate));
 }
 
 /**
@@ -131,6 +142,11 @@ export async function getProviders(
 /** Every provider id across the family, for prebuilding provider pages. */
 export async function getAllProviderIds(): Promise<string[]> {
   return mock.providers.map((p) => p.id);
+}
+
+/** Any provider by id, regardless of child. For page titles only (no cookies). */
+export async function getProviderById(providerId: string): Promise<Provider | null> {
+  return mock.providers.find((p) => p.id === providerId) ?? null;
 }
 
 export async function getProvider(childId: string, providerId: string): Promise<Provider | null> {

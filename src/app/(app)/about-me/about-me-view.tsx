@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { CloudRain, Ear, Heart, MessageCircleHeart, Pill, Sparkles, Star, Sun } from "lucide-react";
+import { LumiTip } from "@/components/lumi-tip";
 import { PageHeader } from "@/components/page-header";
 import { ageOn } from "@/lib/dates";
 import { formatDate } from "@/lib/format";
@@ -12,10 +13,22 @@ import { HealthDetails } from "./health-details";
 import { BasicsEditor, CommunicationEditor, ContactsEditor, DiagnosesEditor, ListEditor } from "./profile-editors";
 import { ChipList, DotList, ProfileHero, ProfileSection, QuickLook } from "./profile-sections";
 import type { AboutMeProfile } from "./share";
+import { RemoveChild } from "./remove-child";
 import { SharePanel } from "./share-panel";
 
 /** About Me with this visit's edits applied. Every section has its own Edit button. */
-export function AboutMeView({ child: saved, today, meds }: { child: Child; today: IsoDate; meds: string[] }) {
+export function AboutMeView({
+  child: saved,
+  today,
+  meds,
+  welcome,
+}: {
+  child: Child;
+  today: IsoDate;
+  meds: string[];
+  /** Just added with the "Add a child" flow. */
+  welcome?: boolean;
+}) {
   const child = useRecords("children", [saved]).find((c) => c.id === saved.id) ?? saved;
   const age = ageOn(child.birthDate, today);
 
@@ -50,6 +63,15 @@ export function AboutMeView({ child: saved, today, meds }: { child: Child; today
         description={`Everything someone new should know about ${child.firstName}.`}
         action={<SharePanel profile={profile} />}
       />
+
+      {welcome && (
+        <LumiTip title={`Welcome, ${child.firstName}!`}>
+          <p>
+            Here&apos;s the start of {child.firstName}&apos;s About Me. Add more anytime with the Edit buttons, and use Share
+            when you&apos;re ready to send a one-page summary to a teacher or sitter.
+          </p>
+        </LumiTip>
+      )}
 
       <ProfileHero child={child} age={age} action={<BasicsEditor child={child} today={today} />} />
       <QuickLook child={child} />
@@ -173,6 +195,8 @@ export function AboutMeView({ child: saved, today, meds }: { child: Child; today
           )}
         </HealthBox>
       </HealthDetails>
+
+      {child.id.startsWith("kid-") && <RemoveChild childId={child.id} name={child.firstName} />}
     </div>
   );
 }

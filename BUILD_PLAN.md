@@ -46,6 +46,7 @@ Sample family (fictional): **Maya**, age 10, autistic + ADHD. Diagnosed autism a
 - [x] Second fictional child (Theo, 5: newly diagnosed, speech only, no meds or IEP yet) with ~10 weeks of data
 - [x] Header child switcher; current child kept in a cookie and checked against the family's own list
 - [x] Every screen follows the selected child; gentle empty states for children with less data
+- [x] "Add a child" intake (basics, school & plan status, interests, strengths, communication, what's hard / what helps, drafted intro); prototype keeps added kids in cookies on the device, with Remove
 
 ### 6. Polish & ship
 - [ ] Lumi moments: cheering on wins, comforting on hard-day logs, sleeping on sleep log, thinking on empty states

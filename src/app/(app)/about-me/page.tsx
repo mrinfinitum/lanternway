@@ -4,7 +4,8 @@ import { AboutMeView } from "./about-me-view";
 
 export const metadata: Metadata = { title: "About Me · Lanternway" };
 
-export default async function AboutMePage() {
+export default async function AboutMePage({ searchParams }: PageProps<"/about-me">) {
+  const { welcome } = await searchParams;
   const [child, today] = await Promise.all([getCurrentChild(), getToday()]);
   const [medications, changes] = await Promise.all([getMedications(child.id), getMedicationChanges(child.id)]);
   // Medications stay owned by the Medications screen; About Me only shows the current list.
@@ -15,5 +16,5 @@ export default async function AboutMePage() {
       return `${m.name} ${latest?.doseMg} mg — ${latest?.schedule.toLowerCase()}`;
     });
 
-  return <AboutMeView key={child.id} child={child} today={today} meds={meds} />;
+  return <AboutMeView key={child.id} child={child} today={today} meds={meds} welcome={welcome === "1"} />;
 }

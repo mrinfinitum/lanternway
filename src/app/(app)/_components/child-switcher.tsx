@@ -64,12 +64,10 @@ export function ChildSwitcher({ kids, currentId }: { kids: KidSummary[]; current
             <IdCard className="size-4" aria-hidden /> About {current.firstName}
           </Link>
         </DropdownMenuItem>
-        <DropdownMenuItem disabled>
-          <Plus className="size-4" aria-hidden />
-          <span className="leading-tight">
-            <span className="block">Add a child</span>
-            <span className="block text-xs text-muted-foreground">Coming in the working version</span>
-          </span>
+        <DropdownMenuItem asChild>
+          <Link href="/kids/new">
+            <Plus className="size-4" aria-hidden /> Add a child
+          </Link>
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

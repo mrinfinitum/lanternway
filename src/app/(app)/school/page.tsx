@@ -84,6 +84,7 @@ export default async function SchoolPage() {
       key={child.id}
       childId={child.id}
       childName={child.firstName}
+      school={child.school}
       today={today}
       plans={plan ? [plan] : []}
       goals={goals}

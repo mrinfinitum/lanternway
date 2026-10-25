@@ -33,6 +33,7 @@ export function ProfileHero({ child, age, action }: { child: Child; age: number;
           <ul className="mt-2 flex flex-wrap justify-center gap-2 text-sm font-semibold sm:justify-start" aria-label="Quick facts">
             <li className="rounded-full bg-white px-3 py-1 ring-1 ring-border">Age {age}</li>
             {child.pronouns && <li className="rounded-full bg-white px-3 py-1 ring-1 ring-border">{child.pronouns}</li>}
+            {child.school?.grade && <li className="rounded-full bg-white px-3 py-1 ring-1 ring-border">{child.school.grade}</li>}
             <li className="inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-1 ring-1 ring-border">
               <Cake className="size-3.5" aria-hidden /> {formatDate(child.birthDate).replace(/, \d{4}$/, "")}
             </li>

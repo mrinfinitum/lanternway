@@ -72,6 +72,7 @@ export const child: Child = {
     "May not hear her name when she's focused; a light tap on the shoulder works",
   ],
   allergies: ["Penicillin (hives)"],
+  school: { name: "Maple Grove Elementary", grade: "5th grade", planStatus: "iep" },
   emergencyContacts: [
     { name: "Dana (Mom)", relationship: "Parent", phone: "(555) 014-2231" },
     { name: "Chris (Dad)", relationship: "Parent", phone: "(555) 014-2298" },

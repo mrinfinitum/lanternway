@@ -47,6 +47,7 @@ export const theo: Child = {
     "Holds a hand in parking lots; may run toward trains",
   ],
   allergies: [],
+  school: { name: "Maple Grove Elementary", grade: "Kindergarten", planStatus: "evaluating" },
   emergencyContacts: [
     { name: "Dana (Mom)", relationship: "Parent", phone: "(555) 014-2231" },
     { name: "Chris (Dad)", relationship: "Parent", phone: "(555) 014-2298" },

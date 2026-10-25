@@ -5,7 +5,7 @@ export function PrototypeBanner() {
   return (
     <p className="flex items-center justify-center gap-2 bg-teal px-4 py-1.5 text-center text-xs font-semibold text-paper print:hidden">
       <Info className="size-3.5 shrink-0" aria-hidden />
-      Prototype — sample data. The family and kids are fictional, and anything you add resets on reload.
+      Prototype — sample data, fictional family. Edits reset on reload; kids you add stay on this device.
     </p>
   );
 }
