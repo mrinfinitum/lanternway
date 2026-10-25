@@ -8,7 +8,7 @@ export function AppHeader({ child, today }: { child: Child; today: IsoDate }) {
   const { logoLockup } = brandImages;
 
   return (
-    <header className="sticky top-0 z-30 border-b bg-paper/95 backdrop-blur print:hidden">
+    <header className="sticky top-0 z-30 border-b bg-background/95 backdrop-blur print:hidden">
       <div className="mx-auto flex h-16 max-w-5xl items-center justify-between gap-4 px-4 md:px-8">
         <Link href="/home" className="md:invisible">
           <Image {...logoLockup} alt={logoLockup.alt} className="h-auto w-32" loading="eager" />

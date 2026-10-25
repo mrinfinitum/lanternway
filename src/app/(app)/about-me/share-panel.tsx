@@ -51,7 +51,7 @@ export function SharePanel({ profile }: { profile: AboutMeProfile }) {
           <Eye /> Share About Me
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-h-[90dvh] overflow-y-auto sm:max-w-2xl">
+      <DialogContent className="max-h-[90dvh] overflow-y-auto bg-paper sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle>Share {profile.firstName}&apos;s About Me</DialogTitle>
           <DialogDescription>
@@ -69,7 +69,7 @@ export function SharePanel({ profile }: { profile: AboutMeProfile }) {
                 type="button"
                 aria-pressed={audience === p.value}
                 onClick={() => setSelection(p.selection)}
-                className="rounded-full border bg-card px-4 py-2 text-sm font-semibold transition-colors hover:border-amber aria-pressed:border-teal aria-pressed:bg-teal aria-pressed:text-paper"
+                className="rounded-full border bg-cream px-4 py-2 text-sm font-semibold transition-colors hover:border-amber aria-pressed:border-teal aria-pressed:bg-teal aria-pressed:text-paper"
               >
                 {p.label}
               </button>
@@ -80,7 +80,7 @@ export function SharePanel({ profile }: { profile: AboutMeProfile }) {
           </div>
         </fieldset>
 
-        <details className="rounded-2xl px-4 py-3 ring-1 ring-foreground/10">
+        <details className="rounded-2xl bg-cream px-4 py-3">
           <summary className="cursor-pointer font-bold">
             Sections{" "}
             <span className="font-semibold text-muted-foreground">
@@ -93,7 +93,7 @@ export function SharePanel({ profile }: { profile: AboutMeProfile }) {
           </fieldset>
         </details>
 
-        <fieldset className="rounded-2xl p-4 ring-1 ring-foreground/10">
+        <fieldset className="rounded-2xl bg-cream p-4">
           <legend className="sr-only">Private information to include</legend>
           <p className="mb-1 flex items-center gap-2 font-bold">
             <Lock className="size-4" aria-hidden /> Private
@@ -105,7 +105,7 @@ export function SharePanel({ profile }: { profile: AboutMeProfile }) {
           <div className="grid gap-3 sm:grid-cols-2">{privateDefs.map(toggle)}</div>
         </fieldset>
 
-        <div className="rounded-2xl p-4 ring-1 ring-foreground/10">
+        <div className="rounded-2xl bg-cream p-4">
           <p className="mb-2 flex items-center gap-2 font-bold">
             <LinkIcon className="size-4" aria-hidden /> Private link
           </p>

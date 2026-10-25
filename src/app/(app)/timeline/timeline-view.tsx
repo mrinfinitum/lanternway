@@ -100,7 +100,7 @@ export function TimelineView({
 
   return (
     <div>
-      <div role="group" aria-label="Zoom" className="sticky top-16 z-20 -mx-4 mb-6 bg-paper/95 px-4 py-2 backdrop-blur md:static md:mx-0 md:px-0">
+      <div role="group" aria-label="Zoom" className="sticky top-16 z-20 -mx-4 mb-6 bg-background/95 px-4 py-2 backdrop-blur md:static md:mx-0 md:px-0">
         <div className="grid grid-cols-4 gap-1 rounded-full bg-cream p-1">
           {zoomOptions.map((o) => (
             <button

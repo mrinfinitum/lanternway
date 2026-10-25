@@ -57,7 +57,7 @@
 
 /* Lanternway brand palette (see CLAUDE.md). Light theme only for now. */
 :root {
-  --background: #fdf3e6; /* paper */
+  --background: #ffffff; /* white page background, easiest to read */
   --foreground: #034251; /* teal */
   --card: #f7e7cd; /* cream */
   --card-foreground: #034251;
@@ -68,7 +68,7 @@
   --secondary: #f7e7cd;
   --secondary-foreground: #034251;
   --muted: #f7e7cd;
-  --muted-foreground: #42636b; /* softened teal, AA on paper and cream */
+  --muted-foreground: #42636b; /* softened teal, AA on white, paper, and cream */
   --accent: #f7b341; /* amber */
   --accent-foreground: #034251;
   --destructive: #b4472a; /* deep coral, AA on paper */

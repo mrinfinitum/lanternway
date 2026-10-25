@@ -261,5 +261,5 @@ The smallest set that makes a visible difference for parents, touching only `abo
 - Sharing: `about-me/share.ts` builds the shared version from only the switched-on sections. The diagnosis part of the intro lives in its own field (`Child.aboutMeHealth`) and is added only when Diagnoses is on. There's no keyword filtering.
 - Presets: Teacher / Caregiver / Medical / Camp. Every private section starts off in every preset, including Medical.
 - Controls come before the preview in the dialog. The link is still a labeled prototype placeholder.
-- Also, at the user's request: cards, panels, and dialogs are white across the whole app (`--card`/`--popover` = white). Cream is kept for small accents.
+- Also, at the user's request: the **page background is white** across the app (`--background`). Cards and panels stay cream.
 - Still to do from Priority 1: edit one section in place (#5) and a full contrast + screen-reader pass (#6).

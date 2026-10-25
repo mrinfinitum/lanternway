@@ -36,7 +36,8 @@ Read `PRD.md` for the product and `BUILD_PLAN.md` for the current task list. Bra
 | `coral` | `#F4825B` | Accents, sparkles, celebrations |
 | `teal` | `#034251` | Text, outlines, primary buttons, headers |
 | `cream` | `#F7E7CD` | Cards, panels |
-| `paper` | `#FDF3E6` | App background |
+| `paper` | `#FDF3E6` | Light inner surfaces (icon circles, inputs, inset boxes inside cream cards) |
+| `white` | `#FFFFFF` | Page background (`bg-background`), for readability |
 
 Font: a rounded, friendly sans-serif — **Nunito** (Google Fonts via `next/font`).
 Corners: generous rounding (`rounded-2xl` on cards). Calm UI: no flashing animations; respect `prefers-reduced-motion`.
