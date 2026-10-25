@@ -80,7 +80,7 @@
   --chart-3: #f4825b;
   --chart-4: #42636b;
   --chart-5: #e9d3b4;
-  --radius: 1rem;
+  --radius: 0.75rem;
   --sidebar: #f7e7cd;
   --sidebar-foreground: #034251;
   --sidebar-primary: #034251;
@@ -112,5 +112,15 @@
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
+  }
+}
+
+/* Reports print on plain white paper. */
+@media print {
+  @page {
+    margin: 14mm;
+  }
+  body {
+    background: white;
   }
 }
