@@ -1,5 +1,5 @@
 import Image from "next/image";
-import { TrendCharts, type TrendEvent, type TrendPoint } from "@/components/charts/trend-charts";
+import { TrendCharts, type PanelKey, type TrendEvent, type TrendPoint } from "@/components/charts/trend-charts";
 import { DISCLAIMER } from "@/components/disclaimer";
 import { brandImages } from "@/lib/brand";
 import {
@@ -74,6 +74,8 @@ export async function Report({
   const medName = (id: string) => medications.find((m) => m.id === id)?.name ?? "Medication";
   const changesInRange = changes.filter((c) => c.date >= from && c.date <= to);
   const wins = logs.filter((l): l is WinLog => l.kind === "win");
+  // No records at all before this period (e.g. a child added recently): show "–", not zero.
+  const hadBefore = prevLogs.length > 0;
 
   // Factual one-liners at the top of every report.
   const insights: string[] = [];
@@ -99,7 +101,8 @@ export async function Report({
     );
   }
   insights.push(
-    `${plural(now.meltdowns, "meltdown")} logged, about ${now.meltdownsPerWeek.toFixed(1)} a week (previous: ${before.meltdownsPerWeek.toFixed(1)} a week)` +
+    `${plural(now.meltdowns, "meltdown")} logged, about ${now.meltdownsPerWeek.toFixed(1)} a week` +
+      (hadBefore ? ` (previous: ${before.meltdownsPerWeek.toFixed(1)} a week)` : "") +
       (now.topTriggers.length ? `. Most often after: ${now.topTriggers.map((t) => t.label.toLowerCase()).join(", ")}.` : "."),
   );
   insights.push(`${plural(wins.length, "win")} recorded.`);
@@ -109,7 +112,7 @@ export async function Report({
     { label: "Sleep (hours)", now: now.sleepHours, before: before.sleepHours },
     { label: "Wake-ups a night", now: now.nightWakings, before: before.nightWakings },
     { label: "Appetite (1–5)", now: now.appetite, before: before.appetite },
-    { label: "Meltdowns a week", now: now.meltdownsPerWeek, before: before.meltdownsPerWeek },
+    { label: "Meltdowns a week", now: now.meltdownsPerWeek, before: hadBefore ? before.meltdownsPerWeek : null },
     { label: "Teacher focus (1–5)", now: teacher.focus, before: teacherBefore.focus },
     { label: "Teacher-rated mood (1–5)", now: teacher.mood, before: teacherBefore.mood },
   ];
@@ -132,7 +135,11 @@ export async function Report({
     n: i + 1,
     label: `${formatDate(c.date)}: ${changeLabel(c, medName(c.medicationId))}`,
   }));
-  const showCharts = days >= 28;
+  // Only chart what was actually recorded (no empty dose chart for a child without medications).
+  const wantedPanels: PanelKey[] =
+    type === "doctor" ? ["dose", "focus", "sleepHours"] : type === "iep" ? ["focus", "mood"] : ["mood", "sleepHours"];
+  const panels = wantedPanels.filter((k) => series.some((p) => p[k] != null));
+  const showCharts = days >= 28 && panels.length > 0;
 
   const { logoLockup } = brandImages;
 
@@ -168,6 +175,7 @@ export async function Report({
 
       {type === "doctor" && (
         <Section title="Medications">
+          {medications.length === 0 && <p>No medications recorded.</p>}
           <ul className="space-y-1">
             {medications.map((m) => {
               const latest = changes.filter((c) => c.medicationId === m.id && c.date <= to).at(-1);
@@ -206,7 +214,7 @@ export async function Report({
           <TrendCharts
             data={series}
             events={events}
-            panels={type === "doctor" ? ["dose", "focus", "sleepHours"] : type === "iep" ? ["focus", "mood"] : ["mood", "sleepHours"]}
+            panels={panels}
             titles={{ dose: mainMed ? `${mainMed.name} dose` : "Dose", mood: "Mood at home" }}
             syncId={`report-${type}`}
           />

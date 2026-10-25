@@ -35,7 +35,7 @@ export function SideNav() {
         </ul>
       </nav>
       <p className="mt-auto px-2 text-xs text-muted-foreground">
-        Prototype with sample data. Maya and her family are fictional.
+        Prototype with sample data. The family and kids are fictional.
       </p>
     </aside>
   );

@@ -64,7 +64,7 @@ export function LogForm({ today, childId, childName, triggers, calmingStrategies
     setSaved(entry.kind);
   };
 
-  const todayAll = [...todayLogs, ...added.filter((l) => l.date === today)];
+  const todayAll = [...todayLogs, ...added.filter((l) => l.childId === childId && l.date === today)];
 
   return (
     <div className="space-y-6">

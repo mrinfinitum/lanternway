@@ -42,6 +42,11 @@ Sample family (fictional): **Maya**, age 10, autistic + ADHD. Diagnosed autism a
 - [ ] Parent School tab: "Teachers" section with invite dialog and per-teacher share toggles
 - [ ] Header switcher for someone who is both a parent and a teacher
 
+### 5b. More than one child (prototype)
+- [x] Second fictional child (Theo, 5: newly diagnosed, speech only, no meds or IEP yet) with ~10 weeks of data
+- [x] Header child switcher; current child kept in a cookie and checked against the family's own list
+- [x] Every screen follows the selected child; gentle empty states for children with less data
+
 ### 6. Polish & ship
 - [ ] Lumi moments: cheering on wins, comforting on hard-day logs, sleeping on sleep log, thinking on empty states
 - [ ] Respect `prefers-reduced-motion`; check color contrast (WCAG AA)
@@ -62,7 +67,7 @@ Sample family (fictional): **Maya**, age 10, autistic + ADHD. Diagnosed autism a
 ## Stage 3: Paid version
 - [ ] Stripe subscriptions (free vs Family plan)
 - [ ] IEP meeting prep tools
-- [ ] Multi-child support
+- [ ] Multi-child support for real accounts: add/edit a child, per-child sharing and teacher access (switcher already in the prototype)
 - [ ] Security & privacy review before charging
 
 ## Stage 4: Mobile apps

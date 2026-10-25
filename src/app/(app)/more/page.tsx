@@ -34,7 +34,7 @@ export default function MorePage() {
         ))}
       </ul>
       <p className="mt-8 text-center text-xs text-muted-foreground">
-        Prototype with sample data. Maya and her family are fictional.
+        Prototype with sample data. The family and kids are fictional.
       </p>
     </div>
   );

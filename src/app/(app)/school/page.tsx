@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { CalendarClock, CircleAlert, CircleCheck, CircleMinus, Paperclip, Users } from "lucide-react";
+import { EmptyState } from "@/components/lumi-tip";
 import { PageHeader, SectionHeading } from "@/components/page-header";
 import { Stat } from "@/components/stat";
 import { Badge } from "@/components/ui/badge";
@@ -30,7 +31,17 @@ export default async function SchoolPage() {
   const [child, today] = await Promise.all([getCurrentChild(), getToday()]);
   const plan = await getIepPlan(child.id);
   if (!plan) {
-    return <PageHeader title="School" description="No IEP or 504 plan added yet." />;
+    return (
+      <div>
+        <PageHeader title="School" />
+        <EmptyState>
+          <p className="font-bold text-teal">No IEP or 504 plan for {child.firstName} yet.</p>
+          <p className="mt-1 text-sm">
+            When the school shares a plan, you can follow goal progress, services, and accommodations here.
+          </p>
+        </EmptyState>
+      </div>
+    );
   }
   const [goals, supports, messages, respondents, links, recentCheckIns] = await Promise.all([
     getIepGoals(plan.id),

@@ -6,7 +6,7 @@ import { ageOn } from "@/lib/dates";
 import { formatDate } from "@/lib/format";
 import { communicationStyleLabels } from "@/lib/labels";
 import { cn } from "@/lib/utils";
-import { ChildAvatar } from "../_components/app-header";
+import { ChildAvatar } from "../_components/child-avatar";
 import { HealthDetails } from "./health-details";
 import type { AboutMeProfile } from "./share";
 import { SharePanel } from "./share-panel";
@@ -110,11 +110,15 @@ export default async function AboutMePage() {
         </section>
         <section className="rounded-xl bg-white p-4">
           <h3 className="mb-2 font-extrabold">Medications</h3>
-          <ul className="space-y-1 text-sm">
-            {meds.map((m) => (
-              <li key={m}>{m}</li>
-            ))}
-          </ul>
+          {meds.length > 0 ? (
+            <ul className="space-y-1 text-sm">
+              {meds.map((m) => (
+                <li key={m}>{m}</li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-sm text-muted-foreground">None recorded.</p>
+          )}
         </section>
         <section className="rounded-xl bg-white p-4">
           <h3 className="mb-2 font-extrabold">Allergies</h3>

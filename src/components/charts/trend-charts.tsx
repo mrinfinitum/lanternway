@@ -29,7 +29,7 @@ export type TrendPoint = {
 
 export type TrendEvent = { week: IsoDate; n: number; label: string };
 
-type PanelKey = "dose" | "focus" | "sleepHours" | "mood";
+export type PanelKey = "dose" | "focus" | "sleepHours" | "mood";
 
 const panelConfig: Record<
   PanelKey,

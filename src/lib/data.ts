@@ -8,6 +8,7 @@
  * Lists are returned oldest-first unless noted.
  */
 
+import { cookies } from "next/headers";
 import { isInRange } from "@/lib/dates";
 import type {
   Accommodation,
@@ -51,13 +52,29 @@ export async function getToday(): Promise<IsoDate> {
 // Child
 // ---------------------------------------------------------------------------
 
-/** The child the parent is currently viewing. Single child for now. */
+/** Cookie holding the id of the child the parent last picked. */
+export const CURRENT_CHILD_COOKIE = "lw-child";
+
+/** The family's kids, oldest first. Stage 2: the signed-in parent's family only (RLS). */
+export async function getChildren(): Promise<Child[]> {
+  return mock.children;
+}
+
+/**
+ * The child the parent is currently viewing: the one picked in the header
+ * switcher (cookie), or the first child. The cookie is only a preference;
+ * it can never select a child outside the family's own list.
+ *
+ * Reads a cookie, so callers must render inside a <Suspense> boundary.
+ */
 export async function getCurrentChild(): Promise<Child> {
-  return mock.child;
+  const [kids, store] = await Promise.all([getChildren(), cookies()]);
+  const picked = store.get(CURRENT_CHILD_COOKIE)?.value;
+  return kids.find((c) => c.id === picked) ?? kids[0];
 }
 
 export async function getChild(childId: string): Promise<Child | null> {
-  return mock.child.id === childId ? mock.child : null;
+  return (await getChildren()).find((c) => c.id === childId) ?? null;
 }
 
 export async function getMilestones(childId: string, range?: DateRange): Promise<Milestone[]> {
@@ -109,6 +126,11 @@ export async function getProviders(
   return mock.providers.filter(
     (p) => p.childId === childId && (includePast || !p.endDate),
   );
+}
+
+/** Every provider id across the family, for prebuilding provider pages. */
+export async function getAllProviderIds(): Promise<string[]> {
+  return mock.providers.map((p) => p.id);
 }
 
 export async function getProvider(childId: string, providerId: string): Promise<Provider | null> {
@@ -180,7 +202,7 @@ export async function getCheckInFormContext(token: string): Promise<CheckInFormC
 
 /** The child's current plan, if any. */
 export async function getIepPlan(childId: string): Promise<IepPlan | null> {
-  return mock.iepPlan.childId === childId ? mock.iepPlan : null;
+  return mock.iepPlans.find((p) => p.childId === childId) ?? null;
 }
 
 export async function getIepGoals(planId: string): Promise<IepGoal[]> {

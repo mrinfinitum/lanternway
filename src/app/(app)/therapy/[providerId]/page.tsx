@@ -7,22 +7,23 @@ import { SectionHeading } from "@/components/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { getCurrentChild, getProvider, getProviders, getTherapyGoals, getTherapySessions } from "@/lib/data";
+import { getAllProviderIds, getChildren, getCurrentChild, getProvider, getTherapyGoals, getTherapySessions } from "@/lib/data";
 import { formatDate } from "@/lib/format";
 import { providerTypeLabels } from "@/lib/labels";
 import type { GoalStatus } from "@/lib/types";
 import { SessionList } from "./session-list";
 
 export async function generateStaticParams() {
-  const child = await getCurrentChild();
-  return (await getProviders(child.id)).map((p) => ({ providerId: p.id }));
+  return (await getAllProviderIds()).map((providerId) => ({ providerId }));
 }
 
 export async function generateMetadata({ params }: PageProps<"/therapy/[providerId]">): Promise<Metadata> {
   const { providerId } = await params;
-  const child = await getCurrentChild();
-  const provider = await getProvider(child.id, providerId);
-  return { title: `${provider?.name ?? "Provider"} · Lanternway` };
+  for (const kid of await getChildren()) {
+    const provider = await getProvider(kid.id, providerId);
+    if (provider) return { title: `${provider.name} · Lanternway` };
+  }
+  return { title: "Care team · Lanternway" };
 }
 
 const statusLabels: Record<GoalStatus, string> = {

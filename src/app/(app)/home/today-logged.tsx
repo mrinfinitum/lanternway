@@ -6,9 +6,9 @@ import type { IsoDate, LogEntry } from "@/lib/types";
 import { useLogStore } from "../_components/log-store";
 
 /** Chips for what's already been logged today (sample data + this visit). */
-export function TodayLogged({ today, serverLogs }: { today: IsoDate; serverLogs: LogEntry[] }) {
+export function TodayLogged({ childId, today, serverLogs }: { childId: string; today: IsoDate; serverLogs: LogEntry[] }) {
   const { added } = useLogStore();
-  const kinds = [...new Set([...serverLogs, ...added.filter((l) => l.date === today)].map((l) => l.kind))];
+  const kinds = [...new Set([...serverLogs, ...added.filter((l) => l.childId === childId && l.date === today)].map((l) => l.kind))];
   if (kinds.length === 0) return null;
 
   return (

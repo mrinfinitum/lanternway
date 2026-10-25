@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { CalendarClock, Pill } from "lucide-react";
 import { TrendCharts, type TrendEvent, type TrendPoint } from "@/components/charts/trend-charts";
 import { Disclaimer } from "@/components/disclaimer";
+import { EmptyState } from "@/components/lumi-tip";
 import { PageHeader, SectionHeading } from "@/components/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -40,6 +41,20 @@ export default async function MedicationsPage() {
     getCheckIns(child.id, { from, to: today }),
     getProviders(child.id),
   ]);
+
+  if (medications.length === 0) {
+    return (
+      <div className="space-y-10">
+        <PageHeader title="Medications" description="What's been prescribed, when it changed, and how days looked around each change." />
+        <EmptyState>
+          <p className="font-bold text-teal">No medications recorded for {child.firstName}.</p>
+          <p className="mt-1 text-sm">
+            If {child.firstName} ever starts one, you can keep the dose history here and see how days looked before and after each change.
+          </p>
+        </EmptyState>
+      </div>
+    );
+  }
 
   const medName = (id: string) => medications.find((m) => m.id === id)?.name ?? "Medication";
   const prescriber = (id: string) => providers.find((p) => p.id === id)?.name;

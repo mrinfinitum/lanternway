@@ -111,7 +111,7 @@ export default async function HomePage() {
             );
           })}
         </div>
-        <TodayLogged today={today} serverLogs={todayLogs} />
+        <TodayLogged childId={child.id} today={today} serverLogs={todayLogs} />
       </section>
 
       {/* This week */}
@@ -142,8 +142,8 @@ export default async function HomePage() {
           <Stat
             label="Teacher focus"
             value={formatAverage(teacher.focus)}
-            unit="/ 5"
-            hint={`From ${plural(teacher.count, "check-in")}, last 2 weeks`}
+            unit={teacher.count > 0 ? "/ 5" : undefined}
+            hint={teacher.count > 0 ? `From ${plural(teacher.count, "check-in")}, last 2 weeks` : "No teacher check-ins yet"}
           />
           <Stat
             label="Meltdowns"
