@@ -3,6 +3,7 @@
 import { createContext, useCallback, useContext, useMemo, useState } from "react";
 import type {
   Accommodation,
+  Child,
   IepGoal,
   IepPlan,
   Medication,
@@ -16,6 +17,7 @@ import type {
 // edits over them with `useRecords`. Stage 2 replaces this with Supabase writes.
 
 type Collections = {
+  children: Child;
   medications: Medication;
   medicationChanges: MedicationChange;
   providers: Provider;
@@ -29,6 +31,7 @@ export type CollectionName = keyof Collections;
 type Overlay = { [K in CollectionName]: { saved: Record<string, Collections[K]>; removed: string[] } };
 
 const empty = (): Overlay => ({
+  children: { saved: {}, removed: [] },
   medications: { saved: {}, removed: [] },
   medicationChanges: { saved: {}, removed: [] },
   providers: { saved: {}, removed: [] },

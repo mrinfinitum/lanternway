@@ -8,13 +8,14 @@ import { cn } from "@/lib/utils";
 import { ChildAvatar } from "../_components/child-avatar";
 
 /** Big, friendly introduction: avatar, name, fun facts, and the intro in the child's own voice. */
-export function ProfileHero({ child, age }: { child: Child; age: number }) {
+export function ProfileHero({ child, age, action }: { child: Child; age: number; action?: React.ReactNode }) {
   const { lumiPeeking } = brandImages;
   return (
     <section
       aria-labelledby="hero-name"
       className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-amber/30 via-card to-coral/15 p-5 ring-1 ring-border sm:p-7"
     >
+      {action && <div className="absolute top-3 right-3 z-10">{action}</div>}
       <Image
         {...lumiPeeking}
         alt=""
@@ -103,6 +104,7 @@ export function ProfileSection({
   title,
   accent,
   className,
+  action,
   children,
 }: {
   id: string;
@@ -110,16 +112,21 @@ export function ProfileSection({
   title: string;
   accent: Accent;
   className?: string;
+  /** e.g. an Edit button, shown at the right of the heading. */
+  action?: React.ReactNode;
   children: React.ReactNode;
 }) {
   return (
     <section aria-labelledby={id} className={cn("rounded-2xl bg-card p-4 ring-1 ring-border sm:p-5", className)}>
-      <h3 id={id} className="mb-3 flex items-center gap-2.5 text-lg font-extrabold">
-        <span className={cn("flex size-9 items-center justify-center rounded-full", accentTint[accent])}>
-          <Icon className="size-4.5" aria-hidden />
-        </span>
-        {title}
-      </h3>
+      <div className="mb-3 flex items-center justify-between gap-2">
+        <h3 id={id} className="flex items-center gap-2.5 text-lg font-extrabold">
+          <span className={cn("flex size-9 items-center justify-center rounded-full", accentTint[accent])}>
+            <Icon className="size-4.5" aria-hidden />
+          </span>
+          {title}
+        </h3>
+        {action}
+      </div>
       {children}
     </section>
   );
