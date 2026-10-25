@@ -2,11 +2,13 @@ import { Suspense } from "react";
 import { AppHeader } from "./_components/app-header";
 import { BottomNav } from "./_components/bottom-nav";
 import { LogProvider } from "./_components/log-store";
+import { RecordsProvider } from "./_components/records-store";
 import { SideNav } from "./_components/side-nav";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
     <LogProvider>
+      <RecordsProvider>
       <div className="flex min-h-dvh">
         <SideNav />
         <div className="flex min-w-0 flex-1 flex-col">
@@ -18,6 +20,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         </div>
       </div>
       <BottomNav />
+      </RecordsProvider>
     </LogProvider>
   );
 }

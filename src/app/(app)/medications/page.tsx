@@ -1,8 +1,6 @@
 import type { Metadata } from "next";
-import { CalendarClock, Pill } from "lucide-react";
 import { TrendCharts, type TrendEvent, type TrendPoint } from "@/components/charts/trend-charts";
 import { Disclaimer } from "@/components/disclaimer";
-import { EmptyState } from "@/components/lumi-tip";
 import { PageHeader, SectionHeading } from "@/components/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -15,19 +13,19 @@ import {
   getProviders,
   getToday,
 } from "@/lib/data";
-import { addDays, daysBetween } from "@/lib/dates";
-import { formatAverage, formatDate, formatMonthYear, formatRelativeDays } from "@/lib/format";
+import { addDays } from "@/lib/dates";
+import { formatAverage, formatDate, formatMonthYear } from "@/lib/format";
 import {
   changeLabel,
   compareAround,
   describeComparison,
-  refillDueDate,
   rollingAverage,
   weekStart,
   weeklySeries,
   type Comparison,
 } from "@/lib/insights";
 import type { MedicationChange } from "@/lib/types";
+import { MedicationManager } from "./medication-manager";
 
 export const metadata: Metadata = { title: "Medications · Lanternway" };
 
@@ -42,24 +40,29 @@ export default async function MedicationsPage() {
     getProviders(child.id),
   ]);
 
+  const manager = (
+    <MedicationManager
+      key={child.id}
+      childId={child.id}
+      childName={child.firstName}
+      today={today}
+      medications={medications}
+      changes={changes}
+      providers={providers}
+    />
+  );
+
   if (medications.length === 0) {
     return (
       <div className="space-y-10">
         <PageHeader title="Medications" description="What's been prescribed, when it changed, and how days looked around each change." />
-        <EmptyState>
-          <p className="font-bold text-teal">No medications recorded for {child.firstName}.</p>
-          <p className="mt-1 text-sm">
-            If {child.firstName} ever starts one, you can keep the dose history here and see how days looked before and after each change.
-          </p>
-        </EmptyState>
+        {manager}
+        <Disclaimer />
       </div>
     );
   }
 
   const medName = (id: string) => medications.find((m) => m.id === id)?.name ?? "Medication";
-  const prescriber = (id: string) => providers.find((p) => p.id === id)?.name;
-  const currentDose = (medId: string) =>
-    changes.filter((c) => c.medicationId === medId).at(-1);
 
   // Chart data: weekly averages plus the main medication's dose that week.
   const main = medications[0];
@@ -106,58 +109,7 @@ export default async function MedicationsPage() {
         description="What's been prescribed, when it changed, and how home and school days looked around each change."
       />
 
-      <section aria-labelledby="current" className="grid gap-4 md:grid-cols-2">
-        <h2 id="current" className="sr-only">Current medications</h2>
-        {medications.map((med) => {
-          const latest = currentDose(med.id);
-          const due = refillDueDate(med.lastFilledOn, med.daysSupply);
-          const daysLeft = due ? daysBetween(today, due) : null;
-          return (
-            <Card key={med.id}>
-              <CardContent className="space-y-3">
-                <div className="flex items-start gap-3">
-                  <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-white">
-                    <Pill className="size-5" aria-hidden />
-                  </span>
-                  <div className="min-w-0">
-                    <h3 className="text-lg font-extrabold">{med.name}</h3>
-                    <p className="text-muted-foreground">
-                      {latest?.doseMg} mg · {latest?.schedule}
-                    </p>
-                  </div>
-                </div>
-                <dl className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
-                  <div>
-                    <dt className="text-muted-foreground">For</dt>
-                    <dd className="font-semibold">{med.purpose}</dd>
-                  </div>
-                  <div>
-                    <dt className="text-muted-foreground">Prescriber</dt>
-                    <dd className="font-semibold">{prescriber(med.prescriberId)}</dd>
-                  </div>
-                  <div>
-                    <dt className="text-muted-foreground">Started</dt>
-                    <dd className="font-semibold">{formatDate(med.startDate)}</dd>
-                  </div>
-                  <div>
-                    <dt className="text-muted-foreground">How</dt>
-                    <dd className="font-semibold">{med.form}</dd>
-                  </div>
-                </dl>
-                {due && daysLeft != null && (
-                  <p className="flex items-center gap-2 rounded-xl bg-white px-3 py-2 text-sm">
-                    <CalendarClock className="size-4 shrink-0" aria-hidden />
-                    <span>
-                      Refill due <strong>{formatDate(due)}</strong> ({formatRelativeDays(due, today)})
-                      {med.pharmacy && <> · {med.pharmacy}</>}
-                    </span>
-                  </p>
-                )}
-              </CardContent>
-            </Card>
-          );
-        })}
-      </section>
+      {manager}
 
       <section aria-labelledby="chart-heading">
         <SectionHeading id="chart-heading">The last two years</SectionHeading>

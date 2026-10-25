@@ -156,7 +156,10 @@ export type Medication = {
   /** What the parent was told it's for, in their words. */
   purpose: string;
   form: string;
+  /** Care-team provider who prescribes it. */
   prescriberId: string;
+  /** Prescriber's name when they aren't on the care team. */
+  prescriberName?: string;
   startDate: IsoDate;
   stopDate?: IsoDate;
   pharmacy?: string;
