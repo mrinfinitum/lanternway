@@ -34,7 +34,7 @@ export function CheckInLinks({ links, today }: { links: Row[]; today: IsoDate })
         const s = status(l);
         const active = s === "Active";
         return (
-          <li key={l.token} className="rounded-2xl bg-cream p-4">
+          <li key={l.token} className="rounded-2xl bg-card ring-1 ring-foreground/10 p-4">
             <div className="flex items-start justify-between gap-2">
               <div>
                 <p className="font-bold">{l.name}</p>

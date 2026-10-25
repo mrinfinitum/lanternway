@@ -65,7 +65,7 @@ function ProviderRow({
     <li>
       <Link
         href={`/therapy/${provider.id}`}
-        className="flex items-center gap-4 rounded-2xl bg-cream p-4 transition-colors hover:bg-amber/25"
+        className="flex items-center gap-4 rounded-2xl bg-card ring-1 ring-foreground/10 p-4 transition-colors hover:bg-amber/25"
       >
         <span className="flex size-12 shrink-0 items-center justify-center rounded-full bg-paper text-lg font-extrabold">
           {provider.name.replace("Dr. ", "")[0]}

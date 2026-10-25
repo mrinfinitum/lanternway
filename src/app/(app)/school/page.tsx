@@ -155,7 +155,7 @@ export default async function SchoolPage() {
         <TabsContent value="messages" className="mt-4">
           <ol className="space-y-3">
             {[...messages].reverse().map((m) => (
-              <li key={m.id} className="rounded-2xl bg-cream p-4">
+              <li key={m.id} className="rounded-2xl bg-card ring-1 ring-foreground/10 p-4">
                 <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
                   <Badge variant="secondary" className="bg-paper">{schoolMessageTypeLabels[m.type]}</Badge>
                   <span>{formatDate(m.date)}</span>

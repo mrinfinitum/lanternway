@@ -35,7 +35,8 @@ Read `PRD.md` for the product and `BUILD_PLAN.md` for the current task list. Bra
 | `amber` | `#F7B341` | Lumi, heart, highlights, positive progress |
 | `coral` | `#F4825B` | Accents, sparkles, celebrations |
 | `teal` | `#034251` | Text, outlines, primary buttons, headers |
-| `cream` | `#F7E7CD` | Cards, panels |
+| `cream` | `#F7E7CD` | Small accents: chips, tab/segment tracks, sidebar, hover. Not for reading surfaces |
+| `white` | `#FFFFFF` | Cards, panels, dialogs (`bg-card`, soft `ring-1 ring-foreground/10` edge). Easier to read |
 | `paper` | `#FDF3E6` | App background |
 
 Font: a rounded, friendly sans-serif — **Nunito** (Google Fonts via `next/font`).

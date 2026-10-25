@@ -28,7 +28,7 @@ export function CheckInForm({
   if (sent) {
     const { lumiFull } = brandImages;
     return (
-      <div role="status" className="flex flex-col items-center rounded-2xl bg-cream p-8 text-center">
+      <div role="status" className="flex flex-col items-center rounded-2xl bg-card ring-1 ring-foreground/10 p-8 text-center">
         <Image {...lumiFull} alt="" className="h-auto w-16" />
         <h1 className="mt-4 text-xl font-extrabold">Thank you, {respondentName}!</h1>
         <p className="mt-2 text-muted-foreground">
@@ -54,7 +54,7 @@ export function CheckInForm({
       </div>
 
       {checkInQuestions.map((q) => (
-        <fieldset key={q.key} className="rounded-2xl bg-cream p-4">
+        <fieldset key={q.key} className="rounded-2xl bg-card ring-1 ring-foreground/10 p-4">
           <legend className="sr-only">{q.label}</legend>
           <p className="mb-3 font-bold" aria-hidden>
             {q.label}
@@ -90,7 +90,7 @@ export function CheckInForm({
           value={note}
           onChange={(e) => setNote(e.target.value)}
           placeholder="A win, something that was tricky, or anything the family should know."
-          className="bg-cream"
+          className="bg-card"
         />
       </div>
 

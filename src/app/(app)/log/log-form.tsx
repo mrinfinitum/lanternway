@@ -77,7 +77,7 @@ export function LogForm({ today, childId, childName, triggers, calmingStrategies
               type="button"
               aria-pressed={k === kind}
               onClick={() => setKind(k)}
-              className="flex flex-col items-center gap-1 rounded-2xl bg-cream px-2 py-3 text-sm font-bold transition-colors hover:bg-amber/30 aria-pressed:bg-teal aria-pressed:text-paper"
+              className="flex flex-col items-center gap-1 rounded-2xl bg-card ring-1 ring-foreground/10 px-2 py-3 text-sm font-bold transition-colors hover:bg-amber/30 aria-pressed:bg-teal aria-pressed:text-paper"
             >
               <Icon className="size-5" aria-hidden />
               {logKindLabels[k]}
@@ -86,7 +86,7 @@ export function LogForm({ today, childId, childName, triggers, calmingStrategies
         })}
       </div>
 
-      <div className="rounded-2xl bg-cream p-5">
+      <div className="rounded-2xl bg-card ring-1 ring-foreground/10 p-5">
         {saved === kind ? (
           <Saved message={confirmations[kind]} onAgain={() => setSaved(null)} />
         ) : (
