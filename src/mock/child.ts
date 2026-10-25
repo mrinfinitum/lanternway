@@ -56,13 +56,30 @@ export const child: Child = {
     "Her cat, Biscuit",
   ],
   dislikes: ["Surprise fire drills", "Mushy textures", "Crowded hallways"],
+  strengths: [
+    "Remembers amazing details about animals, especially horses",
+    "Draws her own comics with characters and stories",
+    "Kind to younger kids; notices when someone is sad",
+    "Strong swimmer (finished Level 4 this summer)",
+    "Follows her visual schedule on her own",
+    "Getting better at asking for a break with words",
+  ],
+  dailyLife: [
+    "Mornings go best with the picture checklist on the fridge",
+    "Tries new foods on a separate plate, not mixed in",
+    "Bedtime is 8:30, with a story and dim lights",
+    "Can make her own snack and pack her school bag",
+    "May not hear her name when she's focused; a light tap on the shoulder works",
+  ],
+  allergies: ["Penicillin (hives)"],
   emergencyContacts: [
     { name: "Dana (Mom)", relationship: "Parent", phone: "(555) 014-2231" },
     { name: "Chris (Dad)", relationship: "Parent", phone: "(555) 014-2298" },
     { name: "Ruth (Grandma)", relationship: "Grandparent", phone: "(555) 017-6604" },
   ],
   aboutMe:
-    "Hi! I'm Maya. I'm 10 and I love horses, drawing, and swimming. I'm autistic and have ADHD. Loud rooms and sudden changes are hard for me. A heads-up before switching activities helps a lot, and sometimes I use my tablet to talk. If I'm upset, a quiet spot and some time usually help me feel better.",
+    "Hi! I'm Maya. I love horses, drawing, and swimming. Loud rooms and sudden changes are hard for me. A heads-up before switching activities helps a lot, and sometimes I use my tablet to talk. If I'm upset, a quiet spot and some time usually help me feel better.",
+  aboutMeHealth: "I'm autistic and have ADHD.",
 };
 
 /** Big life moments for the lifelong timeline. */

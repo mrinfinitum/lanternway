@@ -5,8 +5,10 @@ import { getCurrentChild, getMedicationChanges, getMedications, getToday } from 
 import { ageOn } from "@/lib/dates";
 import { formatDate } from "@/lib/format";
 import { communicationStyleLabels } from "@/lib/labels";
+import { cn } from "@/lib/utils";
 import { ChildAvatar } from "../_components/app-header";
-import type { OnePagerData } from "./one-pager";
+import { HealthDetails } from "./health-details";
+import type { AboutMeProfile } from "./share";
 import { SharePanel } from "./share-panel";
 
 export const metadata: Metadata = { title: "About Me · Lanternway" };
@@ -19,32 +21,33 @@ export default async function AboutMePage() {
     return `${m.name} ${latest?.doseMg} mg — ${latest?.schedule.toLowerCase()}`;
   });
 
-  const data: OnePagerData = {
+  const profile: AboutMeProfile = {
     firstName: child.firstName,
     age: ageOn(child.birthDate, today),
     pronouns: child.pronouns,
-    aboutMe: child.aboutMe,
+    intro: child.aboutMe,
+    introHealth: child.aboutMeHealth,
+    strengths: child.strengths,
+    likes: child.likes,
+    dislikes: child.dislikes,
     communication: `${communicationStyleLabels[child.communicationStyle]}. ${child.communicationNotes}`,
-    hard: child.triggers,
     helps: child.calmingStrategies,
     sensory: child.sensoryNeeds,
-    likes: child.likes,
+    hard: child.triggers,
+    dailyLife: child.dailyLife,
     diagnoses: child.diagnoses.map((d) => d.name),
     medications: meds,
+    allergies: child.allergies,
     contacts: child.emergencyContacts.map((c) => `${c.name} · ${c.phone}`),
   };
 
-  const sections: { title: string; items: string[] }[] = [
-    { title: "Things that are hard", items: child.triggers },
-    { title: "What helps", items: child.calmingStrategies },
-    { title: "Sensory needs", items: child.sensoryNeeds },
-    { title: "Loves", items: child.likes },
-    { title: "Not a fan of", items: child.dislikes },
-  ];
-
   return (
     <div className="space-y-6">
-      <PageHeader title="About Me" description={`Everything someone new should know about ${child.firstName}.`} />
+      <PageHeader
+        title="About Me"
+        description={`Everything someone new should know about ${child.firstName}.`}
+        action={<SharePanel profile={profile} />}
+      />
 
       <Card>
         <CardContent className="flex flex-col gap-4 sm:flex-row sm:items-center">
@@ -52,7 +55,7 @@ export default async function AboutMePage() {
           <div>
             <h2 className="text-xl font-extrabold">{child.firstName}</h2>
             <p className="text-sm text-muted-foreground">
-              Age {data.age} · born {formatDate(child.birthDate)}
+              Age {profile.age} · born {formatDate(child.birthDate)}
               {child.pronouns && ` · ${child.pronouns}`}
             </p>
             <p className="mt-2">{child.aboutMe}</p>
@@ -60,9 +63,20 @@ export default async function AboutMePage() {
         </CardContent>
       </Card>
 
-      <SharePanel data={data} />
-
       <div className="grid gap-4 md:grid-cols-2">
+        <ListCard title="My strengths" items={child.strengths} empty={`What is ${child.firstName} good at, or proud of?`} />
+        <Card>
+          <CardContent>
+            <h3 className="mb-2 font-extrabold">Loves</h3>
+            <BulletList items={child.likes} />
+            {child.dislikes.length > 0 && (
+              <>
+                <h4 className="mt-4 mb-2 font-bold">Not a fan of</h4>
+                <BulletList items={child.dislikes} />
+              </>
+            )}
+          </CardContent>
+        </Card>
         <Card className="md:col-span-2">
           <CardContent>
             <h3 className="font-extrabold">Communication</h3>
@@ -70,57 +84,85 @@ export default async function AboutMePage() {
             <p className="mt-1 text-sm">{child.communicationNotes}</p>
           </CardContent>
         </Card>
-        {sections.map((s) => (
-          <Card key={s.title}>
-            <CardContent>
-              <h3 className="mb-2 font-extrabold">{s.title}</h3>
-              <ul className="list-disc space-y-1 pl-5 text-sm">
-                {s.items.map((i) => (
-                  <li key={i}>{i}</li>
-                ))}
-              </ul>
-            </CardContent>
-          </Card>
-        ))}
-        <Card>
-          <CardContent>
-            <h3 className="mb-2 font-extrabold">Diagnoses</h3>
-            <ul className="space-y-1 text-sm">
-              {child.diagnoses.map((d) => (
-                <li key={d.name}>
-                  <span className="font-semibold">{d.name}</span>
-                  <span className="text-muted-foreground"> · {formatDate(d.diagnosedOn)}{d.diagnosedBy && `, ${d.diagnosedBy}`}</span>
-                </li>
-              ))}
-            </ul>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent>
-            <h3 className="mb-2 font-extrabold">Medications</h3>
-            <ul className="space-y-1 text-sm">
-              {meds.map((m) => (
-                <li key={m}>{m}</li>
-              ))}
-            </ul>
-          </CardContent>
-        </Card>
-        <Card className="md:col-span-2">
-          <CardContent>
-            <h3 className="mb-2 font-extrabold">Emergency contacts</h3>
-            <ul className="grid gap-2 text-sm sm:grid-cols-3">
-              {child.emergencyContacts.map((c) => (
-                <li key={c.name}>
-                  <p className="font-semibold">{c.name}</p>
-                  <a href={`tel:${c.phone.replace(/[^\d+]/g, "")}`} className="text-muted-foreground hover:underline">
-                    {c.phone}
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </CardContent>
-        </Card>
+        <ListCard title="What helps" items={child.calmingStrategies} />
+        <ListCard title="Sensory needs" items={child.sensoryNeeds} />
+        <ListCard title="Things that are hard" items={child.triggers} />
+        <ListCard title="Daily life" items={child.dailyLife} empty="Routines, meals, sleep, and safety notes." />
       </div>
+
+      <HealthDetails>
+        <section className="rounded-xl p-4 ring-1 ring-foreground/10">
+          <h3 className="mb-2 font-extrabold">Diagnoses</h3>
+          <ul className="space-y-1 text-sm">
+            {child.diagnoses.map((d) => (
+              <li key={d.name}>
+                <span className="font-semibold">{d.name}</span>
+                <span className="text-muted-foreground"> · {formatDate(d.diagnosedOn)}{d.diagnosedBy && `, ${d.diagnosedBy}`}</span>
+              </li>
+            ))}
+          </ul>
+          {child.aboutMeHealth && (
+            <p className="mt-3 text-sm">
+              <span className="font-semibold">In {child.firstName}&apos;s words: </span>
+              {child.aboutMeHealth}
+            </p>
+          )}
+        </section>
+        <section className="rounded-xl p-4 ring-1 ring-foreground/10">
+          <h3 className="mb-2 font-extrabold">Medications</h3>
+          <ul className="space-y-1 text-sm">
+            {meds.map((m) => (
+              <li key={m}>{m}</li>
+            ))}
+          </ul>
+        </section>
+        <section className="rounded-xl p-4 ring-1 ring-foreground/10">
+          <h3 className="mb-2 font-extrabold">Allergies</h3>
+          {child.allergies.length > 0 ? (
+            <BulletList items={child.allergies} />
+          ) : (
+            <p className="text-sm text-muted-foreground">None recorded.</p>
+          )}
+        </section>
+        <section className="rounded-xl p-4 ring-1 ring-foreground/10">
+          <h3 className="mb-2 font-extrabold">Emergency contacts</h3>
+          <ul className="space-y-2 text-sm">
+            {child.emergencyContacts.map((c) => (
+              <li key={c.name}>
+                <p className="font-semibold">{c.name}</p>
+                <a href={`tel:${c.phone.replace(/[^\d+]/g, "")}`} className="text-muted-foreground hover:underline">
+                  {c.phone}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </section>
+      </HealthDetails>
     </div>
+  );
+}
+
+function ListCard({ title, items, empty, className }: { title: string; items: string[]; empty?: string; className?: string }) {
+  return (
+    <Card className={cn(className)}>
+      <CardContent>
+        <h3 className="mb-2 font-extrabold">{title}</h3>
+        {items.length > 0 ? (
+          <BulletList items={items} />
+        ) : (
+          <p className="text-sm text-muted-foreground">{empty ?? "Nothing added yet."}</p>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+function BulletList({ items }: { items: string[] }) {
+  return (
+    <ul className="list-disc space-y-1 pl-5 text-sm">
+      {items.map((i) => (
+        <li key={i}>{i}</li>
+      ))}
+    </ul>
   );
 }

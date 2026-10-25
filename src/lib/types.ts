@@ -53,9 +53,22 @@ export type Child = {
   calmingStrategies: string[];
   likes: string[];
   dislikes: string[];
+  /** Abilities, things they're proud of, and skills that are growing. */
+  strengths: string[];
+  /** Routines, eating, sleep, personal care, and safety notes. */
+  dailyLife: string[];
+  allergies: string[];
   emergencyContacts: EmergencyContact[];
-  /** Short parent-written intro for the About Me page. */
+  /**
+   * Short parent-written intro in the child's voice. Keep health details out of it;
+   * they go in `aboutMeHealth`, so a shared profile can leave them out.
+   */
   aboutMe: string;
+  /**
+   * The private part of the intro (e.g. diagnoses in the child's words).
+   * Only shared when the parent includes diagnoses.
+   */
+  aboutMeHealth?: string;
 };
 
 /** A life event for the lifelong timeline (not a daily log). */

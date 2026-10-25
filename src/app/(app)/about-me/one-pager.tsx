@@ -1,64 +1,63 @@
 import Image from "next/image";
 import { brandImages } from "@/lib/brand";
+import type { SharedProfile, SharedSection } from "./share";
 
-export type OnePagerData = {
-  firstName: string;
-  age: number;
-  pronouns?: string;
-  aboutMe: string;
-  communication: string;
-  hard: string[];
-  helps: string[];
-  sensory: string[];
-  likes: string[];
-  diagnoses: string[];
-  medications: string[];
-  contacts: string[];
-};
-
-export type OnePagerOptions = { diagnoses: boolean; medications: boolean; contacts: boolean };
-
-/** The shareable one-page summary (what a teacher, sitter, or camp would see). */
-export function OnePager({ data, options }: { data: OnePagerData; options: OnePagerOptions }) {
+/**
+ * The shareable one-page summary (what a teacher, sitter, or camp would see).
+ * It renders whatever it's given; `buildSharedProfile` decides what that is.
+ */
+export function OnePager({ profile }: { profile: SharedProfile }) {
   const { logoLockup } = brandImages;
-  const list = (title: string, items: string[]) => (
-    <section>
-      <h3 className="text-sm font-extrabold">{title}</h3>
-      <ul className="mt-1 list-disc space-y-0.5 pl-4 text-sm">
-        {items.map((i) => (
-          <li key={i}>{i}</li>
-        ))}
-      </ul>
-    </section>
-  );
+  const communication = profile.sections.find((s) => s.kind === "text");
+  const contacts = profile.sections.find((s) => s.key === "contacts");
+  const lists = profile.sections.filter((s) => s !== communication && s !== contacts);
 
   return (
-    <article className="rounded-2xl border bg-white/60 p-5 text-teal">
+    <article className="rounded-2xl border bg-card p-5 text-teal">
       <header className="flex items-start justify-between gap-3 border-b pb-3">
         <div>
           <p className="text-xs font-bold tracking-wide text-muted-foreground uppercase">All about me</p>
-          <h2 className="text-2xl font-extrabold">{data.firstName}</h2>
+          <h2 className="text-2xl font-extrabold">{profile.firstName}</h2>
           <p className="text-sm text-muted-foreground">
-            Age {data.age}
-            {data.pronouns && ` · ${data.pronouns}`}
+            Age {profile.age}
+            {profile.pronouns && ` · ${profile.pronouns}`}
           </p>
         </div>
         <Image {...logoLockup} alt={logoLockup.alt} className="h-auto w-24" />
       </header>
-      <p className="mt-3 text-sm">{data.aboutMe}</p>
-      <section className="mt-3 rounded-xl bg-amber/20 p-3">
-        <h3 className="text-sm font-extrabold">How I communicate</h3>
-        <p className="mt-1 text-sm">{data.communication}</p>
-      </section>
-      <div className="mt-3 grid gap-3 sm:grid-cols-2">
-        {list("Things that are hard for me", data.hard)}
-        {list("What helps me", data.helps)}
-        {list("Sensory needs", data.sensory)}
-        {list("Things I love", data.likes)}
-        {options.diagnoses && list("Diagnoses", data.diagnoses)}
-        {options.medications && list("Medications", data.medications)}
-      </div>
-      {options.contacts && <div className="mt-3">{list("If you need to reach my family", data.contacts)}</div>}
+      <p className="mt-3 text-sm">{profile.intro}</p>
+      {communication?.kind === "text" && (
+        <section className="mt-3 rounded-xl bg-amber/20 p-3">
+          <h3 className="text-sm font-extrabold">{communication.title}</h3>
+          <p className="mt-1 text-sm">{communication.text}</p>
+        </section>
+      )}
+      {lists.length > 0 && (
+        <div className="mt-3 grid gap-3 sm:grid-cols-2">
+          {lists.map((s) => (
+            <List key={s.key} section={s} />
+          ))}
+        </div>
+      )}
+      {contacts && (
+        <div className="mt-3">
+          <List section={contacts} />
+        </div>
+      )}
     </article>
+  );
+}
+
+function List({ section }: { section: SharedSection }) {
+  if (section.kind !== "list") return null;
+  return (
+    <section>
+      <h3 className="text-sm font-extrabold">{section.title}</h3>
+      <ul className="mt-1 list-disc space-y-0.5 pl-4 text-sm">
+        {section.items.map((i) => (
+          <li key={i}>{i}</li>
+        ))}
+      </ul>
+    </section>
   );
 }
