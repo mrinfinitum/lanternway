@@ -23,8 +23,8 @@ Read `PRD.md` for the product and `BUILD_PLAN.md` for the current task list. Bra
 1. **No ad trackers or marketing pixels** (no Meta Pixel, Google Ads tags, etc.). If analytics are ever added, use privacy-friendly, cookieless options and ask first.
 2. **No medical, legal, or therapeutic advice** in UI copy, AI features, or reports. The app records and organizes. Never suggest doses, diagnoses, or treatments. Reports include a disclaimer: "Lanternway is a record-keeping tool and does not provide medical advice."
 3. **Data isolation:** every Supabase table holding family data must have RLS policies restricting access to members of that family. Never ship a table without RLS.
-4. **Check-in links:** random unguessable tokens, scoped to one child + one respondent, with expiry and revoke. Respondents see only the check-in form — never the child's record.
-5. **Parent-facing only.** No child accounts. Don't collect data about other students.
+4. **Check-in links:** random unguessable tokens, scoped to one child + one respondent, with expiry and revoke. Link respondents see only the check-in form — never the child's record.
+5. **Parent-owned.** No child accounts. Teachers may have free accounts, but only see children a parent connected them to, and only what the parent shared (check-in form, About Me, accommodations list). Never logs, medications, therapy, IEP progress, messages, or reports. Teachers can't create student records. Don't collect data about other students. See `APP_MAP.md`.
 6. **Mock data must be fictional.** Never use real names of real children.
 7. **Language:** supportive, non-judgmental, plain English. Hard days are logged without guilt. No "fixing" language, no puzzle-piece imagery.
 8. **Mascot:** Lumi is always "Lumi from Lanternway". Never create a feature or product named "Lumi AI", "Lumi Plus", etc.

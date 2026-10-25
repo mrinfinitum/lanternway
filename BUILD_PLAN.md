@@ -18,23 +18,31 @@ Sample family (fictional): **Maya**, age 10, autistic + ADHD. Diagnosed autism a
 - [x] Simple data-access functions (`getChild`, `getLogs(range)`, etc.) so swapping to Supabase later is easy
 
 ### 3. App shell
-- [ ] Mobile-first layout with bottom tab bar: Home, Log, Timeline, School, More
-- [ ] Desktop: sidebar navigation
-- [ ] Header with child name/photo and Lanternway logo
+- [x] Mobile-first layout with bottom tab bar: Home, Log, Timeline, School, More
+- [x] Desktop: sidebar navigation
+- [x] Header with child name/photo and Lanternway logo
 
 ### 4. Screens
-- [ ] **Welcome/onboarding** — Lumi peeking from the lantern, 3 short intro cards
-- [ ] **Home** — today's quick-log buttons, this week's summary, upcoming (IEP review, refills), a Lumi tip
-- [ ] **Quick log** — mood, sleep, appetite, meltdown (trigger, intensity, duration, what helped), win, note; saves to local state
-- [ ] **Timeline** — scrollable lifelong timeline (diagnoses, med changes, IEP events, milestones) with zoom: week / month / year / all
-- [ ] **Medication timeline** — dose history chart with teacher focus ratings and sleep overlaid (Recharts)
-- [ ] **Therapy hub** — providers list → provider detail with goals and session notes
-- [ ] **School / IEP** — plan dates, goals with progress, accommodations with delivered log, school message log
-- [ ] **About Me** — profile view + "share" preview of the public one-pager
-- [ ] **Teacher check-in (public page)** — `/c/[token]`: a 15-second form for a teacher, styled simply, no app chrome
-- [ ] **Reports** — pick type (doctor / IEP / therapist) and date range → printable report page with insights and disclaimer
+- [x] **Welcome/onboarding** — Lumi peeking from the lantern, 3 short intro cards
+- [x] **Home** — today's quick-log buttons, this week's summary, upcoming (IEP review, refills), a Lumi tip
+- [x] **Quick log** — mood, sleep, appetite, meltdown (trigger, intensity, duration, what helped), win, note; saves to local state
+- [x] **Timeline** — scrollable lifelong timeline (diagnoses, med changes, IEP events, milestones) with zoom: week / month / year / all
+- [x] **Medication timeline** — dose history chart with teacher focus ratings and sleep overlaid (Recharts)
+- [x] **Therapy hub** — providers list → provider detail with goals and session notes
+- [x] **School / IEP** — plan dates, goals with progress, accommodations with delivered log, school message log
+- [x] **About Me** — profile view + "share" preview of the public one-pager
+- [x] **Teacher check-in (public page)** — `/c/[token]`: a 15-second form for a teacher, styled simply, no app chrome
+- [x] **Reports** — pick type (doctor / IEP / therapist) and date range → printable report page with insights and disclaimer
 
-### 5. Polish & ship
+### 5. Parent & teacher sign-in (prototype, see `APP_MAP.md` §7)
+- [ ] `/sign-in` with demo buttons: "Try as a parent (Dana)" / "Try as a teacher (Ms. Lindqvist)"; cookie holds the demo role
+- [ ] Mock data: teacher access for Ms. Lindqvist (Maya + one more fictional student) with share settings
+- [ ] Teacher shell (Students / Settings) and `/teacher` "Your students" list
+- [ ] `/teacher/students/[childId]`: Check in, About (shared one-pager), Supports, My check-ins
+- [ ] Parent School tab: "Teachers" section with invite dialog and per-teacher share toggles
+- [ ] Header switcher for someone who is both a parent and a teacher
+
+### 6. Polish & ship
 - [ ] Lumi moments: cheering on wins, comforting on hard-day logs, sleeping on sleep log, thinking on empty states
 - [ ] Respect `prefers-reduced-motion`; check color contrast (WCAG AA)
 - [ ] Test at 390px and desktop widths
@@ -46,6 +54,8 @@ Sample family (fictional): **Maya**, age 10, autistic + ADHD. Diagnosed autism a
 - [ ] Real check-in links (tokens, expiry, revoke) + email delivery (Resend)
 - [ ] PDF export for reports and About Me
 - [ ] Family invites with roles (view / log / admin)
+- [ ] Teacher accounts: `school_contacts.user_id`, `teacher_access`, `invites`; teacher reads only via narrow Postgres functions (`APP_MAP.md` §6)
+- [ ] `/join/[invite]` flow and post-sign-in routing (family / students / both / neither)
 - [ ] Data export + delete account
 - [ ] Privacy policy + terms (plain English)
 

@@ -12,6 +12,7 @@ Lumi, a small friendly flame who lives in the Lanternway lantern, is the in-app 
 ## 2. Who it's for
 
 - **Primary user:** parents and caregivers (the app is parent-facing; children are not account holders).
+- **Teachers:** can use a free teacher account, or no account at all. Either way they only see children a parent connected them to, and only what the parent shared. See `APP_MAP.md`.
 - **Contributors without accounts:** teachers, therapists, babysitters — they respond to secure check-in links.
 - **Later:** the teen (own check-in mode, ~13+) and the young adult (receives the record at 18).
 
@@ -59,6 +60,13 @@ Lumi, a small friendly flame who lives in the Lanternway lantern, is the in-app 
 - Parent creates a check-in link for a specific person and child (expires, revocable, scoped to one child).
 - Respondent taps a few ratings (e.g., focus, mood, behavior, participation) + optional note. ~15 seconds. No account.
 - Responses flow into the child's timeline.
+
+### 5.5a Teacher accounts (optional for teachers, always free)
+- One sign-in page for everyone (email magic link). The account's connections decide what it sees; one person can be both a parent and a teacher.
+- A teacher appears on a child only when that child's parent invites them. Teachers can't add students.
+- Teacher view: "Your students" list → per student: check-in form, About Me (if shared, parent's include toggles apply), accommodations list (if shared, read-only), and their own past check-ins.
+- Teachers never see daily logs, medications, therapy, IEP progress, school messages, or reports.
+- Parents can change what a teacher sees, or remove them, at any time. Full map in `APP_MAP.md`.
 
 ### 5.6 IEP / 504 tracker
 - Plan dates (start, annual review, re-evaluation), team members.
