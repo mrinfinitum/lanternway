@@ -59,16 +59,16 @@
 :root {
   --background: #fdf3e6; /* paper */
   --foreground: #034251; /* teal */
-  --card: #ffffff; /* white: cards and panels, easiest to read */
+  --card: #f7e7cd; /* cream */
   --card-foreground: #034251;
-  --popover: #ffffff;
+  --popover: #fdf3e6;
   --popover-foreground: #034251;
   --primary: #034251;
   --primary-foreground: #fdf3e6;
   --secondary: #f7e7cd;
   --secondary-foreground: #034251;
   --muted: #f7e7cd;
-  --muted-foreground: #42636b; /* softened teal, AA on white, paper, and cream */
+  --muted-foreground: #42636b; /* softened teal, AA on paper and cream */
   --accent: #f7b341; /* amber */
   --accent-foreground: #034251;
   --destructive: #b4472a; /* deep coral, AA on paper */

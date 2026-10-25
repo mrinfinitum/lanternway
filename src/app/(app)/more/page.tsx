@@ -20,7 +20,7 @@ export default function MorePage() {
       <ul className="space-y-2">
         {[...moreItems, { href: "/", label: "Welcome tour", icon: Sparkles }].map(({ href, label, icon: Icon }) => (
           <li key={href}>
-            <Link href={href} className="flex items-center gap-4 rounded-2xl bg-card ring-1 ring-foreground/10 p-4 transition-colors hover:bg-amber/25">
+            <Link href={href} className="flex items-center gap-4 rounded-2xl bg-cream p-4 transition-colors hover:bg-amber/25">
               <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-paper">
                 <Icon className="size-5" aria-hidden />
               </span>

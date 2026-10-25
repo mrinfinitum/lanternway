@@ -101,7 +101,7 @@ export default async function HomePage() {
               <Link
                 key={kind}
                 href={`/log?kind=${kind}`}
-                className="flex flex-col items-center gap-2 rounded-2xl bg-card ring-1 ring-foreground/10 px-2 py-4 text-sm font-bold transition-colors hover:bg-amber/30"
+                className="flex flex-col items-center gap-2 rounded-2xl bg-cream px-2 py-4 text-sm font-bold transition-colors hover:bg-amber/30"
               >
                 <span className="flex size-10 items-center justify-center rounded-full bg-paper">
                   <Icon className="size-5" aria-hidden />
