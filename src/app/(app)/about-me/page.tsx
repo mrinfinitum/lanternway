@@ -1,13 +1,12 @@
 import type { Metadata } from "next";
+import { CloudRain, Ear, Heart, MessageCircleHeart, Sparkles, Star, Sun } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
-import { Card, CardContent } from "@/components/ui/card";
 import { getCurrentChild, getMedicationChanges, getMedications, getToday } from "@/lib/data";
 import { ageOn } from "@/lib/dates";
 import { formatDate } from "@/lib/format";
 import { communicationStyleLabels } from "@/lib/labels";
-import { cn } from "@/lib/utils";
-import { ChildAvatar } from "../_components/child-avatar";
 import { HealthDetails } from "./health-details";
+import { ChipList, DotList, ProfileHero, ProfileSection, QuickLook } from "./profile-sections";
 import type { AboutMeProfile } from "./share";
 import { SharePanel } from "./share-panel";
 
@@ -49,45 +48,40 @@ export default async function AboutMePage() {
         action={<SharePanel profile={profile} />}
       />
 
-      <Card>
-        <CardContent className="flex flex-col gap-4 sm:flex-row sm:items-center">
-          <ChildAvatar child={child} size={72} />
-          <div>
-            <h2 className="text-xl font-extrabold">{child.firstName}</h2>
-            <p className="text-sm text-muted-foreground">
-              Age {profile.age} · born {formatDate(child.birthDate)}
-              {child.pronouns && ` · ${child.pronouns}`}
-            </p>
-            <p className="mt-2">{child.aboutMe}</p>
-          </div>
-        </CardContent>
-      </Card>
+      <ProfileHero child={child} age={profile.age} />
+      <QuickLook child={child} />
 
       <div className="grid gap-4 md:grid-cols-2">
-        <ListCard title="My strengths" items={child.strengths} empty={`What is ${child.firstName} good at, or proud of?`} />
-        <Card>
-          <CardContent>
-            <h3 className="mb-2 font-extrabold">Loves</h3>
-            <BulletList items={child.likes} />
-            {child.dislikes.length > 0 && (
-              <>
-                <h4 className="mt-4 mb-2 font-bold">Not a fan of</h4>
-                <BulletList items={child.dislikes} />
-              </>
-            )}
-          </CardContent>
-        </Card>
-        <Card className="md:col-span-2">
-          <CardContent>
-            <h3 className="font-extrabold">Communication</h3>
-            <p className="mt-1 text-sm font-semibold">{communicationStyleLabels[child.communicationStyle]}</p>
-            <p className="mt-1 text-sm">{child.communicationNotes}</p>
-          </CardContent>
-        </Card>
-        <ListCard title="What helps" items={child.calmingStrategies} />
-        <ListCard title="Sensory needs" items={child.sensoryNeeds} />
-        <ListCard title="Things that are hard" items={child.triggers} />
-        <ListCard title="Daily life" items={child.dailyLife} empty="Routines, meals, sleep, and safety notes." />
+        <ProfileSection id="strengths" icon={Star} title="My strengths" accent="amber">
+          <DotList items={child.strengths} accent="amber" icon={Star} empty={`What is ${child.firstName} good at, or proud of?`} />
+        </ProfileSection>
+        <ProfileSection id="loves" icon={Heart} title="Things I love" accent="coral">
+          <ChipList items={child.likes} accent="coral" />
+          {child.dislikes.length > 0 && (
+            <>
+              <h4 className="mt-4 mb-2 text-sm font-bold text-teal/80">Not a fan of</h4>
+              <ChipList items={child.dislikes} accent="cream" />
+            </>
+          )}
+        </ProfileSection>
+        <ProfileSection id="communication" icon={MessageCircleHeart} title="How I communicate" accent="teal" className="md:col-span-2">
+          <p className="mb-2 inline-block rounded-full bg-teal px-3 py-1 text-sm font-bold text-paper">
+            {communicationStyleLabels[child.communicationStyle]}
+          </p>
+          <p className="text-base leading-relaxed">{child.communicationNotes}</p>
+        </ProfileSection>
+        <ProfileSection id="helps" icon={Sparkles} title="What helps me" accent="amber">
+          <DotList items={child.calmingStrategies} accent="amber" icon={Sparkles} />
+        </ProfileSection>
+        <ProfileSection id="sensory" icon={Ear} title="Sensory needs" accent="teal">
+          <DotList items={child.sensoryNeeds} accent="teal" />
+        </ProfileSection>
+        <ProfileSection id="hard" icon={CloudRain} title="Things that are hard for me" accent="cream">
+          <DotList items={child.triggers} accent="cream" />
+        </ProfileSection>
+        <ProfileSection id="daily" icon={Sun} title="My day" accent="amber">
+          <DotList items={child.dailyLife} accent="amber" empty="Routines, meals, sleep, and safety notes." />
+        </ProfileSection>
       </div>
 
       <HealthDetails>
@@ -143,21 +137,6 @@ export default async function AboutMePage() {
         </section>
       </HealthDetails>
     </div>
-  );
-}
-
-function ListCard({ title, items, empty, className }: { title: string; items: string[]; empty?: string; className?: string }) {
-  return (
-    <Card className={cn(className)}>
-      <CardContent>
-        <h3 className="mb-2 font-extrabold">{title}</h3>
-        {items.length > 0 ? (
-          <BulletList items={items} />
-        ) : (
-          <p className="text-sm text-muted-foreground">{empty ?? "Nothing added yet."}</p>
-        )}
-      </CardContent>
-    </Card>
   );
 }
 
