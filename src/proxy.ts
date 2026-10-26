@@ -17,6 +17,8 @@ export const config = {
     "/more/:path*",
     "/kids/:path*",
     "/start/:path*",
+    "/account/:path*",
+    "/api/account/:path*",
     "/api/medications/:path*",
   ],
 };

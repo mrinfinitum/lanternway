@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { brandImages } from "@/lib/brand";
+import { LegalLinks } from "@/components/legal-links";
 
 /** Sign in / sign up: calm, centered, no app chrome. */
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
@@ -12,6 +13,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
       </Link>
       <Image {...lumiPeeking} alt="" className="mx-auto mt-6 h-auto w-20" loading="eager" />
       <div className="mt-4">{children}</div>
+      <LegalLinks className="mt-8 justify-center" />
     </main>
   );
 }

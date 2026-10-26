@@ -22,6 +22,9 @@ import type { MilestoneCategory } from "@/lib/types";
 import type { TimelineEvent } from "./events";
 import { TimelineView } from "./timeline-view";
 
+// Reads the signed-in session, so navigations wait for the server (see app layout).
+export const instant = false;
+
 export const metadata: Metadata = { title: "Timeline · Lanternway" };
 
 const milestoneCategory: Record<MilestoneCategory, TimelineEvent["category"]> = {

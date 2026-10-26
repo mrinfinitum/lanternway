@@ -8,6 +8,9 @@ import { isReportType } from "../report-types";
 import { PrintButton } from "./print-button";
 import { Report } from "./report";
 
+// Reads the signed-in session, so navigations wait for the server (see app layout).
+export const instant = false;
+
 export const metadata: Metadata = { title: "Report · Lanternway" };
 
 const isDate = (v: unknown): v is string => typeof v === "string" && /^\d{4}-\d{2}-\d{2}$/.test(v);

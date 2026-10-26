@@ -68,8 +68,9 @@ Sample family (fictional): **Maya**, age 10, autistic + ADHD. Diagnosed autism a
 - [ ] Family invites with roles (view / log / admin)
 - [ ] Teacher accounts: `school_contacts.user_id`, `teacher_access`, `invites`; teacher reads only via narrow Postgres functions (`APP_MAP.md` §6)
 - [ ] `/join/[invite]` flow and post-sign-in routing (family / students / both / neither)
-- [ ] Data export + delete account (also revoke the account's sessions: Neon Auth caches session data in the cookie for up to 5 minutes)
-- [ ] Before real families: privacy policy, terms, Washington-style consumer health data policy, opt-in consent at sign-up, adult confirmation; then remove the test-data notice and checkbox
+- [x] Data export + delete account (Account & privacy page; sessions removed with the account)
+- [x] Draft privacy policy, terms, consumer health data policy; opt-in consents (recorded with versions); adult confirmation; share consent; security headers; password policy; breach plan (see COMPLIANCE.md)
+- [ ] Counsel review of the drafts; fill placeholders in src/lib/policies.ts; then remove the test-data notice and checkbox
 - [ ] Privacy policy + terms (plain English)
 
 ## Stage 3: Paid version

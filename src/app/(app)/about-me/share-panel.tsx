@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { isSavedChildId } from "@/lib/child-profile";
+import { recordShareConsent } from "./actions";
 import { OnePager } from "./one-pager";
 import {
   buildSharedProfile,
@@ -23,8 +25,10 @@ const SAMPLE_LINK = "https://lanternway.co/a/Xk92-mPq7-Lt4w";
 const generalDefs = sectionDefs.filter((d) => !d.private);
 const privateDefs = sectionDefs.filter((d) => d.private);
 
-export function SharePanel({ profile }: { profile: AboutMeProfile }) {
+export function SharePanel({ profile, childId }: { profile: AboutMeProfile; childId: string }) {
   const [selection, setSelection] = useState<ShareSelection>(presets[0].selection);
+  // Consent covers exactly what's selected; changing the selection asks again.
+  const [consentedTo, setConsentedTo] = useState<string | null>(null);
   const [linkOn, setLinkOn] = useState(true);
   const [copied, setCopied] = useState(false);
 
@@ -109,7 +113,24 @@ export function SharePanel({ profile }: { profile: AboutMeProfile }) {
           <p className="mb-2 flex items-center gap-2 font-bold">
             <LinkIcon className="size-4" aria-hidden /> Private link
           </p>
-          {linkOn ? (
+          {consentedTo !== JSON.stringify(selection) ? (
+            <label className="flex items-start gap-3 rounded-xl bg-white p-3 text-sm ring-1 ring-border">
+              <input
+                type="checkbox"
+                className="mt-0.5 size-5 shrink-0 accent-teal"
+                onChange={(e) => {
+                  if (!e.target.checked) return;
+                  setConsentedTo(JSON.stringify(selection));
+                  const sections = sectionDefs.filter((d) => selection[d.key]).map((d) => d.key);
+                  if (isSavedChildId(childId)) void recordShareConsent(childId, sections, audience);
+                }}
+              />
+              <span>
+                I choose to share the information switched on above with the person I send this link to. I can turn the link
+                off anytime.
+              </span>
+            </label>
+          ) : linkOn ? (
             <>
               <p className="rounded-lg bg-white px-3 py-2 font-mono text-xs break-all">{SAMPLE_LINK}</p>
               <div className="mt-3 flex flex-wrap gap-2">

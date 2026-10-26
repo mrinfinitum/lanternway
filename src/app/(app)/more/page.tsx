@@ -1,8 +1,12 @@
 import Link from "next/link";
 import type { Metadata } from "next";
-import { ChevronRight, Sparkles } from "lucide-react";
+import { LegalLinks } from "@/components/legal-links";
+import { ChevronRight, ShieldCheck, Sparkles } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
 import { moreItems } from "../_components/nav-items";
+
+// Reads the signed-in session, so navigations wait for the server (see app layout).
+export const instant = false;
 
 export const metadata: Metadata = { title: "More · Lanternway" };
 
@@ -33,9 +37,20 @@ export default function MorePage() {
           </li>
         ))}
       </ul>
-      <p className="mt-8 text-center text-xs text-muted-foreground">
-        Prototype with sample data. The family and kids are fictional.
-      </p>
+      <Link
+        href="/account"
+        className="mt-3 flex items-center gap-4 rounded-2xl bg-cream p-4 transition-colors hover:bg-amber/25"
+      >
+        <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-white">
+          <ShieldCheck className="size-5" aria-hidden />
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="block font-bold">Account &amp; privacy</span>
+          <span className="block text-sm text-muted-foreground">Download your data, password, what you&apos;ve agreed to, delete account</span>
+        </span>
+        <ChevronRight className="size-5 text-muted-foreground" aria-hidden />
+      </Link>
+      <LegalLinks className="mt-8 justify-center" />
     </div>
   );
 }

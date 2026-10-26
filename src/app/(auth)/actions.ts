@@ -2,6 +2,8 @@
 
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth/server";
+import { recordConsents } from "@/lib/consents";
+import { passwordProblem } from "@/lib/password-policy";
 
 export type AuthFormState = { error: string; email?: string; name?: string } | null;
 
@@ -42,12 +44,17 @@ export async function signUp(_prev: AuthFormState, form: FormData): Promise<Auth
   const password = String(form.get("password") ?? "");
   if (!name) return { error: "Please add your first name.", email, name };
   if (!isEmail(email)) return { error: "Please enter your email address.", email, name };
-  if (password.length < 8) return { error: "Please use at least 8 characters for your password.", email, name };
-  if (form.get("testing") !== "on") {
-    return { error: "Please tick the box to confirm you'll use made-up details while we're testing.", email, name };
-  }
+  const weak = passwordProblem(password, email);
+  if (weak) return { error: weak, email, name };
+  const missing = [
+    ["adult", "confirm you're 18 or older and a parent or guardian"],
+    ["terms", "agree to the Terms of Use and Privacy Policy"],
+    ["healthData", "consent to Lanternway storing the health information you enter"],
+    ["testing", "confirm you'll use made-up details while we're testing"],
+  ].find(([key]) => form.get(key) !== "on");
+  if (missing) return { error: `Please tick the box to ${missing[1]}.`, email, name };
 
-  const { error } = await auth.signUp.email({ name, email, password });
+  const { data, error } = await auth.signUp.email({ name, email, password });
   if (error) {
     // Email and password are checked above, so a validation failure here almost always means the
     // email is taken. Stay neutral rather than confirming whether an account exists.
@@ -56,6 +63,11 @@ export async function signUp(_prev: AuthFormState, form: FormData): Promise<Auth
         ? "We couldn't create an account with that email. If you already have one, try signing in."
         : friendly(error);
     return { error: message, email, name };
+  }
+  // Keep a record of exactly what they agreed to, and which policy versions.
+  const userId = (data as { user?: { id?: string } } | null)?.user?.id;
+  if (userId) {
+    await recordConsents(userId, ["adult_guardian", "terms", "privacy", "health_data_collection", "test_data"]);
   }
   redirect("/home");
 }

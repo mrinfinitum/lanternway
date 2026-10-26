@@ -10,11 +10,15 @@ import { brandImages } from "@/lib/brand";
 import { getChildren } from "@/lib/data";
 import { SampleFamilyButton } from "./sample-family-button";
 
+// Reads the signed-in session, so navigations wait for the server (see app layout).
+export const instant = false;
+
 export const metadata: Metadata = { title: "Welcome · Lanternway" };
 
 /** Where a new family lands before they've added a child. */
 export default async function StartPage() {
   const [kids, user] = await Promise.all([getChildren(), getSignedInUser()]);
+  if (!user && !kids.length) redirect("/sign-in");
   if (kids.length > 0) redirect("/home");
   const { lumiPeeking } = brandImages;
   const name = user?.name.split(" ")[0];

@@ -66,12 +66,35 @@ try {
   const fam = await as(A, async (c) => (await c.query("select id from families")).rows.map((r) => r.id));
   check("A sees only A's family", fam.length === 1 && fam[0] === a.f);
 
+  // Consents: each person only ever sees or records their own.
+  await as(A, async (c) => c.query("insert into consents (user_id, kind, policy_version) values ($1, 'terms', 'test')", [A]));
+  await as(B, async (c) => c.query("insert into consents (user_id, kind, policy_version) values ($1, 'terms', 'test')", [B]));
+  const aConsents = await as(A, async (c) => (await c.query("select user_id from consents")).rows.map((r) => r.user_id));
+  check("A sees only A's consents", aConsents.length === 1 && aConsents[0] === A);
+  const forge = await as(A, async (c) => c.query("insert into consents (user_id, kind, policy_version) values ($1, 'terms', 'test')", [B]));
+  check("A cannot record a consent for B", Boolean(forge?.error));
+  const wipe = await as(A, async (c) => (await c.query("delete from consents where user_id = $1", [B])).rowCount);
+  check("A cannot delete B's consents", wipe === 0);
+
+  // Account deletion: A can delete A's own family, never B's.
+  const delB = await as(A, async (c) => (await c.query("delete from families where id = $1", [b.f])).rowCount);
+  check("A cannot delete B's family", delB === 0);
+
+  // Self-deletion of the sign-in account: only ever the caller's own, never with no user.
+  const selfDel = await as("00000000-0000-0000-0000-000000000000", async (c) => (await c.query("select delete_my_auth_account() as n")).rows[0].n);
+  check("delete_my_auth_account removes nothing for an unknown caller", selfDel === 0);
+  const anonDel = await as(null, async (c) => c.query("select delete_my_auth_account()"));
+  check("delete_my_auth_account refuses with no signed-in user", Boolean(anonDel?.error));
+  const peek = await as(A, async (c) => c.query('select count(*) from neon_auth."user"'));
+  check("website role cannot read the auth tables directly", Boolean(peek?.error));
+
   const ddl = await as(A, async (c) => c.query("create table sneaky (id int)"));
   check("website role still cannot create tables", Boolean(ddl?.error));
 } finally {
   // The website role can't delete families (by design), so clean up with the owner role.
   const admin = new Pool({ connectionString: process.env.DATABASE_URL_ADMIN });
   await admin.query("delete from families where created_by = any($1)", [[A, B]]);
+  await admin.query("delete from consents where user_id = any($1)", [[A, B]]);
   await admin.end();
   await pool.end();
 }

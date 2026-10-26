@@ -4,6 +4,9 @@ import { PageHeader } from "@/components/page-header";
 import { getToday } from "@/lib/data";
 import { ReportPicker } from "./report-picker";
 
+// Reads the signed-in session, so navigations wait for the server (see app layout).
+export const instant = false;
+
 export const metadata: Metadata = { title: "Reports · Lanternway" };
 
 export default async function ReportsPage() {

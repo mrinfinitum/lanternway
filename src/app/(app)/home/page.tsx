@@ -23,6 +23,9 @@ import { appetiteLabels, logKindLabels, moodLabels, ratingLabel } from "@/lib/la
 import type { IsoDate, WinLog } from "@/lib/types";
 import { TodayLogged } from "./today-logged";
 
+// Reads the signed-in session, so navigations wait for the server (see app layout).
+export const instant = false;
+
 export const metadata: Metadata = { title: "Home · Lanternway" };
 
 type Upcoming = { date: IsoDate; title: string; detail: string; icon: typeof Pill; href: string };

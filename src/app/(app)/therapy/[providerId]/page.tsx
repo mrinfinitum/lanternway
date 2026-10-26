@@ -13,6 +13,9 @@ import type { GoalStatus } from "@/lib/types";
 import { ProviderAddedThisVisit, ProviderHeader } from "../care-team";
 import { SessionList } from "./session-list";
 
+// Reads the signed-in session, so navigations wait for the server (see app layout).
+export const instant = false;
+
 export async function generateStaticParams() {
   return (await getAllProviderIds()).map((providerId) => ({ providerId }));
 }

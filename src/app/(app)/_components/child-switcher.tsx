@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useTransition } from "react";
-import { ChevronDown, Eye, House, IdCard, LogOut, Plus } from "lucide-react";
+import { ChevronDown, Eye, House, IdCard, LogOut, Plus, ShieldCheck } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -111,6 +111,11 @@ export function ChildSwitcher({
               <span className="block truncate text-sm font-bold text-teal">{user.name || user.email}</span>
               {user.name && <span className="block truncate text-xs font-normal">{user.email}</span>}
             </DropdownMenuLabel>
+            <DropdownMenuItem asChild>
+              <Link href="/account">
+                <ShieldCheck className="size-4" aria-hidden /> Account &amp; privacy
+              </Link>
+            </DropdownMenuItem>
             <DropdownMenuItem onSelect={() => startTransition(() => signOut())}>
               <LogOut className="size-4" aria-hidden /> Sign out
             </DropdownMenuItem>

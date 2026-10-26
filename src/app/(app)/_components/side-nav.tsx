@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { LegalLinks } from "@/components/legal-links";
 import { brandImages } from "@/lib/brand";
 import { isActive, sidebarItems } from "./nav-items";
 
@@ -34,9 +35,12 @@ export function SideNav() {
           })}
         </ul>
       </nav>
-      <p className="mt-auto px-2 text-xs text-muted-foreground">
-        Prototype with sample data. The family and kids are fictional.
-      </p>
+      <div className="mt-auto space-y-3 px-2">
+        <Link href="/account" className="block text-sm font-semibold text-teal/80 underline-offset-4 hover:underline">
+          Account &amp; privacy
+        </Link>
+        <LegalLinks className="flex-col" />
+      </div>
     </aside>
   );
 }

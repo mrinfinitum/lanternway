@@ -62,7 +62,7 @@ export function AboutMeView({
       <PageHeader
         title="About Me"
         description={`Everything someone new should know about ${child.firstName}.`}
-        action={<SharePanel profile={profile} />}
+        action={<SharePanel profile={profile} childId={child.id} />}
       />
 
       {welcome && (

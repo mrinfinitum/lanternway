@@ -5,6 +5,11 @@ import { LogProvider } from "./_components/log-store";
 import { RecordsProvider } from "./_components/records-store";
 import { SideNav } from "./_components/side-nav";
 
+// Every app screen reads the signed-in session (a request-time check against Neon Auth),
+// so navigations wait for the server instead of showing a prerendered shell. This is
+// the documented opt-out for authenticated routes with Cache Components.
+export const instant = false;
+
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
     <LogProvider>

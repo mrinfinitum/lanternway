@@ -27,6 +27,9 @@ import {
 import type { MedicationChange } from "@/lib/types";
 import { MedicationManager } from "./medication-manager";
 
+// Reads the signed-in session, so navigations wait for the server (see app layout).
+export const instant = false;
+
 export const metadata: Metadata = { title: "Medications · Lanternway" };
 
 export default async function MedicationsPage() {

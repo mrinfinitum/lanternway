@@ -3,6 +3,9 @@ import { PageHeader } from "@/components/page-header";
 import { getCurrentChild, getProviders, getTherapyGoals, getTherapySessions, getToday } from "@/lib/data";
 import { CareTeamList } from "./care-team";
 
+// Reads the signed-in session, so navigations wait for the server (see app layout).
+export const instant = false;
+
 export const metadata: Metadata = { title: "Therapy · Lanternway" };
 
 export default async function TherapyPage() {
