@@ -43,6 +43,9 @@ export async function signUp(_prev: AuthFormState, form: FormData): Promise<Auth
   if (!name) return { error: "Please add your first name.", email, name };
   if (!isEmail(email)) return { error: "Please enter your email address.", email, name };
   if (password.length < 8) return { error: "Please use at least 8 characters for your password.", email, name };
+  if (form.get("testing") !== "on") {
+    return { error: "Please tick the box to confirm you'll use made-up details while we're testing.", email, name };
+  }
 
   const { error } = await auth.signUp.email({ name, email, password });
   if (error) {

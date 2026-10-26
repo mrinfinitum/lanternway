@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useEffect, useRef, useState, useTransition } from "react";
 import { ArrowLeft, ArrowRight, Check, Plus } from "lucide-react";
 import { Field, SelectField, TextAreaField } from "@/components/form-dialog";
+import { TestDataNotice } from "@/components/test-data-notice";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { draftIntro, type NewChildInput } from "@/lib/child-profile";
@@ -128,6 +129,7 @@ export function AddChildWizard({ today }: { today: IsoDate }) {
             <StepHeading refEl={headingRef} title="Let's meet your child" lumi>
               Just the basics. Everything else is optional, and you can change any of it later.
             </StepHeading>
+            <TestDataNotice compact />
             <div className="grid gap-3 sm:grid-cols-2">
               <Field name="firstName" label="First name" required value={a.firstName} onChange={(e) => set("firstName", e.target.value)} autoComplete="off" hint="The name they go by." />
               <Field name="birthDate" label="Birthday" type="date" required max={today} value={a.birthDate} onChange={(e) => set("birthDate", e.target.value)} />

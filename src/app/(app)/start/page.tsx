@@ -3,6 +3,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Plus } from "lucide-react";
+import { TestDataNotice } from "@/components/test-data-notice";
 import { Button } from "@/components/ui/button";
 import { getSignedInUser } from "@/lib/auth/server";
 import { brandImages } from "@/lib/brand";
@@ -26,6 +27,7 @@ export default async function StartPage() {
         Lanternway keeps your child&apos;s whole journey in one place. Start by telling us a little about them. It takes about
         two minutes, and you can change anything later.
       </p>
+      <TestDataNotice compact className="mt-5" />
       <div className="mt-6 flex flex-col gap-3">
         <Button asChild size="lg" className="h-12 rounded-full text-base">
           <Link href="/kids/new">

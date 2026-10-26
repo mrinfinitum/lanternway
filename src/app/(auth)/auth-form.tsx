@@ -52,6 +52,12 @@ export function AuthForm({ mode, action }: { mode: Mode; action: (prev: AuthForm
           </p>
         )}
       </div>
+      {signUp && (
+        <label className="flex items-start gap-3 rounded-xl bg-white p-3 text-sm ring-1 ring-border">
+          <input type="checkbox" name="testing" required className="mt-0.5 size-5 shrink-0 accent-teal" />
+          <span>I understand this is a test version and I&apos;ll use made-up details, not real information about my child.</span>
+        </label>
+      )}
       {state?.error && (
         <p id={errorId} role="alert" className="rounded-xl bg-coral/15 px-3 py-2 text-sm font-semibold">
           {state.error}
