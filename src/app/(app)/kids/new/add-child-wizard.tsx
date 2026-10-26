@@ -6,7 +6,7 @@ import { ArrowLeft, ArrowRight, Check, Plus } from "lucide-react";
 import { Field, SelectField, TextAreaField } from "@/components/form-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { draftIntro, type NewChildInput } from "@/lib/added-children";
+import { draftIntro, type NewChildInput } from "@/lib/child-profile";
 import { brandImages } from "@/lib/brand";
 import { formatDate } from "@/lib/format";
 import { communicationStyleLabels } from "@/lib/labels";

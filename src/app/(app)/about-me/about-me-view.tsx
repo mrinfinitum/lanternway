@@ -8,6 +8,7 @@ import { ageOn } from "@/lib/dates";
 import { formatDate } from "@/lib/format";
 import { communicationStyleLabels } from "@/lib/labels";
 import type { Child, IsoDate } from "@/lib/types";
+import { isSavedChildId } from "@/lib/child-profile";
 import { useRecords } from "../_components/records-store";
 import { HealthDetails } from "./health-details";
 import { BasicsEditor, CommunicationEditor, ContactsEditor, DiagnosesEditor, ListEditor } from "./profile-editors";
@@ -196,7 +197,7 @@ export function AboutMeView({
         </HealthBox>
       </HealthDetails>
 
-      {child.id.startsWith("kid-") && <RemoveChild childId={child.id} name={child.firstName} />}
+      {isSavedChildId(child.id) && <RemoveChild childId={child.id} name={child.firstName} />}
     </div>
   );
 }

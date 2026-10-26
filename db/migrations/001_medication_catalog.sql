@@ -27,6 +27,6 @@ begin
   end if;
 end $$;
 
-revoke all on all tables in schema public from lanternway_app;
+revoke insert, update, delete, truncate on medication_catalog from lanternway_app;
 grant usage on schema public to lanternway_app;
 grant select on medication_catalog to lanternway_app;

@@ -1,18 +1,21 @@
 /**
- * Stage 1 stand-in for saving a new child to the database.
+ * Validating and tidying a child's profile before it's saved to the database.
+ * Used by "Add a child" and by About Me edits. Everything is re-checked on the
+ * server, so a tampered request can't store unexpected shapes or huge values.
  *
- * Children added with the "Add a child" flow are kept in httpOnly cookies on
- * the parent's own browser (one cookie per child, ~2 KB each), so the new
- * child works on every screen and survives a reload. Everything read back is
- * re-checked here, because a cookie can be edited by hand.
- *
- * Stage 2 replaces this file with a Supabase insert (with RLS).
+ * Also safe to import in the browser (no server-only code): the Add a child
+ * flow uses draftIntro().
  */
 
-import type { Child, CommunicationStyle, SchoolPlanStatus } from "@/lib/types";
+import type { Child, CommunicationStyle, Diagnosis, EmergencyContact, SchoolPlanStatus } from "@/lib/types";
 
-export const ADDED_CHILD_COOKIE_PREFIX = "lw-kid-";
-export const MAX_ADDED_CHILDREN = 3;
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/** True for children saved to a family in the database (sample kids have ids like "child-maya"). */
+export const isSavedChildId = (id: string) => UUID.test(id);
+
+/** Cap on kids per family in the prototype, to keep things tidy. */
+export const MAX_CHILDREN = 12;
 
 const STYLES: CommunicationStyle[] = ["speaking", "limited-speech", "aac", "nonverbal", "speaking-and-aac"];
 const PLAN_STATUSES: SchoolPlanStatus[] = ["iep", "504", "evaluating", "none", "unsure"];
@@ -76,19 +79,45 @@ export function buildChild(input: unknown, id: string, today: string): Child | s
   };
 }
 
-/** Read one cookie value back into a Child, or null if it doesn't check out. */
-export function parseAddedChild(raw: string | undefined, today: string): Child | null {
-  if (!raw) return null;
-  try {
-    const data = JSON.parse(raw) as Record<string, unknown>;
-    const id = str(data.id, 40);
-    if (!/^kid-[a-z0-9]{8}$/.test(id)) return null;
-    const school = (data.school ?? {}) as Record<string, unknown>;
-    const child = buildChild({ ...data, grade: school.grade, schoolName: school.name, planStatus: school.planStatus }, id, today);
-    return typeof child === "string" ? null : child;
-  } catch {
-    return null;
-  }
+const diagnoses = (v: unknown): Diagnosis[] =>
+  Array.isArray(v)
+    ? v
+        .map((d) => (d ?? {}) as Record<string, unknown>)
+        .map((d) => ({
+          name: str(d.name, 80),
+          tag: str(d.tag, 30) || str(d.name, 80).toLowerCase().split(/[^a-z]+/)[0],
+          diagnosedOn: str(d.diagnosedOn, 10),
+          diagnosedBy: str(d.diagnosedBy, 80) || undefined,
+          notes: str(d.notes, 300) || undefined,
+        }))
+        .filter((d) => d.name && isDate(d.diagnosedOn))
+        .slice(0, 12)
+    : [];
+
+const contacts = (v: unknown): EmergencyContact[] =>
+  Array.isArray(v)
+    ? v
+        .map((c) => (c ?? {}) as Record<string, unknown>)
+        .map((c) => ({ name: str(c.name, 60), relationship: str(c.relationship, 40), phone: str(c.phone, 30) }))
+        .filter((c) => c.name && c.phone)
+        .slice(0, 8)
+    : [];
+
+/** A whole saved profile (from About Me edits), checked field by field. */
+export function sanitizeChild(input: unknown, id: string, today: string): Child | string {
+  const v = (input ?? {}) as Record<string, unknown>;
+  const school = (v.school ?? {}) as Record<string, unknown>;
+  const base = buildChild({ ...v, grade: school.grade, schoolName: school.name, planStatus: school.planStatus }, id, today);
+  if (typeof base === "string") return base;
+  return {
+    ...base,
+    dislikes: list(v.dislikes),
+    dailyLife: list(v.dailyLife),
+    allergies: list(v.allergies),
+    diagnoses: diagnoses(v.diagnoses),
+    emergencyContacts: contacts(v.emergencyContacts),
+    aboutMeHealth: str(v.aboutMeHealth, 300) || undefined,
+  };
 }
 
 /** First-person intro drafted from the answers. The parent can edit it before saving. */

@@ -5,7 +5,7 @@ Read `PRD.md` for the product and `BUILD_PLAN.md` for the current task list. Bra
 ## Stack
 - **Next.js** (App Router, TypeScript, `src/` directory) deployed on **Vercel**.
 - **Tailwind CSS** + **shadcn/ui** components (customized to the Lanternway palette).
-- **Neon** Postgres (project `lanternway`, aws-us-east-1) with **Neon Auth** (Managed Better Auth; users and sessions in the `neon_auth` schema) and Row Level Security. Sign-in is required for the app (email + password). Family data is still local mock data until the family tables land. File storage: not chosen yet. Secrets live in `.env.local` (git-ignored) and Vercel env vars; the website connects with the read-only `lanternway_app` role. `pnpm db:setup` runs migrations and seeds.
+- **Neon** Postgres (project `lanternway`, aws-us-east-1) with **Neon Auth** (Managed Better Auth; users and sessions in the `neon_auth` schema) and Row Level Security. Sign-in is required for the app (email + password). Each account has its own family: families, members, and children (with their About Me profile) are saved in Neon; logs, medications, therapy, and school are still sample data or visit-only edits. A sample family (Maya and Theo) can be explored from the header menu. File storage: not chosen yet. Secrets live in `.env.local` (git-ignored) and Vercel env vars; the website connects with the read-only `lanternway_app` role. `pnpm db:setup` runs migrations and seeds.
 - **Stripe** for subscriptions (Stage 3).
 - Charts: **Recharts**.
 - Package manager: **pnpm**.
@@ -22,7 +22,7 @@ Read `PRD.md` for the product and `BUILD_PLAN.md` for the current task list. Bra
 ## Non-negotiable rules
 1. **No ad trackers or marketing pixels** (no Meta Pixel, Google Ads tags, etc.). If analytics are ever added, use privacy-friendly, cookieless options and ask first.
 2. **No medical, legal, or therapeutic advice** in UI copy, AI features, or reports. The app records and organizes. Never suggest doses, diagnoses, or treatments. Reports include a disclaimer: "Lanternway is a record-keeping tool and does not provide medical advice."
-3. **Data isolation:** every database table holding family data must have RLS policies restricting access to members of that family. Never ship a table without RLS.
+3. **Data isolation:** every database table holding family data must have RLS policies restricting access to members of that family. Never ship a table without RLS. Run family queries through `asUser()` (`src/lib/db.ts`), which sets `app.user_id` for the policies, and extend `pnpm db:test-rls` for every new table.
 4. **Check-in links:** random unguessable tokens, scoped to one child + one respondent, with expiry and revoke. Link respondents see only the check-in form — never the child's record.
 5. **Parent-owned.** No child accounts. Teachers may have free accounts, but only see children a parent connected them to, and only what the parent shared (check-in form, About Me, accommodations list). Never logs, medications, therapy, IEP progress, messages, or reports. Teachers can't create student records. Don't collect data about other students. See `APP_MAP.md`.
 6. **Mock data must be fictional.** Never use real names of real children.

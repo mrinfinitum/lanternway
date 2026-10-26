@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { Pencil, Plus, X } from "lucide-react";
 import { Field, FormDialog, SelectField, TextAreaField, text } from "@/components/form-dialog";
 import { Button } from "@/components/ui/button";
@@ -8,7 +8,27 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { communicationStyleLabels } from "@/lib/labels";
 import type { Child, CommunicationStyle, IsoDate } from "@/lib/types";
+import { isSavedChildId } from "@/lib/child-profile";
 import { useRecordActions } from "../_components/records-store";
+import { saveChildProfile } from "./actions";
+
+/**
+ * Save a profile edit: show it right away, and for kids in the parent's own family
+ * also save it to the database. Sample-family edits last for the visit only.
+ */
+function useSaveChild() {
+  const { save } = useRecordActions();
+  const [, startSaving] = useTransition();
+  return (child: Child) => {
+    save("children", child);
+    if (isSavedChildId(child.id)) {
+      startSaving(async () => {
+        const result = await saveChildProfile(child);
+        if (!result.ok && result.error) console.warn("About Me save failed:", result.error);
+      });
+    }
+  };
+}
 
 /** Small "Edit" button with a clear accessible name, e.g. "Edit My strengths". */
 function EditTrigger({ what, ...props }: { what: string } & React.ComponentProps<typeof Button>) {
@@ -122,7 +142,7 @@ export function ListEditor({
   itemLabel: string;
   placeholder?: string;
 }) {
-  const { save } = useRecordActions();
+  const saveChild = useSaveChild();
   return (
     <FormDialog
       title={title}
@@ -130,7 +150,7 @@ export function ListEditor({
       trigger={<EditTrigger what={title.replace(/^Edit /, "")} />}
       onSave={(form) => {
         const items = [...new Set(readRows(form, ["item"]).map((r) => r.item))];
-        save("children", { ...child, [field]: items });
+        saveChild({ ...child, [field]: items });
       }}
     >
       <RepeatRows
@@ -145,7 +165,7 @@ export function ListEditor({
 
 /** Name, pronouns, birthday, and the intro (with its private part kept separate). */
 export function BasicsEditor({ child, today }: { child: Child; today: IsoDate }) {
-  const { save } = useRecordActions();
+  const saveChild = useSaveChild();
   return (
     <FormDialog
       title={`Edit ${child.firstName}'s basics`}
@@ -161,7 +181,7 @@ export function BasicsEditor({ child, today }: { child: Child; today: IsoDate })
         if (!firstName) return "Please add a first name.";
         if (!/^\d{4}-\d{2}-\d{2}$/.test(birthDate)) return "Please add a birthday.";
         if (birthDate > today) return "The birthday can't be in the future.";
-        save("children", {
+        saveChild({
           ...child,
           firstName,
           pronouns: text(form, "pronouns") || undefined,
@@ -200,14 +220,14 @@ const styleOptions = (Object.keys(communicationStyleLabels) as CommunicationStyl
 }));
 
 export function CommunicationEditor({ child }: { child: Child }) {
-  const { save } = useRecordActions();
+  const saveChild = useSaveChild();
   return (
     <FormDialog
       title="How I communicate"
       description="Help someone new talk with them in the first five minutes."
       trigger={<EditTrigger what="How I communicate" />}
       onSave={(form) =>
-        save("children", {
+        saveChild({
           ...child,
           communicationStyle: text(form, "style") as CommunicationStyle,
           communicationNotes: text(form, "notes"),
@@ -227,7 +247,7 @@ export function CommunicationEditor({ child }: { child: Child }) {
 }
 
 export function DiagnosesEditor({ child, today }: { child: Child; today: IsoDate }) {
-  const { save } = useRecordActions();
+  const saveChild = useSaveChild();
   const columns = ["name", "diagnosedOn", "diagnosedBy"];
   return (
     <FormDialog
@@ -240,7 +260,7 @@ export function DiagnosesEditor({ child, today }: { child: Child; today: IsoDate
           if (!/^\d{4}-\d{2}-\d{2}$/.test(r.diagnosedOn)) return `Please add when “${r.name}” was diagnosed. A rough date is fine.`;
           if (r.diagnosedOn > today) return "A diagnosis date can't be in the future.";
         }
-        save("children", {
+        saveChild({
           ...child,
           diagnoses: rows.map((r) => {
             const existing = child.diagnoses.find((d) => d.name === r.name);
@@ -270,7 +290,7 @@ export function DiagnosesEditor({ child, today }: { child: Child; today: IsoDate
 }
 
 export function ContactsEditor({ child }: { child: Child }) {
-  const { save } = useRecordActions();
+  const saveChild = useSaveChild();
   return (
     <FormDialog
       title="Emergency contacts"
@@ -280,7 +300,7 @@ export function ContactsEditor({ child }: { child: Child }) {
         const rows = readRows(form, ["name", "relationship", "phone"]);
         const missing = rows.find((r) => !r.phone);
         if (missing) return `Please add a phone number for ${missing.name}.`;
-        save("children", { ...child, emergencyContacts: rows.map((r) => ({ name: r.name, relationship: r.relationship, phone: r.phone })) });
+        saveChild({ ...child, emergencyContacts: rows.map((r) => ({ name: r.name, relationship: r.relationship, phone: r.phone })) });
       }}
     >
       <RepeatRows

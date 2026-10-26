@@ -3,7 +3,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { brandImages } from "@/lib/brand";
 import { getSignedInUser } from "@/lib/auth/server";
-import { getChildren, getCurrentChild, getToday } from "@/lib/data";
+import { getChildren, getCurrentChildOrNull, getToday, isSampleFamily } from "@/lib/data";
 import { ageOn } from "@/lib/dates";
 import { ChildSwitcher } from "./child-switcher";
 
@@ -26,12 +26,25 @@ export function AppHeader() {
 
 /** Reads the current-child cookie, so it streams in after the static header. */
 async function CurrentChild() {
-  const [kids, current, today, user] = await Promise.all([getChildren(), getCurrentChild(), getToday(), getSignedInUser()]);
+  const [kids, current, today, user, sample] = await Promise.all([
+    getChildren(),
+    getCurrentChildOrNull(),
+    getToday(),
+    getSignedInUser(),
+    isSampleFamily(),
+  ]);
   const summaries = kids.map((k) => ({
     id: k.id,
     firstName: k.firstName,
     age: ageOn(k.birthDate, today),
     photoUrl: k.photoUrl,
   }));
-  return <ChildSwitcher kids={summaries} currentId={current.id} user={user ? { name: user.name, email: user.email } : null} />;
+  return (
+    <ChildSwitcher
+      kids={summaries}
+      currentId={current?.id ?? null}
+      user={user ? { name: user.name, email: user.email } : null}
+      sample={sample}
+    />
+  );
 }

@@ -2,49 +2,47 @@
 
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { ADDED_CHILD_COOKIE_PREFIX, MAX_ADDED_CHILDREN, buildChild } from "@/lib/added-children";
-import { CURRENT_CHILD_COOKIE, getToday } from "@/lib/data";
+import { getSignedInUser } from "@/lib/auth/server";
+import { MAX_CHILDREN, buildChild } from "@/lib/child-profile";
+import { CURRENT_CHILD_COOKIE, SAMPLE_FAMILY_COOKIE, getToday } from "@/lib/data";
+import { deleteChild, insertChild, listChildren } from "@/lib/families";
 
 const cookieOptions = {
   path: "/",
   httpOnly: true,
   sameSite: "lax" as const,
   secure: process.env.NODE_ENV === "production",
-  maxAge: 60 * 60 * 24 * 30,
+  maxAge: 60 * 60 * 24 * 365,
 };
 
 /**
- * Save a child from the "Add a child" flow, switch to them, and open their About Me.
- * Returns a message if something needs fixing. Stage 2: insert into Supabase instead.
+ * Save a child from the "Add a child" flow to the signed-in parent's family,
+ * switch to them, and open their About Me. Returns a message if something needs fixing.
  */
 export async function addChild(input: unknown): Promise<{ error: string } | void> {
-  const [store, today] = await Promise.all([cookies(), getToday()]);
-  const used = store.getAll().filter((c) => c.name.startsWith(ADDED_CHILD_COOKIE_PREFIX)).map((c) => c.name);
-  if (used.length >= MAX_ADDED_CHILDREN) {
-    return { error: `The prototype holds up to ${MAX_ADDED_CHILDREN} added kids. Sign-in and real saving come in the working version.` };
+  const [user, today, store] = await Promise.all([getSignedInUser(), getToday(), cookies()]);
+  if (!user) redirect("/sign-in");
+
+  const child = buildChild(input, "new", today);
+  if (typeof child === "string") return { error: child };
+  if ((await listChildren(user.id)).length >= MAX_CHILDREN) {
+    return { error: `A family can have up to ${MAX_CHILDREN} kids in this prototype.` };
   }
 
-  const id = `kid-${crypto.randomUUID().replace(/-/g, "").slice(0, 8)}`;
-  const child = buildChild(input, id, today);
-  if (typeof child === "string") return { error: child };
+  const { id: _placeholder, ...profile } = child;
+  void _placeholder;
+  const id = await insertChild(user.id, profile);
 
-  const slot = Array.from({ length: MAX_ADDED_CHILDREN }, (_, i) => `${ADDED_CHILD_COOKIE_PREFIX}${i + 1}`).find((n) => !used.includes(n))!;
-  store.set(slot, JSON.stringify(child), cookieOptions);
-  store.set(CURRENT_CHILD_COOKIE, id, { ...cookieOptions, maxAge: 60 * 60 * 24 * 365 });
+  store.set(CURRENT_CHILD_COOKIE, id, cookieOptions);
+  store.delete(SAMPLE_FAMILY_COOKIE); // adding a real child brings you back to your own family
   redirect("/about-me?welcome=1");
 }
 
-/** Remove a child added with the flow (sample kids can't be removed). */
-export async function removeAddedChild(childId: string): Promise<void> {
-  const store = await cookies();
-  for (const c of store.getAll()) {
-    if (!c.name.startsWith(ADDED_CHILD_COOKIE_PREFIX)) continue;
-    try {
-      if ((JSON.parse(c.value) as { id?: string }).id === childId) store.delete(c.name);
-    } catch {
-      store.delete(c.name);
-    }
-  }
+/** Remove a child from the family (admins only, enforced by row-level security). */
+export async function removeChild(childId: string): Promise<void> {
+  const [user, store] = await Promise.all([getSignedInUser(), cookies()]);
+  if (!user) redirect("/sign-in");
+  await deleteChild(user.id, childId);
   if (store.get(CURRENT_CHILD_COOKIE)?.value === childId) store.delete(CURRENT_CHILD_COOKIE);
   redirect("/home");
 }

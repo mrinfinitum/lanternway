@@ -9,7 +9,10 @@
  */
 
 import { cookies } from "next/headers";
-import { ADDED_CHILD_COOKIE_PREFIX, parseAddedChild } from "@/lib/added-children";
+import { redirect } from "next/navigation";
+import { cache } from "react";
+import { getSignedInUser } from "@/lib/auth/server";
+import { listChildren } from "@/lib/families";
 import { isInRange } from "@/lib/dates";
 import type {
   Accommodation,
@@ -55,33 +58,41 @@ export async function getToday(): Promise<IsoDate> {
 
 /** Cookie holding the id of the child the parent last picked. */
 export const CURRENT_CHILD_COOKIE = "lw-child";
+/** Cookie set while a parent is looking around the sample family. */
+export const SAMPLE_FAMILY_COOKIE = "lw-sample";
+
+/** True while the parent is exploring the sample family (Maya and Theo). */
+export const isSampleFamily = cache(async (): Promise<boolean> => (await cookies()).get(SAMPLE_FAMILY_COOKIE)?.value === "1");
 
 /**
- * The family's kids, oldest first: the sample kids plus any added with
- * "Add a child" (kept in cookies for now). Stage 2: the signed-in parent's
- * family only (RLS). Reads cookies, so callers render inside <Suspense>.
+ * The kids the parent is looking at, oldest first: their own family's
+ * children from Neon (row-level security), or the sample family while
+ * exploring it. Reads cookies, so callers render inside <Suspense>.
+ * Cached for the request, since the header and the page both ask.
  */
-export async function getChildren(): Promise<Child[]> {
-  const [store, today] = await Promise.all([cookies(), getToday()]);
-  const added = store
-    .getAll()
-    .filter((c) => c.name.startsWith(ADDED_CHILD_COOKIE_PREFIX))
-    .map((c) => parseAddedChild(c.value, today))
-    .filter((c): c is Child => c !== null);
-  return [...mock.children, ...added].sort((a, b) => a.birthDate.localeCompare(b.birthDate));
-}
+export const getChildren = cache(async (): Promise<Child[]> => {
+  if (await isSampleFamily()) return mock.children;
+  const user = await getSignedInUser();
+  if (!user) return [];
+  return listChildren(user.id);
+});
 
 /**
- * The child the parent is currently viewing: the one picked in the header
- * switcher (cookie), or the first child. The cookie is only a preference;
- * it can never select a child outside the family's own list.
- *
- * Reads a cookie, so callers must render inside a <Suspense> boundary.
+ * The child the parent is viewing: the one picked in the switcher (cookie), or
+ * the first child. The cookie can never select a child outside the list.
+ * Null when the family has no children yet.
  */
-export async function getCurrentChild(): Promise<Child> {
+export async function getCurrentChildOrNull(): Promise<Child | null> {
   const [kids, store] = await Promise.all([getChildren(), cookies()]);
   const picked = store.get(CURRENT_CHILD_COOKIE)?.value;
-  return kids.find((c) => c.id === picked) ?? kids[0];
+  return kids.find((c) => c.id === picked) ?? kids[0] ?? null;
+}
+
+/** Like getCurrentChildOrNull, but sends a family with no kids yet to the start page. */
+export async function getCurrentChild(): Promise<Child> {
+  const child = await getCurrentChildOrNull();
+  if (!child) redirect("/start");
+  return child;
 }
 
 export async function getChild(childId: string): Promise<Child | null> {
@@ -201,7 +212,8 @@ export async function getCheckInFormContext(token: string): Promise<CheckInFormC
   if (link.expiresAt < now) return null;
 
   const respondent = mock.respondents.find((r) => r.id === link.respondentId);
-  const child = await getChild(link.childId);
+  // Check-in links are still sample data, so look up the sample child (public page, no account).
+  const child = mock.children.find((c) => c.id === link.childId);
   if (!respondent || !child) return null;
 
   return {
