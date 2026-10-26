@@ -60,7 +60,7 @@ export function IntroCards() {
         )}
         {last ? (
           <Button asChild size="lg" className="h-12 flex-1 rounded-full text-base">
-            <Link href="/home">Get started</Link>
+            <Link href="/sign-up">Get started</Link>
           </Button>
         ) : (
           <Button size="lg" className="h-12 flex-1 rounded-full text-base" onClick={() => setStep(step + 1)}>
@@ -68,11 +68,19 @@ export function IntroCards() {
           </Button>
         )}
       </div>
-      {!last && (
-        <Link href="/home" className="mt-3 text-sm font-semibold text-muted-foreground underline-offset-4 hover:underline">
-          Skip
+      <p className="mt-3 text-sm font-semibold text-muted-foreground">
+        {!last && (
+          <>
+            <Link href="/sign-up" className="underline-offset-4 hover:underline">
+              Skip
+            </Link>
+            {" · "}
+          </>
+        )}
+        <Link href="/sign-in" className="underline-offset-4 hover:underline">
+          I already have an account
         </Link>
-      )}
+      </p>
     </div>
   );
 }

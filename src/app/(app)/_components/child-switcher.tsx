@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useTransition } from "react";
-import { ChevronDown, IdCard, Plus } from "lucide-react";
+import { ChevronDown, IdCard, LogOut, Plus } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -15,12 +15,21 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 import { ChildAvatar } from "./child-avatar";
+import { signOut } from "../../(auth)/actions";
 import { selectChild } from "./child-actions";
 
 /** Just what the switcher needs. The full child record never goes to the browser here. */
 export type KidSummary = { id: string; firstName: string; age: number; photoUrl?: string };
 
-export function ChildSwitcher({ kids, currentId }: { kids: KidSummary[]; currentId: string }) {
+export function ChildSwitcher({
+  kids,
+  currentId,
+  user,
+}: {
+  kids: KidSummary[];
+  currentId: string;
+  user: { name: string; email: string } | null;
+}) {
   const [pending, startTransition] = useTransition();
   const current = kids.find((k) => k.id === currentId) ?? kids[0];
 
@@ -69,6 +78,19 @@ export function ChildSwitcher({ kids, currentId }: { kids: KidSummary[]; current
             <Plus className="size-4" aria-hidden /> Add a child
           </Link>
         </DropdownMenuItem>
+        {user && (
+          <>
+            <DropdownMenuSeparator />
+            <DropdownMenuLabel className="normal-case tracking-normal">
+              <span className="block text-xs font-semibold">Signed in as</span>
+              <span className="block truncate text-sm font-bold text-teal">{user.name || user.email}</span>
+              {user.name && <span className="block truncate text-xs font-normal">{user.email}</span>}
+            </DropdownMenuLabel>
+            <DropdownMenuItem onSelect={() => startTransition(() => signOut())}>
+              <LogOut className="size-4" aria-hidden /> Sign out
+            </DropdownMenuItem>
+          </>
+        )}
       </DropdownMenuContent>
     </DropdownMenu>
   );

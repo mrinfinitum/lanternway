@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ChevronRight, HeartHandshake, Pill, School, Star } from "lucide-react";
 import type { Metadata } from "next";
 import { LumiTip } from "@/components/lumi-tip";
+import { getSignedInUser } from "@/lib/auth/server";
 import { SectionHeading } from "@/components/page-header";
 import { Stat } from "@/components/stat";
 import { Card, CardContent } from "@/components/ui/card";
@@ -35,7 +36,7 @@ function nextWeekday(today: IsoDate, dow: number): IsoDate {
 const weekdayByName: Record<string, number> = { Mondays: 1, Tuesdays: 2, Wednesdays: 3, Thursdays: 4, Fridays: 5 };
 
 export default async function HomePage() {
-  const [child, today] = await Promise.all([getCurrentChild(), getToday()]);
+  const [child, today, user] = await Promise.all([getCurrentChild(), getToday(), getSignedInUser()]);
   const weekFrom = addDays(today, -6);
   const [weekLogs, todayLogs, checkIns, plan, medications, providers] = await Promise.all([
     getLogs(child.id, { from: weekFrom, to: today }),
@@ -88,7 +89,7 @@ export default async function HomePage() {
     <div className="space-y-8">
       <div>
         <p className="text-sm font-semibold text-muted-foreground">{formatLongWeekday(today)}</p>
-        <h1 className="text-2xl font-extrabold md:text-3xl">Hi Dana</h1>
+        <h1 className="text-2xl font-extrabold md:text-3xl">Hi {user?.name.split(" ")[0] || "there"}</h1>
       </div>
 
       {/* Quick log */}

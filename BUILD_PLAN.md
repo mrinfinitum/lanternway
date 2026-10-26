@@ -15,7 +15,7 @@ Sample family (fictional): **Maya**, age 10, autistic + ADHD. Diagnosed autism a
 ### 2. Mock data
 - [x] Define TypeScript types: Child, LogEntry, Medication, MedicationChange, Provider, TherapyGoal, CheckIn, IepPlan, IepGoal, Accommodation, SchoolMessage
 - [x] Create `src/mock/` with ~2 years of realistic, fictional data for Maya
-- [x] Simple data-access functions (`getChild`, `getLogs(range)`, etc.) so swapping to Supabase later is easy
+- [x] Simple data-access functions (`getChild`, `getLogs(range)`, etc.) so swapping to the database later is easy
 
 ### 3. App shell
 - [x] Mobile-first layout with bottom tab bar: Home, Log, Timeline, School, More
@@ -55,9 +55,12 @@ Sample family (fictional): **Maya**, age 10, autistic + ADHD. Diagnosed autism a
 - [x] Deploy to Vercel; add a "Prototype — sample data" banner (dev.lanternway.co, from the `dev` branch)
 
 ## Stage 2: Working MVP (real accounts)
-- [x] Neon Postgres project `lanternway` (NSoul Co org, aws-us-east-1) with `medication_catalog` (type-ahead for medication names) and a read-only `lanternway_app` role. `pnpm db:setup` runs migrations + seed. Decide: Neon + separate auth/storage, or Supabase as planned
-- [ ] Supabase project: auth (email magic link), schema, RLS on every table
-- [ ] Replace mock data layer with Supabase queries
+- [x] Neon Postgres project `lanternway` (NSoul Co org, aws-us-east-1) with `medication_catalog` (type-ahead for medication names) and a read-only `lanternway_app` role. `pnpm db:setup` runs migrations + seed.
+- [x] Neon Auth: sign-in required for the app; email + password (sign up, sign in, sign out); dev.lanternway.co trusted; Google turned off
+- [ ] Family tables (families, members, children, …) with RLS tied to `neon_auth` users; new accounts start with their own empty family instead of the sample one
+- [ ] Replace mock data layer with Neon queries
+- [ ] Custom email sender (verification codes, password reset) before real users
+- [ ] File storage choice (documents, photos)
 - [ ] Real check-in links (tokens, expiry, revoke) + email delivery (Resend)
 - [ ] PDF export for reports and About Me
 - [ ] Family invites with roles (view / log / admin)
@@ -73,5 +76,5 @@ Sample family (fictional): **Maya**, age 10, autistic + ADHD. Diagnosed autism a
 - [ ] Security & privacy review before charging
 
 ## Stage 4: Mobile apps
-- [ ] Expo app sharing Supabase backend
+- [ ] Expo app sharing the Neon backend
 - [ ] Widgets, quick-log from lock screen, push notifications
