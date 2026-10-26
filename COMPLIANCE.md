@@ -10,7 +10,7 @@ Last updated: Oct 26, 2026.
 | Terms of Use | 🟡 Draft at `/terms` | Warranty disclaimer, liability, governing law to be written by counsel |
 | Consumer Health Data Privacy Policy (WA MHMDA, NV, CT) | 🟡 Draft at `/health-data-privacy` | Needs counsel review |
 | Opt-in consent at sign-up | ✅ Built | Four required boxes (adult guardian, terms + privacy, health data collection, test data), recorded in `consents` with policy versions. Wording needs counsel approval |
-| Separate consent before sharing | ✅ Built for About Me | Link appears only after consent; recorded with the sections shared. Teacher check-in invites need the same when they're built |
+| Separate consent before sharing | ✅ Built | About Me: link appears only after consent, recorded with the sections shared. Teacher check-ins: parent ticks a consent box before each link is created (`share_checkin`, recorded with child and expiry) |
 | Adult parent / guardian confirmation | ✅ Built | Checkbox at sign-up |
 | Data export | ✅ Built | Account & privacy → Download my data (JSON) |
 | Delete my account | ✅ Built | Password + "DELETE"; one transaction deletes family data (or just membership if others share the family), consents, and the sign-in account (sessions cascade); signs out. Neon's managed auth has no self-service delete endpoint, so the sign-in account is removed by `delete_my_auth_account()` (migration 004), which can only delete the caller. Revisit if Neon adds the endpoint |

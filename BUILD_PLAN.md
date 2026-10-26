@@ -63,7 +63,8 @@ Sample family (fictional): **Maya**, age 10, autistic + ADHD. Diagnosed autism a
 - [x] Data layer reads the family's own kids from Neon; sample family stays on mock data
 - [ ] Custom email sender (verification codes, password reset) before real users
 - [ ] File storage choice (documents, photos)
-- [ ] Real check-in links (tokens, expiry, revoke) + email delivery (Resend)
+- [x] Real check-in links: random 32-byte tokens (only a hash stored), one child + one respondent, 30/90/180-day expiry, revoke, consent before creating; public form saves through two narrow DB functions
+- [ ] Lanternway-sent check-in emails/reminders to teachers (links are shared from the parent's own email/messages for now)
 - [ ] PDF export for reports and About Me
 - [ ] Family invites with roles (view / log / admin)
 - [ ] Teacher accounts: `school_contacts.user_id`, `teacher_access`, `invites`; teacher reads only via narrow Postgres functions (`APP_MAP.md` §6)

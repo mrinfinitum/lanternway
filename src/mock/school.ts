@@ -32,11 +32,12 @@ export const respondents: CheckInRespondent[] = [
   { id: "resp-abernathy", childId: CHILD_ID, name: "Ms. Abernathy", role: "special-ed-teacher", email: "j.abernathy@maplegrove.example" },
 ];
 
-/** Token for the demo check-in page (`/c/[token]`). Real tokens will be random. */
+/** Token for the demo check-in page (`/c/[token]`). Saved links use random 32-byte tokens. */
 export const DEMO_CHECKIN_TOKEN = "q7Rm2xV9pL4tT8wZcK3n";
 
 export const checkInLinks: CheckInLink[] = [
   {
+    id: "link-rivera",
     token: "aB4kP9sW2mQ7xR1vYt6e",
     childId: CHILD_ID,
     respondentId: "resp-rivera",
@@ -44,6 +45,7 @@ export const checkInLinks: CheckInLink[] = [
     expiresAt: "2025-06-13T23:59:00Z", // expired at end of 3rd grade
   },
   {
+    id: "link-okafor",
     token: "Hn3cZ8uL5dF0gJ6wEo2s",
     childId: CHILD_ID,
     respondentId: "resp-okafor",
@@ -52,6 +54,7 @@ export const checkInLinks: CheckInLink[] = [
     revokedAt: "2026-06-15T18:30:00Z", // revoked after 4th grade ended
   },
   {
+    id: "link-lindqvist",
     token: DEMO_CHECKIN_TOKEN,
     childId: CHILD_ID,
     respondentId: "resp-lindqvist",
@@ -59,6 +62,7 @@ export const checkInLinks: CheckInLink[] = [
     expiresAt: "2027-06-11T23:59:00Z",
   },
   {
+    id: "link-abernathy",
     token: "Ws8eT1yN6bV3kM9qXa5r",
     childId: CHILD_ID,
     respondentId: "resp-abernathy",

@@ -9,13 +9,15 @@
  */
 
 import { cookies } from "next/headers";
+import { connection } from "next/server";
 import { redirect } from "next/navigation";
 import { cache } from "react";
 import { getSignedInUser } from "@/lib/auth/server";
 import { listChildren } from "@/lib/families";
 import { isSavedChildId } from "@/lib/child-profile";
 import { loadChildRecords } from "@/lib/records";
-import { isInRange } from "@/lib/dates";
+import { isSavedLinkToken, loadChildCheckIns, savedLinkFormContext } from "@/lib/checkins";
+import { TIME_ZONE_COOKIE, isInRange, todayIn } from "@/lib/dates";
 import type {
   Accommodation,
   CheckIn,
@@ -49,10 +51,16 @@ function inRange<T extends { date: IsoDate }>(items: T[], range?: DateRange): T[
 // Prototype clock
 // ---------------------------------------------------------------------------
 
-/** "Today" for the app. Pinned while on mock data; becomes the real date later. */
-export async function getToday(): Promise<IsoDate> {
-  return mock.PROTOTYPE_TODAY;
-}
+/**
+ * "Today" for the app: the real date in the family's time zone, or the pinned
+ * prototype date while exploring the sample family (its data is built around it).
+ */
+export const getToday = cache(async (): Promise<IsoDate> => {
+  if (await isSampleFamily()) return mock.PROTOTYPE_TODAY;
+  const tz = (await cookies()).get(TIME_ZONE_COOKIE)?.value ?? "";
+  await connection(); // reading the clock: always at request time
+  return todayIn(tz.replace(/%2F/gi, "/"));
+});
 
 // ---------------------------------------------------------------------------
 // Child
@@ -218,19 +226,21 @@ export async function getCheckIns(
   range?: DateRange,
   respondentId?: string,
 ): Promise<CheckIn[]> {
+  const all = isSavedChildId(childId) ? (await loadChildCheckIns(childId)).checkIns : mock.checkIns;
   return inRange(
-    mock.checkIns.filter(
-      (c) => c.childId === childId && (!respondentId || c.respondentId === respondentId),
-    ),
+    all.filter((c) => c.childId === childId && (!respondentId || c.respondentId === respondentId)),
     range,
   );
 }
 
 export async function getCheckInRespondents(childId: string): Promise<CheckInRespondent[]> {
+  if (isSavedChildId(childId)) return (await loadChildCheckIns(childId)).respondents;
   return mock.respondents.filter((r) => r.childId === childId);
 }
 
+/** Links for a child. Saved links never include their token (only a hash is stored). */
 export async function getCheckInLinks(childId: string): Promise<CheckInLink[]> {
+  if (isSavedChildId(childId)) return (await loadChildCheckIns(childId)).links;
   return mock.checkInLinks.filter((l) => l.childId === childId);
 }
 
@@ -239,23 +249,16 @@ export async function getCheckInLinks(childId: string): Promise<CheckInLink[]> {
  * needs, or null if the link is unknown, revoked, or expired.
  */
 export async function getCheckInFormContext(token: string): Promise<CheckInFormContext | null> {
+  if (isSavedLinkToken(token)) return savedLinkFormContext(token);
+
+  // Sample-family links (for previewing the form).
   const link = mock.checkInLinks.find((l) => l.token === token);
   if (!link || link.revokedAt) return null;
-
-  const now = `${await getToday()}T12:00:00Z`;
-  if (link.expiresAt < now) return null;
-
+  if (link.expiresAt < `${mock.PROTOTYPE_TODAY}T12:00:00Z`) return null;
   const respondent = mock.respondents.find((r) => r.id === link.respondentId);
-  // Check-in links are still sample data, so look up the sample child (public page, no account).
   const child = mock.children.find((c) => c.id === link.childId);
   if (!respondent || !child) return null;
-
-  return {
-    token: link.token,
-    childFirstName: child.firstName,
-    respondentName: respondent.name,
-    expiresAt: link.expiresAt,
-  };
+  return { childFirstName: child.firstName, respondentName: respondent.name, expiresAt: link.expiresAt };
 }
 
 // ---------------------------------------------------------------------------

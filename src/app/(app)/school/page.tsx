@@ -12,6 +12,7 @@ import {
   getSchoolMessages,
   getToday,
 } from "@/lib/data";
+import { isSavedChildId } from "@/lib/child-profile";
 import { addDays } from "@/lib/dates";
 import { formatAverage, formatShortDate, plural } from "@/lib/format";
 import { summarizeCheckIns } from "@/lib/insights";
@@ -54,6 +55,10 @@ export default async function SchoolPage() {
           Each link is private to one person and only opens a short form. They never see {child.firstName}&apos;s record.
         </p>
         <CheckInLinks
+          childId={child.id}
+          childName={child.firstName}
+          saved={isSavedChildId(child.id)}
+          respondents={respondents}
           today={today}
           links={links.map((l) => {
             const r = respondents.find((x) => x.id === l.respondentId);
@@ -64,6 +69,9 @@ export default async function SchoolPage() {
 
       <section aria-labelledby="recent-checkins">
         <SectionHeading id="recent-checkins">Recent check-ins</SectionHeading>
+        {recentCheckIns.length === 0 && (
+          <p className="text-sm text-muted-foreground">No check-ins in the last 4 weeks yet.</p>
+        )}
         <ul className="space-y-2">
           {[...recentCheckIns].reverse().map((c) => (
             <li key={c.id} className="rounded-2xl border p-3 text-sm">

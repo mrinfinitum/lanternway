@@ -7,7 +7,7 @@
 import { asUser } from "@/lib/db";
 import { POLICY_VERSIONS } from "@/lib/policies";
 
-export type ConsentKind = "terms" | "privacy" | "health_data_collection" | "adult_guardian" | "test_data" | "share_profile";
+export type ConsentKind = "terms" | "privacy" | "health_data_collection" | "adult_guardian" | "test_data" | "share_profile" | "share_checkin";
 
 const versionFor = (kind: ConsentKind): string =>
   kind === "terms" ? POLICY_VERSIONS.terms : kind === "privacy" ? POLICY_VERSIONS.privacy : POLICY_VERSIONS.healthData;

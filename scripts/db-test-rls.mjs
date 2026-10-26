@@ -1,6 +1,7 @@
 // Proves row-level security keeps families apart, using the website's own role.
 //   pnpm db:test-rls
 // Creates two throwaway families, checks every cross-family access is refused, then cleans up.
+import { createHash, randomBytes } from "node:crypto";
 import { Pool } from "@neondatabase/serverless";
 
 const pool = new Pool({ connectionString: process.env.DATABASE_URL });
@@ -104,6 +105,57 @@ try {
   check("delete_my_auth_account refuses with no signed-in user", Boolean(anonDel?.error));
   const peek = await as(A, async (c) => c.query('select count(*) from neon_auth."user"'));
   check("website role cannot read the auth tables directly", Boolean(peek?.error));
+
+  // Check-in links (rule 4): family-only management; the public side only through the two functions.
+  const token = randomBytes(32).toString("base64url");
+  const hash = createHash("sha256").update(token).digest("hex");
+  const link = await as(A, async (c) => {
+    const r = (await c.query("insert into checkin_respondents (family_id, child_id, name, role) values ($1, $2, 'Ms. Test', 'aide') returning id", [a.f, a.ch])).rows[0].id;
+    const l = (await c.query("insert into checkin_links (family_id, child_id, respondent_id, token_hash, expires_at) values ($1, $2, $3, $4, now() + interval '30 days') returning id", [a.f, a.ch, r, hash])).rows[0].id;
+    return { r, l };
+  });
+  check("A can create a check-in link for A's child", Boolean(link?.l));
+  const bResp = await as(B, async (c) => (await c.query("select count(*)::int n from checkin_respondents")).rows[0].n);
+  check("B cannot see A's check-in respondents", bResp === 0);
+  const bLinks = await as(B, async (c) => (await c.query("select count(*)::int n from checkin_links")).rows[0].n);
+  check("B cannot see A's check-in links", bLinks === 0);
+  const respIntoB = await as(A, async (c) => c.query("insert into checkin_respondents (family_id, child_id, name, role) values ($1, $2, 'X', 'aide')", [b.f, b.ch]));
+  check("A cannot add a respondent to B's family", Boolean(respIntoB?.error));
+  const respMismatch = await as(A, async (c) => c.query("insert into checkin_respondents (family_id, child_id, name, role) values ($1, $2, 'X', 'aide')", [a.f, b.ch]));
+  check("a respondent can't pair A's family with B's child", Boolean(respMismatch?.error));
+  const bRevoke = await as(B, async (c) => (await c.query("update checkin_links set revoked_at = now() where id = $1", [link.l])).rowCount);
+  check("B cannot revoke A's link", bRevoke === 0);
+  const anonLinks = await as(null, async (c) => (await c.query("select count(*)::int n from checkin_links")).rows[0].n);
+  check("no user set: cannot read check-in links", anonLinks === 0);
+
+  const ctx = await as(null, async (c) => (await c.query("select * from checkin_form_context($1)", [token])).rows);
+  check("public form context: first name and respondent only", ctx.length === 1 && ctx[0].child_first_name === `Kid of ${A}` && Object.keys(ctx[0]).sort().join() === "child_first_name,expires_at,respondent_name");
+  const ctxBad = await as(null, async (c) => (await c.query("select * from checkin_form_context($1)", ["x".repeat(43)])).rows.length);
+  check("public form context: unknown token gives nothing", ctxBad === 0);
+  const ctxHash = await as(null, async (c) => (await c.query("select * from checkin_form_context($1)", [hash])).rows.length);
+  check("public form context: the stored hash doesn't work as a link", ctxHash === 0);
+
+  const submit = (t, focus = 4) => as(null, async (c) => (await c.query("select submit_checkin($1, current_date, $2, 3, 4, 5, 'Good day') as ok", [t, focus])).rows[0].ok);
+  check("public submit with a valid link saves", (await submit(token)) === true);
+  check("public submit again the same day updates (no duplicate)", (await submit(token, 2)) === true);
+  const aCheckIns = await as(A, async (c) => (await c.query("select ratings from checkins")).rows);
+  check("A sees the one check-in, with the updated rating", aCheckIns.length === 1 && aCheckIns[0].ratings.focus === 2);
+  const bCheckIns = await as(B, async (c) => (await c.query("select count(*)::int n from checkins")).rows[0].n);
+  check("B cannot see A's check-ins", bCheckIns === 0);
+  check("public submit rejects an out-of-range rating", (await submit(token, 9)) === false);
+  const forgeCheckIn = await as(A, async (c) => c.query("insert into checkins (family_id, child_id, respondent_id, link_id, date, ratings) values ($1, $2, $3, $4, current_date, '{}')", [a.f, a.ch, link.r, link.l]));
+  check("check-ins can't be written directly, only through a link", Boolean(forgeCheckIn?.error));
+
+  await as(A, async (c) => c.query("update checkin_links set revoked_at = now() where id = $1", [link.l]));
+  const ctxRevoked = await as(null, async (c) => (await c.query("select * from checkin_form_context($1)", [token])).rows.length);
+  check("revoked link: form context gives nothing", ctxRevoked === 0);
+  check("revoked link: submit is refused", (await submit(token)) === false);
+
+  const oldToken = randomBytes(32).toString("base64url");
+  await as(A, async (c) => c.query("insert into checkin_links (family_id, child_id, respondent_id, token_hash, expires_at) values ($1, $2, $3, $4, now() - interval '1 minute')", [a.f, a.ch, link.r, createHash("sha256").update(oldToken).digest("hex")]));
+  const ctxExpired = await as(null, async (c) => (await c.query("select * from checkin_form_context($1)", [oldToken])).rows.length);
+  check("expired link: form context gives nothing", ctxExpired === 0);
+  check("expired link: submit is refused", (await submit(oldToken)) === false);
 
   const ddl = await as(A, async (c) => c.query("create table sneaky (id int)"));
   check("website role still cannot create tables", Boolean(ddl?.error));

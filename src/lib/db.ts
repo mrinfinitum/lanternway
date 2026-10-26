@@ -26,3 +26,19 @@ export async function asUser<T>(userId: string, fn: (db: PoolClient) => Promise<
     await pool.end();
   }
 }
+
+/**
+ * Run queries with no signed-in user, for the public check-in page. Row-level
+ * security then allows nothing on family tables; only the narrow SECURITY DEFINER
+ * functions (checkin_form_context, submit_checkin) are usable. Server-only.
+ */
+export async function asNobody<T>(fn: (db: PoolClient) => Promise<T>): Promise<T> {
+  const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+  const db = await pool.connect();
+  try {
+    return await fn(db);
+  } finally {
+    db.release();
+    await pool.end();
+  }
+}

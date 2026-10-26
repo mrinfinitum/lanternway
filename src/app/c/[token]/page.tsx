@@ -1,9 +1,9 @@
 import Image from "next/image";
 import type { Metadata } from "next";
+import { connection } from "next/server";
 import { Suspense } from "react";
 import { brandImages } from "@/lib/brand";
-import { getCheckInFormContext, getToday } from "@/lib/data";
-import { formatLongWeekday } from "@/lib/format";
+import { getCheckInFormContext } from "@/lib/data";
 import { CheckInForm } from "./check-in-form";
 
 // Public page for teachers and therapists. No app chrome, no child record —
@@ -31,7 +31,8 @@ export default function CheckInPage({ params }: PageProps<"/c/[token]">) {
 
 async function CheckIn({ params }: { params: PageProps<"/c/[token]">["params"] }) {
   const { token } = await params;
-  const [context, today] = await Promise.all([getCheckInFormContext(token), getToday()]);
+  await connection(); // private, per-link page: never prerendered
+  const context = await getCheckInFormContext(token);
 
   if (!context) {
     return (
@@ -45,10 +46,6 @@ async function CheckIn({ params }: { params: PageProps<"/c/[token]">["params"] }
   }
 
   return (
-    <CheckInForm
-      childFirstName={context.childFirstName}
-      respondentName={context.respondentName}
-      dateLabel={formatLongWeekday(today)}
-    />
+    <CheckInForm token={token} childFirstName={context.childFirstName} respondentName={context.respondentName} />
   );
 }

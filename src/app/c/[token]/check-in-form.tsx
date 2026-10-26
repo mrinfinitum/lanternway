@@ -1,28 +1,42 @@
 "use client";
 
 import Image from "next/image";
-import { useState } from "react";
+import { useState, useSyncExternalStore, useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { brandImages } from "@/lib/brand";
 import { checkInQuestions } from "@/lib/labels";
-import type { CheckInRatings, Rating } from "@/lib/types";
+import { formatLongWeekday } from "@/lib/format";
+import type { CheckInRatings, IsoDate, Rating } from "@/lib/types";
+import { sendCheckIn } from "./actions";
 
 type Answers = Partial<CheckInRatings>;
 
+/** The respondent's own date, from their device. */
+const localToday = (): IsoDate => {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+};
+
+const noSubscribe = () => () => {};
+
 export function CheckInForm({
+  token,
   childFirstName,
   respondentName,
-  dateLabel,
 }: {
+  token: string;
   childFirstName: string;
   respondentName: string;
-  dateLabel: string;
 }) {
   const [answers, setAnswers] = useState<Answers>({});
   const [note, setNote] = useState("");
   const [sent, setSent] = useState(false);
+  const [failed, setFailed] = useState(false);
+  const [sending, startSending] = useTransition();
+  // The device's date; null while rendering on the server.
+  const today = useSyncExternalStore(noSubscribe, localToday, () => null);
   const complete = checkInQuestions.every((q) => answers[q.key]);
 
   if (sent) {
@@ -42,13 +56,18 @@ export function CheckInForm({
     <form
       onSubmit={(e) => {
         e.preventDefault();
-        // Stage 2 will save this to the child's timeline.
-        if (complete) setSent(true);
+        if (!complete || sending) return;
+        setFailed(false);
+        startSending(async () => {
+          const result = await sendCheckIn(token, today ?? localToday(), answers, note).catch(() => ({ ok: false }));
+          if (result.ok) setSent(true);
+          else setFailed(true);
+        });
       }}
       className="space-y-6"
     >
       <div>
-        <p className="text-sm font-semibold text-muted-foreground">{dateLabel}</p>
+        <p className="min-h-5 text-sm font-semibold text-muted-foreground">{today ? formatLongWeekday(today) : ""}</p>
         <h1 className="text-2xl font-extrabold">How was {childFirstName}&apos;s day?</h1>
         <p className="mt-1 text-muted-foreground">Hi {respondentName} — four quick taps and you&apos;re done.</p>
       </div>
@@ -66,7 +85,7 @@ export function CheckInForm({
                 type="button"
                 aria-pressed={answers[q.key] === n}
                 aria-label={`${q.label}: ${n} of 5${n === 1 ? ` (${q.low})` : n === 5 ? ` (${q.high})` : ""}`}
-                onClick={() => setAnswers({ ...answers, [q.key]: n as Rating })}
+                onClick={() => setAnswers((a) => ({ ...a, [q.key]: n as Rating }))}
                 className="h-12 rounded-xl border-2 border-transparent bg-white text-lg font-extrabold transition-colors hover:border-amber aria-pressed:border-teal aria-pressed:bg-amber/50"
               >
                 {n}
@@ -94,8 +113,14 @@ export function CheckInForm({
         />
       </div>
 
-      <Button type="submit" size="lg" disabled={!complete} className="h-12 w-full rounded-full text-base">
-        Send check-in
+      {failed && (
+        <p role="alert" className="rounded-2xl bg-white p-3 text-sm ring-1 ring-coral">
+          That didn&apos;t send. The link may have just expired or been turned off. Please try again, or ask the family for a new link.
+        </p>
+      )}
+
+      <Button type="submit" size="lg" disabled={!complete || sending} className="h-12 w-full rounded-full text-base">
+        {sending ? "Sending…" : "Send check-in"}
       </Button>
     </form>
   );

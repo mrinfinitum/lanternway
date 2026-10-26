@@ -86,6 +86,10 @@ export function SchoolManager({ childId, childName, school, today, plans, goals,
           </p>
           <PlanForm childId={childId} today={today} />
         </EmptyState>
+        <section aria-labelledby="teacher-checkins" className="space-y-6">
+          <SectionHeading id="teacher-checkins">Teacher check-ins</SectionHeading>
+          {checkIns}
+        </section>
         <MessagesSection childId={childId} today={today} messages={allMessages} />
       </div>
     );

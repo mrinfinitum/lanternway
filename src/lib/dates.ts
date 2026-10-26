@@ -47,3 +47,17 @@ export function ageOn(birthDate: IsoDate, on: IsoDate): number {
   const [y, m, d] = on.split("-").map(Number);
   return y - by - (m < bm || (m === bm && d < bd) ? 1 : 0);
 }
+
+/** Cookie with the family's time zone (set by <TimeZoneCookie />). */
+export const TIME_ZONE_COOKIE = "lw-tz";
+const DEFAULT_TIME_ZONE = "America/New_York";
+
+/** Today's date in a time zone (falls back to US Eastern if it's missing or unknown). */
+export function todayIn(timeZone: string | undefined, now: Date = new Date()): IsoDate {
+  const format = (tz: string) => new Intl.DateTimeFormat("en-CA", { timeZone: tz, year: "numeric", month: "2-digit", day: "2-digit" }).format(now);
+  try {
+    return format(timeZone || DEFAULT_TIME_ZONE);
+  } catch {
+    return format(DEFAULT_TIME_ZONE);
+  }
+}

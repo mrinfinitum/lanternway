@@ -42,10 +42,15 @@ export default function PrivacyPage() {
           .
         </li>
         <li>
+          <strong>Teacher and therapist check-ins:</strong> the name, role, and (if you add it) email of each person you ask
+          for check-ins, and the ratings and notes they send through your link. The person using a link only sees your
+          child&apos;s first name and the form. We don&apos;t email them; you send the link yourself.
+        </li>
+        <li>
           <strong>Your choices and consents:</strong> what you agreed to, which version, and when.
         </li>
         <li>
-          <strong>Technical basics:</strong> cookies that keep you signed in and remember which child you&apos;re viewing.
+          <strong>Technical basics:</strong> cookies that keep you signed in, remember which child you&apos;re viewing, and remember your time zone so dates match your day.
           These are strictly necessary; we don&apos;t use advertising or analytics cookies.
         </li>
       </ul>

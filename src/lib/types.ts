@@ -273,14 +273,19 @@ export type CheckInRespondent = {
   email?: string;
 };
 
-/** A private link for one respondent about one child. */
+/**
+ * A private link for one respondent about one child. Saved links only keep a hash
+ * of the token, so `token` is only known for sample links (and right after creating one).
+ */
 export type CheckInLink = {
-  token: string;
+  id: string;
+  token?: string;
   childId: string;
   respondentId: string;
   createdAt: IsoDateTime;
   expiresAt: IsoDateTime;
   revokedAt?: IsoDateTime;
+  lastUsedAt?: IsoDateTime;
 };
 
 export type CheckInRatings = {
@@ -304,7 +309,6 @@ export type CheckIn = {
  * Deliberately tiny: no access to the child's record.
  */
 export type CheckInFormContext = {
-  token: string;
   childFirstName: string;
   respondentName: string;
   expiresAt: IsoDateTime;

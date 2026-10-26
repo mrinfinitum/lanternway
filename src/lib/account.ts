@@ -13,14 +13,21 @@ export async function exportAccountData(user: { id: string; name: string; email:
     const children = (await db.query("select id, family_id, profile, created_at, updated_at from children order by created_at")).rows;
     const records = (await db.query("select id, child_id, kind, parent_id, occurred_on, data, created_at, updated_at from records order by child_id, kind, occurred_on nulls last")).rows;
     const consents = (await db.query("select kind, policy_version, details, granted_at, withdrawn_at from consents order by granted_at")).rows;
+    const checkInRespondents = (await db.query("select id, child_id, name, role, email, created_at from checkin_respondents order by created_at")).rows;
+    // Links are listed without their token hash: it's useless outside Lanternway.
+    const checkInLinks = (await db.query("select id, child_id, respondent_id, created_at, expires_at, revoked_at, last_used_at from checkin_links order by created_at")).rows;
+    const checkIns = (await db.query("select id, child_id, respondent_id, date, ratings, note, created_at, updated_at from checkins order by child_id, date")).rows;
     return {
-      about: "Your Lanternway data export: everything we store for your account (family, kids, their logs, medications, care team, school records, and your consents), in JSON format.",
+      about: "Your Lanternway data export: everything we store for your account (family, kids, their logs, medications, care team, school records, teacher check-ins, and your consents), in JSON format.",
       exportedAt: new Date().toISOString(),
       account: { id: user.id, name: user.name, email: user.email },
       families,
       familyMembers: members,
       children,
       records,
+      checkInRespondents,
+      checkInLinks,
+      checkIns,
       consents,
     };
   });
