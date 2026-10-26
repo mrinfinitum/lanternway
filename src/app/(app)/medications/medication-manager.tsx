@@ -11,7 +11,7 @@ import { formatDate, formatRelativeDays } from "@/lib/format";
 import { providerTypeLabels } from "@/lib/labels";
 import { refillDueDate } from "@/lib/insights";
 import type { IsoDate, Medication, MedicationChange, Provider } from "@/lib/types";
-import { newId, useRecordActions, useRecords } from "../_components/records-store";
+import { newId, useEditedThisVisit, useRecordActions, useRecords } from "../_components/records-store";
 import { MedicationNameAndForm } from "./medication-name-field";
 
 const OTHER = "__other";
@@ -29,6 +29,7 @@ type Props = {
 export function MedicationManager({ childId, childName, today, medications, changes, providers }: Props) {
   const meds = useRecords("medications", medications).filter((m) => m.childId === childId);
   const allChanges = useRecords("medicationChanges", changes);
+  const changedThisVisit = useEditedThisVisit("medicationChanges");
   const team = useRecords("providers", providers).filter((p) => p.childId === childId);
   const [status, setStatus] = useState("");
 
@@ -37,7 +38,7 @@ export function MedicationManager({ childId, childName, today, medications, chan
   const current = meds.filter((m) => !m.stopDate);
   const past = meds.filter((m) => m.stopDate);
   const recordedThisVisit = allChanges
-    .filter((c) => c.id.includes("-local-") && meds.some((m) => m.id === c.medicationId))
+    .filter((c) => changedThisVisit.has(c.id) && meds.some((m) => m.id === c.medicationId))
     .reverse()
     .sort((a, b) => b.date.localeCompare(a.date));
 
@@ -142,7 +143,7 @@ export function MedicationManager({ childId, childName, today, medications, chan
             ))}
           </ul>
           <p className="mt-2 text-xs text-muted-foreground">
-            Prototype: in the working version these are saved and show up in the charts, timeline, and reports.
+            Saved to your account and shown in the charts, timeline, and reports. (Sample-family changes last for this visit.)
           </p>
         </section>
       )}

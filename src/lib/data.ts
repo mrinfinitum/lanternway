@@ -1,9 +1,9 @@
 /**
  * Data access for the app. Screens import from here, never from `@/mock`.
  *
- * Every function is async and filters by child/plan/provider id, so in
- * Stage 2 each one can become a Supabase query (with RLS doing the
- * family-level isolation) without changing any callers.
+ * Every function is async and filters by child/plan/provider id. For the family's
+ * own children the records come from Neon (row-level security does the family
+ * isolation); for the sample family they come from @/mock.
  *
  * Lists are returned oldest-first unless noted.
  */
@@ -13,6 +13,8 @@ import { redirect } from "next/navigation";
 import { cache } from "react";
 import { getSignedInUser } from "@/lib/auth/server";
 import { listChildren } from "@/lib/families";
+import { isSavedChildId } from "@/lib/child-profile";
+import { loadChildRecords } from "@/lib/records";
 import { isInRange } from "@/lib/dates";
 import type {
   Accommodation,
@@ -99,7 +101,27 @@ export async function getChild(childId: string): Promise<Child | null> {
   return (await getChildren()).find((c) => c.id === childId) ?? null;
 }
 
+// ---------------------------------------------------------------------------
+// Where records come from: the database for the family's own children, sample
+// data for the sample family. One query per request loads all of a child's records.
+// ---------------------------------------------------------------------------
+
+/** The saved child's records, or null for a sample child. */
+async function saved(childId: string) {
+  return isSavedChildId(childId) ? loadChildRecords(childId) : null;
+}
+
+/** Records of the child being viewed, when looking something up by provider or plan id. */
+async function savedForCurrentChild() {
+  const child = await getCurrentChildOrNull();
+  return child && isSavedChildId(child.id) ? loadChildRecords(child.id) : null;
+}
+
+const isId = (id: string) => /^[0-9a-f-]{36}$/i.test(id);
+
 export async function getMilestones(childId: string, range?: DateRange): Promise<Milestone[]> {
+  const db = await saved(childId);
+  if (db) return inRange(db.milestones as unknown as Milestone[], range);
   return inRange(mock.milestones.filter((m) => m.childId === childId), range);
 }
 
@@ -112,9 +134,9 @@ export async function getLogs(
   range?: DateRange,
   kinds?: LogKind[],
 ): Promise<LogEntry[]> {
-  const logs = mock.logs.filter(
-    (log) => log.childId === childId && (!kinds || kinds.includes(log.kind)),
-  );
+  const db = await saved(childId);
+  const source = db ? (db.logs as unknown as LogEntry[]) : mock.logs.filter((log) => log.childId === childId);
+  const logs = source.filter((log) => !kinds || kinds.includes(log.kind));
   return inRange(logs, range).sort(
     (a, b) => byDate(a, b) || (a.time ?? "").localeCompare(b.time ?? ""),
   );
@@ -125,6 +147,8 @@ export async function getLogs(
 // ---------------------------------------------------------------------------
 
 export async function getMedications(childId: string): Promise<Medication[]> {
+  const db = await saved(childId);
+  if (db) return db.medications as unknown as Medication[];
   return mock.medications.filter((m) => m.childId === childId);
 }
 
@@ -134,7 +158,9 @@ export async function getMedicationChanges(
   range?: DateRange,
 ): Promise<MedicationChange[]> {
   const ids = new Set((await getMedications(childId)).map((m) => m.id));
-  return inRange(mock.medicationChanges.filter((c) => ids.has(c.medicationId)), range);
+  const db = await saved(childId);
+  const source = db ? (db.medicationChanges as unknown as MedicationChange[]) : mock.medicationChanges;
+  return inRange(source.filter((c) => ids.has(c.medicationId)), range);
 }
 
 // ---------------------------------------------------------------------------
@@ -145,9 +171,9 @@ export async function getProviders(
   childId: string,
   { includePast = true }: { includePast?: boolean } = {},
 ): Promise<Provider[]> {
-  return mock.providers.filter(
-    (p) => p.childId === childId && (includePast || !p.endDate),
-  );
+  const db = await saved(childId);
+  const source = db ? (db.providers as unknown as Provider[]) : mock.providers.filter((p) => p.childId === childId);
+  return source.filter((p) => includePast || !p.endDate);
 }
 
 /** Every provider id across the family, for prebuilding provider pages. */
@@ -161,10 +187,14 @@ export async function getProviderById(providerId: string): Promise<Provider | nu
 }
 
 export async function getProvider(childId: string, providerId: string): Promise<Provider | null> {
-  return mock.providers.find((p) => p.childId === childId && p.id === providerId) ?? null;
+  return (await getProviders(childId)).find((p) => p.id === providerId) ?? null;
 }
 
 export async function getTherapyGoals(providerId: string): Promise<TherapyGoal[]> {
+  if (isId(providerId)) {
+    const db = await savedForCurrentChild();
+    return ((db?.therapyGoals ?? []) as unknown as TherapyGoal[]).filter((g) => g.providerId === providerId);
+  }
   return mock.therapyGoals.filter((g) => g.providerId === providerId);
 }
 
@@ -172,6 +202,10 @@ export async function getTherapySessions(
   providerId: string,
   range?: DateRange,
 ): Promise<TherapySession[]> {
+  if (isId(providerId)) {
+    const db = await savedForCurrentChild();
+    return inRange(((db?.therapySessions ?? []) as unknown as TherapySession[]).filter((s) => s.providerId === providerId), range);
+  }
   return inRange(mock.therapySessions.filter((s) => s.providerId === providerId), range);
 }
 
@@ -230,14 +264,27 @@ export async function getCheckInFormContext(token: string): Promise<CheckInFormC
 
 /** The child's current plan, if any. */
 export async function getIepPlan(childId: string): Promise<IepPlan | null> {
+  const db = await saved(childId);
+  if (db) {
+    const plans = (db.iepPlans as unknown as IepPlan[]).sort((a, b) => a.startDate.localeCompare(b.startDate));
+    return plans.at(-1) ?? null;
+  }
   return mock.iepPlans.find((p) => p.childId === childId) ?? null;
 }
 
 export async function getIepGoals(planId: string): Promise<IepGoal[]> {
+  if (isId(planId)) {
+    const db = await savedForCurrentChild();
+    return ((db?.iepGoals ?? []) as unknown as IepGoal[]).filter((g) => g.planId === planId);
+  }
   return mock.iepGoals.filter((g) => g.planId === planId);
 }
 
 export async function getAccommodations(planId: string): Promise<Accommodation[]> {
+  if (isId(planId)) {
+    const db = await savedForCurrentChild();
+    return ((db?.accommodations ?? []) as unknown as Accommodation[]).filter((a) => a.planId === planId);
+  }
   return mock.accommodations.filter((a) => a.planId === planId);
 }
 
@@ -245,5 +292,7 @@ export async function getSchoolMessages(
   childId: string,
   range?: DateRange,
 ): Promise<SchoolMessage[]> {
+  const db = await saved(childId);
+  if (db) return inRange(db.schoolMessages as unknown as SchoolMessage[], range);
   return inRange(mock.schoolMessages.filter((m) => m.childId === childId), range);
 }

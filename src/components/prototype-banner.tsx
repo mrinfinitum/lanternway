@@ -5,7 +5,7 @@ export function PrototypeBanner() {
   return (
     <p className="flex items-center justify-center gap-2 bg-teal px-4 py-1.5 text-center text-xs font-semibold text-paper print:hidden">
       <Info className="size-3.5 shrink-0" aria-hidden />
-      Prototype. Your kids and their About Me are saved to your account; logs, medications, therapy, and school changes still reset on reload.
+      Test version. Everything you add for your own kids is saved to your account. Teacher check-ins are still sample data.
     </p>
   );
 }

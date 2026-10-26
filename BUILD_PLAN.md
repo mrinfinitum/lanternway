@@ -58,9 +58,9 @@ Sample family (fictional): **Maya**, age 10, autistic + ADHD. Diagnosed autism a
 - [x] Neon Postgres project `lanternway` (NSoul Co org, aws-us-east-1) with `medication_catalog` (type-ahead for medication names) and a read-only `lanternway_app` role. `pnpm db:setup` runs migrations + seed.
 - [x] Neon Auth: sign-in required for the app; email + password (sign up, sign in, sign out); dev.lanternway.co trusted; Google turned off
 - [x] Family tables (families, family_members, children) with RLS tied to `neon_auth` users (`pnpm db:test-rls`: 10 checks); new accounts start on /start with their own empty family; Add a child, About Me edits, and Remove save to Neon; sample family available from the header menu
-- [ ] Logs, medications, therapy, and school records in Neon (same RLS pattern)
+- [x] Logs, medications, therapy, and school records in Neon (`records` table, RLS, server-side validation, end-to-end browser test)
 - [ ] Family invites with roles (view / log / admin) and teacher access
-- [ ] Replace mock data layer with Neon queries
+- [x] Data layer reads the family's own kids from Neon; sample family stays on mock data
 - [ ] Custom email sender (verification codes, password reset) before real users
 - [ ] File storage choice (documents, photos)
 - [ ] Real check-in links (tokens, expiry, revoke) + email delivery (Resend)

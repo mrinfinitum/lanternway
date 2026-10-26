@@ -43,7 +43,7 @@ export default async function AccountPage() {
 
       <section aria-labelledby="data" className={box}>
         <SectionHeading id="data">Your data</SectionHeading>
-        <p className="text-sm">Download everything Lanternway stores for your account: your family, your kids&apos; profiles, and your consent records.</p>
+        <p className="text-sm">Download everything Lanternway stores for your account: your family, your kids&apos; profiles, logs, medications, care team, school records, and your consent records.</p>
         <a href="/api/account/export" className="inline-flex h-9 items-center gap-2 rounded-full bg-primary px-4 text-sm font-semibold text-primary-foreground hover:bg-primary/80">
           <Download className="size-4" aria-hidden /> Download my data
         </a>

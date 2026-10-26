@@ -52,7 +52,7 @@ async function ProviderDetails({ params }: { params: PageProps<"/therapy/[provid
   const [provider, today] = await Promise.all([getProvider(child.id, providerId), getToday()]);
   if (!provider) {
     // Providers added during this visit only exist in the browser for now.
-    if (providerId.includes("-local-")) return <ProviderAddedThisVisit id={providerId} childName={child.firstName} today={today} />;
+    if (/^[0-9a-f-]{36}$/i.test(providerId)) return <ProviderAddedThisVisit id={providerId} childName={child.firstName} today={today} />;
     notFound();
   }
   const [goals, sessions] = await Promise.all([getTherapyGoals(provider.id), getTherapySessions(provider.id)]);

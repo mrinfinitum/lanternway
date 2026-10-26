@@ -11,14 +11,16 @@ export async function exportAccountData(user: { id: string; name: string; email:
     const families = (await db.query("select id, name, created_at from families order by created_at")).rows;
     const members = (await db.query("select family_id, user_id, role, created_at from family_members order by created_at")).rows;
     const children = (await db.query("select id, family_id, profile, created_at, updated_at from children order by created_at")).rows;
+    const records = (await db.query("select id, child_id, kind, parent_id, occurred_on, data, created_at, updated_at from records order by child_id, kind, occurred_on nulls last")).rows;
     const consents = (await db.query("select kind, policy_version, details, granted_at, withdrawn_at from consents order by granted_at")).rows;
     return {
-      about: "Your Lanternway data export. Everything we store for your account, in JSON format.",
+      about: "Your Lanternway data export: everything we store for your account (family, kids, their logs, medications, care team, school records, and your consents), in JSON format.",
       exportedAt: new Date().toISOString(),
       account: { id: user.id, name: user.name, email: user.email },
       families,
       familyMembers: members,
       children,
+      records,
       consents,
     };
   });

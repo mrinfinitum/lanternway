@@ -8,7 +8,9 @@ import { useLogStore } from "../_components/log-store";
 /** Chips for what's already been logged today (sample data + this visit). */
 export function TodayLogged({ childId, today, serverLogs }: { childId: string; today: IsoDate; serverLogs: LogEntry[] }) {
   const { added } = useLogStore();
-  const kinds = [...new Set([...serverLogs, ...added.filter((l) => l.childId === childId && l.date === today)].map((l) => l.kind))];
+  const serverIds = new Set(serverLogs.map((l) => l.id));
+  const fresh = added.filter((l) => l.childId === childId && l.date === today && !serverIds.has(l.id));
+  const kinds = [...new Set([...serverLogs, ...fresh].map((l) => l.kind))];
   if (kinds.length === 0) return null;
 
   return (

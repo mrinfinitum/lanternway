@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { PageHeader } from "@/components/page-header";
+import { getSignedInUser } from "@/lib/auth/server";
 import { getCurrentChild, getLogs, getToday } from "@/lib/data";
 import { LogForm } from "./log-form";
 
@@ -10,7 +11,7 @@ export const instant = false;
 export const metadata: Metadata = { title: "Log · Lanternway" };
 
 export default async function LogPage() {
-  const [child, today] = await Promise.all([getCurrentChild(), getToday()]);
+  const [child, today, user] = await Promise.all([getCurrentChild(), getToday(), getSignedInUser()]);
   const todayLogs = await getLogs(child.id, { from: today, to: today });
 
   return (
@@ -22,6 +23,7 @@ export default async function LogPage() {
           today={today}
           childId={child.id}
           childName={child.firstName}
+          loggedBy={user?.name.split(" ")[0] || "Parent"}
           triggers={child.triggers}
           calmingStrategies={child.calmingStrategies}
           todayLogs={todayLogs}

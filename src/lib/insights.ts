@@ -36,6 +36,8 @@ function countTop(values: string[], limit: number) {
 
 export type LogSummary = {
   days: number;
+  /** How many log entries this summary is based on (0 means nothing was recorded). */
+  entries: number;
   mood: number | null;
   sleepHours: number | null;
   nightWakings: number | null;
@@ -56,6 +58,7 @@ export function summarizeLogs(logs: LogEntry[], days: number): LogSummary {
   const meltdowns = of("meltdown") as MeltdownLog[];
   return {
     days,
+    entries: logs.length,
     mood: round1(average((of("mood") as MoodLog[]).map((l) => l.rating))),
     sleepHours: round1(average(sleep.map((l) => l.hours))),
     nightWakings: round1(average(sleep.map((l) => l.nightWakings))),
@@ -184,8 +187,14 @@ export function describeComparison(c: Comparison, eventLabel: string): string {
     change("appetite", c.after.logs.appetite, c.before.logs.appetite),
     change("mood", c.after.logs.mood, c.before.logs.mood),
   ].filter(Boolean);
-  const meltdowns = `meltdowns ${c.after.logs.meltdownsPerWeek.toFixed(1)}/week (was ${c.before.logs.meltdownsPerWeek.toFixed(1)})`;
-  return `Since the ${eventLabel} on ${formatShortDate(c.date)}, ${[...parts, meltdowns].join("; ")}.`;
+  // Only compare meltdowns when something was logged on both sides; no records isn't "zero meltdowns".
+  if (c.before.logs.entries > 0 && c.after.logs.entries > 0) {
+    parts.push(`meltdowns ${c.after.logs.meltdownsPerWeek.toFixed(1)}/week (was ${c.before.logs.meltdownsPerWeek.toFixed(1)})`);
+  }
+  if (parts.length === 0) {
+    return `Not enough was recorded before and after the ${eventLabel} on ${formatShortDate(c.date)} to compare yet.`;
+  }
+  return `Since the ${eventLabel} on ${formatShortDate(c.date)}, ${parts.join("; ")}.`;
 }
 
 /** Short label for a medication change, e.g. "dose change", "start of Guanfacine ER". */

@@ -2,9 +2,10 @@
 
 import { createContext, useCallback, useContext, useMemo, useState } from "react";
 import type { LogEntry } from "@/lib/types";
+import { persistRecord } from "./record-actions";
 
-// Stage 1: quick-log entries live in memory for this visit only.
-// Stage 2 will save them to Supabase.
+// Quick-log entries show up right away and, for the family's own children, are saved
+// to the database (sample-family entries last for the visit).
 
 type DistributiveOmit<T, K extends PropertyKey> = T extends unknown ? Omit<T, K> : never;
 export type NewLogEntry = DistributiveOmit<LogEntry, "id">;
@@ -20,8 +21,9 @@ export function LogProvider({ children }: { children: React.ReactNode }) {
   const [added, setAdded] = useState<LogEntry[]>([]);
 
   const addLog = useCallback((entry: NewLogEntry) => {
-    const saved = { ...entry, id: `local-${crypto.randomUUID()}` } as LogEntry;
+    const saved = { ...entry, id: crypto.randomUUID() } as LogEntry;
     setAdded((prev) => [...prev, saved]);
+    void persistRecord("logs", saved);
     return saved;
   }, []);
 

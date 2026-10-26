@@ -80,6 +80,23 @@ try {
   const delB = await as(A, async (c) => (await c.query("delete from families where id = $1", [b.f])).rowCount);
   check("A cannot delete B's family", delB === 0);
 
+  // Records (logs, medications, school…): same family isolation.
+  const recA = "11111111-1111-4111-8111-111111111111";
+  const recB = "22222222-2222-4222-8222-222222222222";
+  const insA = await as(A, async (c) => c.query("insert into records (id, family_id, child_id, kind, data) values ($1, $2, $3, 'log', '{}')", [recA, a.f, a.ch]));
+  check("A can save a record for A's child", !insA?.error);
+  await as(B, async (c) => c.query("insert into records (id, family_id, child_id, kind, data) values ($1, $2, $3, 'log', '{}')", [recB, b.f, b.ch]));
+  const aRecs = await as(A, async (c) => (await c.query("select id from records")).rows.map((r) => r.id));
+  check("A sees only A's records", aRecs.length === 1 && aRecs[0] === recA);
+  const intoB = await as(A, async (c) => c.query("insert into records (id, family_id, child_id, kind, data) values (gen_random_uuid(), $1, $2, 'log', '{}')", [b.f, b.ch]));
+  check("A cannot save a record into B's family", Boolean(intoB?.error));
+  const mismatch = await as(A, async (c) => c.query("insert into records (id, family_id, child_id, kind, data) values (gen_random_uuid(), $1, $2, 'log', '{}')", [a.f, b.ch]));
+  check("a record can't pair A's family with B's child", Boolean(mismatch?.error));
+  const updB = await as(A, async (c) => (await c.query("update records set data = '{\"x\":1}' where id = $1", [recB])).rowCount);
+  check("A cannot change B's record", updB === 0);
+  const delB2 = await as(A, async (c) => (await c.query("delete from records where id = $1", [recB])).rowCount);
+  check("A cannot delete B's record", delB2 === 0);
+
   // Self-deletion of the sign-in account: only ever the caller's own, never with no user.
   const selfDel = await as("00000000-0000-0000-0000-000000000000", async (c) => (await c.query("select delete_my_auth_account() as n")).rows[0].n);
   check("delete_my_auth_account removes nothing for an unknown caller", selfDel === 0);

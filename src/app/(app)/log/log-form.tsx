@@ -24,6 +24,8 @@ type Props = {
   today: IsoDate;
   childId: string;
   childName: string;
+  /** First name of the signed-in parent, shown on the entry (the server sets it too). */
+  loggedBy: string;
   triggers: string[];
   calmingStrategies: string[];
   todayLogs: LogEntry[];
@@ -46,7 +48,7 @@ function nowTime() {
   return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
 }
 
-export function LogForm({ today, childId, childName, triggers, calmingStrategies, todayLogs }: Props) {
+export function LogForm({ today, childId, childName, loggedBy, triggers, calmingStrategies, todayLogs }: Props) {
   const router = useRouter();
   const params = useSearchParams();
   const kindParam = params.get("kind");
@@ -60,11 +62,12 @@ export function LogForm({ today, childId, childName, triggers, calmingStrategies
   };
 
   const save = (entry: DistributiveFields) => {
-    addLog({ ...entry, childId, date: today, time: nowTime(), loggedBy: "Dana" } as NewLogEntry);
+    addLog({ ...entry, childId, date: today, time: nowTime(), loggedBy } as NewLogEntry);
     setSaved(entry.kind);
   };
 
-  const todayAll = [...todayLogs, ...added.filter((l) => l.childId === childId && l.date === today)];
+  const serverIds = new Set(todayLogs.map((l) => l.id));
+  const todayAll = [...todayLogs, ...added.filter((l) => l.childId === childId && l.date === today && !serverIds.has(l.id))];
 
   return (
     <div className="space-y-6">
