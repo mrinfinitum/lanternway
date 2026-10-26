@@ -57,6 +57,11 @@ export function AuthForm({ mode, action }: { mode: Mode; action: (prev: AuthForm
           required
           className="h-11 bg-white"
         />
+        {!signUp && (
+          <Link href="/forgot-password" className="inline-block text-sm font-semibold text-teal underline-offset-4 hover:underline">
+            Forgot your password?
+          </Link>
+        )}
         {signUp && (
           <p id={`${id}-password-hint`} className="text-xs text-muted-foreground">
             {PASSWORD_HINT}
