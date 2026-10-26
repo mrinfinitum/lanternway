@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth/server";
 import { recordConsents } from "@/lib/consents";
 import { passwordProblem } from "@/lib/password-policy";
+import { rememberEmailToVerify } from "./verify-cookie";
 
 export type AuthFormState = { error: string; email?: string; name?: string } | null;
 
@@ -34,7 +35,13 @@ export async function signIn(_prev: AuthFormState, form: FormData): Promise<Auth
   if (!password) return { error: "Please enter your password.", email };
 
   const { error } = await auth.signIn.email({ email, password });
-  if (error) return { error: friendly(error), email };
+  if (error) {
+    if (/not_verified|email_not_verified/i.test(error.code ?? "") || (error.status === 403 && /verif/i.test(error.message ?? ""))) {
+      await rememberEmailToVerify(email);
+      redirect("/verify-email");
+    }
+    return { error: friendly(error), email };
+  }
   redirect("/home");
 }
 
@@ -69,7 +76,9 @@ export async function signUp(_prev: AuthFormState, form: FormData): Promise<Auth
   if (userId) {
     await recordConsents(userId, ["adult_guardian", "terms", "privacy", "health_data_collection", "test_data"]);
   }
-  redirect("/home");
+  // Email verification is required: the code is emailed on sign-up.
+  await rememberEmailToVerify(email);
+  redirect("/verify-email");
 }
 
 export async function signOut() {

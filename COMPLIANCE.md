@@ -15,7 +15,7 @@ Last updated: Oct 26, 2026.
 | Data export | ✅ Built | Account & privacy → Download my data (JSON) |
 | Delete my account | ✅ Built | Password + "DELETE"; one transaction deletes family data (or just membership if others share the family), consents, and the sign-in account (sessions cascade); signs out. Neon's managed auth has no self-service delete endpoint, so the sign-in account is removed by `delete_my_auth_account()` (migration 004), which can only delete the caller. Revisit if Neon adds the endpoint |
 | Backup retention | ✅ Documented | Neon restore history is 6 hours; stated in the Privacy Policy. Keep it in sync if the plan changes |
-| Own email sender (Resend) | 🟡 Waiting on DNS | Neon Auth sends via Resend SMTP as `Lanternway <noreply@send.lanternway.co>` (restricted sending-only key). Forgot/reset password pages built. Needs Resend's DNS records for `send.lanternway.co` in Cloudflare, then turn on required email verification |
+| Own email sender (Resend) | ✅ Built | Neon Auth sends via Resend SMTP as `Lanternway <noreply@send.lanternway.co>` (domain verified; restricted sending-only key). Email verification by 6-digit code is required for new accounts; forgot/reset password works. Sign Resend's DPA |
 | Vendor data agreements | ⬜ You | See below |
 | Breach response plan | 🟡 Draft | `docs/compliance/BREACH_RESPONSE.md`. Fill in names; counsel review |
 | Security headers + CSP | ✅ Built | `next.config.ts` |
