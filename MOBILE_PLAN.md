@@ -372,7 +372,7 @@ The user chose this design (Nov 1). It sits next to dose reminders and uses the 
   - **Call:** `tel:+15555550123`.
   - Use `Linking.canOpenURL` first (an iPad or a phone with no SIM can't text or call), and fall back to showing the number with a Copy button.
   - Lanternway never sends the message or places the call. The note asks for a refill and nothing else: no dose, symptoms or advice (CLAUDE.md rule 2).
-- **Web:** the website shows the same "refill due" date it shows today, plus the per-medication reminder setting. Tap-to-text links work on the website too, on a phone.
+- **Web (built Nov 2):** the medication card shows "Refill due" and the reminder setting; Add/Edit have Pharmacy phone and Refill reminder; a Refill button opens the editable note with Text / Call / Copy. The fields are `pharmacyPhone` and `refillReminderDays` (unset = 5, 0 = off). Reuse `packages/shared/src/refills.ts` in the app: `refillReminderDate()`, `refillNote()`, `smsHref(phone, body, Platform.OS)`, `telHref()`, `dialable()`.
 
 ---
 

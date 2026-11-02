@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { TrendCharts, type TrendEvent, type TrendPoint } from "@/components/charts/trend-charts";
 import { Disclaimer } from "@/components/disclaimer";
+import { getSignedInUser } from "@/lib/auth/server";
 import { PageHeader, SectionHeading } from "@/components/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -36,7 +37,7 @@ export const instant = false;
 export const metadata: Metadata = { title: "Medications · Lanternway" };
 
 export default async function MedicationsPage() {
-  const [child, today] = await Promise.all([getCurrentChild(), getToday()]);
+  const [child, today, user] = await Promise.all([getCurrentChild(), getToday(), getSignedInUser()]);
   const from = addDays(today, -728);
   const [medications, changes, reminders, logs, checkIns, providers] = await Promise.all([
     getMedications(child.id),
@@ -58,6 +59,7 @@ export default async function MedicationsPage() {
       changes={changes}
       reminders={reminders}
       providers={providers}
+      senderName={user?.name}
     />
   );
 

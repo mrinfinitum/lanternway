@@ -133,8 +133,10 @@ export const RECORD_KINDS = {
       startDate: date(),
       stopDate: date(true),
       pharmacy: ostr(120),
+      pharmacyPhone: ostr(40),
       lastFilledOn: date(true),
       daysSupply: num(1, 400, true, true),
+      refillReminderDays: num(0, 30, true, true),
     },
   },
   medicationChanges: {

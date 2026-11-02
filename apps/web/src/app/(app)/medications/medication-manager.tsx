@@ -1,20 +1,21 @@
 "use client";
 
 import { useState } from "react";
-import { CalendarClock, Pencil, Pill, Plus, TrendingUp, CircleStop } from "lucide-react";
+import { Pencil, Pill, Plus, TrendingUp, CircleStop } from "lucide-react";
 import { IfAllowed } from "@/components/access";
 import { Field, FormDialog, SelectField, TextAreaField, text } from "@/components/form-dialog";
 import { EmptyState } from "@/components/lumi-tip";
 import { SectionHeading } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { formatDate, formatRelativeDays } from "@/lib/format";
+import { formatDate } from "@/lib/format";
 import { providerTypeLabels } from "@lanternway/shared/labels";
 import { refillDueDate } from "@/lib/insights";
 import type { IsoDate, Medication, MedicationChange, MedicationReminder, Provider } from "@lanternway/shared/types";
 import { newId, useEditedThisVisit, useRecordActions, useRecords } from "../_components/records-store";
 import { MedicationNameAndForm } from "./medication-name-field";
 import { ReminderDialog, ReminderPrompt, ReminderRow } from "./reminders";
+import { AskForRefill, RefillFields, RefillLine, readRefillFields } from "./refills";
 
 const OTHER = "__other";
 
@@ -26,10 +27,12 @@ type Props = {
   changes: MedicationChange[];
   reminders: MedicationReminder[];
   providers: Provider[];
+  /** The signed-in person's name, for the refill note. */
+  senderName?: string;
 };
 
 /** Current and past medications, with add / change dose / stop / edit. Edits last for this visit. */
-export function MedicationManager({ childId, childName, today, medications, changes, reminders, providers }: Props) {
+export function MedicationManager({ childId, childName, today, medications, changes, reminders, providers, senderName }: Props) {
   const meds = useRecords("medications", medications).filter((m) => m.childId === childId);
   const allChanges = useRecords("medicationChanges", changes);
   const allReminders = useRecords("medicationReminders", reminders);
@@ -47,6 +50,10 @@ export function MedicationManager({ childId, childName, today, medications, chan
     .reverse()
     .sort((a, b) => b.date.localeCompare(a.date));
 
+  const prescriberContact = (m: Medication) => {
+    const p = team.find((t) => t.id === m.prescriberId);
+    return m.prescriberName ? { name: m.prescriberName } : p ? { name: p.name, phone: p.phone } : undefined;
+  };
   const prescriberOf = (m: Medication) => m.prescriberName || team.find((p) => p.id === m.prescriberId)?.name;
   const ctx = { childId, childName, today, team, historyOf, announce: setStatus, reminderOf };
 
@@ -100,20 +107,13 @@ export function MedicationManager({ childId, childName, today, medications, chan
                       <Detail label="Started" value={formatDate(med.startDate)} />
                       <Detail label="How" value={med.form} />
                     </dl>
-                    {due && (
-                      <p className="flex items-center gap-2 rounded-xl bg-white px-3 py-2 text-sm">
-                        <CalendarClock className="size-4 shrink-0" aria-hidden />
-                        <span>
-                          Refill due <strong>{formatDate(due)}</strong> ({formatRelativeDays(due, today)})
-                          {med.pharmacy && <> · {med.pharmacy}</>}
-                        </span>
-                      </p>
-                    )}
+                    {due && <RefillLine med={med} due={due} today={today} />}
                     <ReminderRow med={med} reminder={reminderOf(med.id)} childName={childName} schedule={latest?.schedule} />
                     <div className="flex flex-wrap gap-2 pt-1">
                       {!reminderOf(med.id) && (
                         <ReminderDialog med={med} childName={childName} schedule={latest?.schedule} label="Reminder" compact />
                       )}
+                      <AskForRefill med={med} childName={childName} senderName={senderName} prescriber={prescriberContact(med)} />
                       <ChangeDose med={med} {...ctx} />
                       <StopMedication med={med} {...ctx} />
                       <EditMedication med={med} {...ctx} />
@@ -270,6 +270,8 @@ function AddMedication({ childId, childName, today, team, announce }: Ctx) {
         const prescriber = readPrescriber(form);
         if (typeof prescriber === "string") return prescriber;
         const daysSupply = Number(text(form, "daysSupply")) || undefined;
+        const refill = readRefillFields(form);
+        if (typeof refill === "string") return refill;
 
         const med: Medication = {
           id: newId("med"),
@@ -281,6 +283,7 @@ function AddMedication({ childId, childName, today, team, announce }: Ctx) {
           pharmacy: text(form, "pharmacy") || undefined,
           lastFilledOn: text(form, "lastFilledOn") || undefined,
           daysSupply,
+          ...refill,
           ...prescriber,
         };
         save("medications", med);
@@ -312,6 +315,7 @@ function AddMedication({ childId, childName, today, team, announce }: Ctx) {
             <Field name="lastFilledOn" label="Last filled" type="date" max={today} />
             <Field name="daysSupply" label="Days supply" inputMode="numeric" />
           </div>
+          <RefillFields />
         </div>
       </details>
     </FormDialog>
@@ -423,6 +427,8 @@ function EditMedication({ med, team, today, historyOf, announce, reminderOf }: C
         if (!name) return "Please add the medication's name.";
         const prescriber = readPrescriber(form);
         if (typeof prescriber === "string") return prescriber;
+        const refill = readRefillFields(form);
+        if (typeof refill === "string") return refill;
         save("medications", {
           ...med,
           name,
@@ -431,6 +437,7 @@ function EditMedication({ med, team, today, historyOf, announce, reminderOf }: C
           pharmacy: text(form, "pharmacy") || undefined,
           lastFilledOn: text(form, "lastFilledOn") || undefined,
           daysSupply: Number(text(form, "daysSupply")) || undefined,
+          ...refill,
           ...prescriber,
         });
         setConfirming(false);
@@ -469,6 +476,7 @@ function EditMedication({ med, team, today, historyOf, announce, reminderOf }: C
         <Field name="lastFilledOn" label="Last filled" type="date" max={today} defaultValue={med.lastFilledOn} />
         <Field name="daysSupply" label="Days supply" inputMode="numeric" defaultValue={med.daysSupply} />
       </div>
+      <RefillFields med={med} />
       {confirming && (
         <p role="alert" className="rounded-xl bg-coral/15 px-3 py-2 text-sm">
           Deleting removes {med.name} and its whole history. If {med.name} was stopped, use Stop instead so the history stays.

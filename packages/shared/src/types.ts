@@ -174,8 +174,11 @@ export type Medication = {
   startDate: IsoDate;
   stopDate?: IsoDate;
   pharmacy?: string;
+  pharmacyPhone?: string;
   lastFilledOn?: IsoDate;
   daysSupply?: number;
+  /** Days before the refill is due to remind the family (3, 5, 7 or 10). Unset = 5; 0 = off. */
+  refillReminderDays?: number;
 };
 
 export type MedicationChangeType = "start" | "dose-change" | "stop";
