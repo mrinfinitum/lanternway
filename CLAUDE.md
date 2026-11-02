@@ -3,13 +3,14 @@
 Read `PRD.md` for the product and `BUILD_PLAN.md` for the current task list. Brand rules are in `brand/BRAND.md`.
 
 ## Stack
-- **Next.js** (App Router, TypeScript, `src/` directory) deployed on **Vercel**.
+- **pnpm workspace monorepo:** `apps/web` is the Next.js website, `packages/shared` (`@lanternway/shared`) holds plain TypeScript shared with the future mobile app (types, `record-schemas`, `labels`, `dates`, `family-roles`), and `db/`, `scripts/`, `brand/` and the docs stay at the repo root. Run commands from the root (`pnpm dev`, `pnpm build`, `pnpm lint`, `pnpm typecheck`, `pnpm db:setup`, `pnpm db:test-rls`). Keep `packages/shared` free of React, Node built-ins and database code. Paths below without a prefix are in `apps/web/`.
+- **Next.js** (App Router, TypeScript, `apps/web/src/`) deployed on **Vercel** (project Root Directory `apps/web`).
 - **Tailwind CSS** + **shadcn/ui** components (customized to the Lanternway palette).
-- **Neon** Postgres (project `lanternway`, aws-us-east-1) with **Neon Auth** (Managed Better Auth; users and sessions in the `neon_auth` schema) and Row Level Security. Sign-in is required for the app (email + password). Each account has its own family: families, members, children (About Me), and all their records (logs, milestones, medications and changes, medication reminders (settings only; not sent yet), care team, therapy goals and sessions, IEP plans, goals, supports, school messages) are saved in Neon (`records` table, validated by `src/lib/record-schemas.ts`). Teacher check-ins (respondents, links stored as SHA-256 token hashes, check-ins) are saved in Neon too (migration 006); family sharing (invite links as token hashes, roles admin / log / view) is migration 008, with roles enforced by RLS and mirrored in the UI via `useAccess()` (`src/components/access.tsx`); the public `/c/[token]` page only goes through the `checkin_form_context` and `submit_checkin` database functions. A sample family (Maya and Theo) can be explored from the header menu. File storage: not chosen yet. Secrets live in `.env.local` (git-ignored) and Vercel env vars; the website connects with the read-only `lanternway_app` role. `pnpm db:setup` runs migrations and seeds.
+- **Neon** Postgres (project `lanternway`, aws-us-east-1) with **Neon Auth** (Managed Better Auth; users and sessions in the `neon_auth` schema) and Row Level Security. Sign-in is required for the app (email + password). Each account has its own family: families, members, children (About Me), and all their records (logs, milestones, medications and changes, medication reminders (settings only; not sent yet), care team, therapy goals and sessions, IEP plans, goals, supports, school messages) are saved in Neon (`records` table, validated by `packages/shared/src/record-schemas.ts`). Teacher check-ins (respondents, links stored as SHA-256 token hashes, check-ins) are saved in Neon too (migration 006); family sharing (invite links as token hashes, roles admin / log / view) is migration 008, with roles enforced by RLS and mirrored in the UI via `useAccess()` (`src/components/access.tsx`); the public `/c/[token]` page only goes through the `checkin_form_context` and `submit_checkin` database functions. A sample family (Maya and Theo) can be explored from the header menu. File storage: not chosen yet. Secrets live in `apps/web/.env.local` (git-ignored) and Vercel env vars; the website connects with the read-only `lanternway_app` role. `pnpm db:setup` runs migrations and seeds.
 - **Stripe** for subscriptions (Stage 3).
 - Charts: **Recharts**.
 - Package manager: **pnpm**.
-- Later: **Expo** (React Native) for iOS/Android, reusing the same Neon backend.
+- Later: **Expo** (React Native) for iOS/Android in `apps/mobile`, reusing the same backend through `/api/v1` (see `MOBILE_PLAN.md`).
 
 ## How to work
 - Work through `BUILD_PLAN.md` one task at a time. Check off tasks (`- [x]`) as they're completed.
@@ -49,4 +50,4 @@ Font: a rounded, friendly sans-serif — **Nunito** (Google Fonts via `next/font
 Corners: generous rounding (`rounded-2xl` on cards). Calm UI: no flashing animations; respect `prefers-reduced-motion`.
 
 ## Assets
-Brand images are in `brand/` (raster, AI-generated). Copy needed images into `public/brand/` for use in the app. Vector (SVG) versions will replace them later — keep image references centralized in one file (e.g., `src/lib/brand.ts`) so they're easy to swap.
+Brand images are in `brand/` (raster, AI-generated). Copy needed images into `apps/web/public/brand/` for use in the app. Vector (SVG) versions will replace them later — keep image references centralized in one file (e.g., `src/lib/brand.ts`) so they're easy to swap.

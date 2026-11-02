@@ -3,8 +3,8 @@
 //
 //   pnpm db:setup
 //
-// Needs DATABASE_URL_ADMIN (the owner role) in .env.local. Writes DATABASE_URL
-// (the read-only `lanternway_app` role) to .env.local the first time.
+// Needs DATABASE_URL_ADMIN (the owner role) in apps/web/.env.local. Writes DATABASE_URL
+// (the read-only `lanternway_app` role) to apps/web/.env.local the first time.
 // Secrets are never printed.
 
 import { Pool } from "@neondatabase/serverless";
@@ -15,7 +15,7 @@ import { join } from "node:path";
 const root = new URL("..", import.meta.url).pathname;
 const adminUrl = process.env.DATABASE_URL_ADMIN;
 if (!adminUrl) {
-  console.error("DATABASE_URL_ADMIN is missing. Add it to .env.local.");
+  console.error("DATABASE_URL_ADMIN is missing. Add it to apps/web/.env.local.");
   process.exit(1);
 }
 
@@ -52,7 +52,7 @@ try {
   console.log(`seeded    medication_catalog (${rows[0].n} medications)`);
 
   // 3. Read-only role for the website: set a password once and record its URL.
-  const envPath = join(root, ".env.local");
+  const envPath = join(root, "apps/web/.env.local");
   const env = readFileSync(envPath, "utf8");
   if (!/^DATABASE_URL=/m.test(env)) {
     const password = randomBytes(24).toString("base64url");

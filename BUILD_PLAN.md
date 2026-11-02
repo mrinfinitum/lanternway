@@ -83,6 +83,9 @@ Sample family (fictional): **Maya**, age 10, autistic + ADHD. Diagnosed autism a
 - [ ] Multi-child support for real accounts: add/edit a child, per-child sharing and teacher access (switcher already in the prototype)
 - [ ] Security & privacy review before charging
 
-## Stage 4: Mobile apps
-- [ ] Expo app sharing the Neon backend
+## Stage 4: Mobile apps (step by step in `MOBILE_PLAN.md` §6)
+- [x] M0: mobile auth spike (bearer token through `/api/v1`, branch `spike/mobile-auth`)
+- [x] M1: pnpm workspace monorepo: `apps/web`, `packages/shared` (Vercel Root Directory → `apps/web` before merging)
+- [ ] M2: JSON API `/api/v1` for every screen
+- [ ] Expo app sharing the Neon backend (M3 onward)
 - [ ] Widgets, quick-log from lock screen, push notifications

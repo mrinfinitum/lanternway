@@ -75,7 +75,7 @@ lanternway/
 | `src/`, `public/` | `apps/web/src/`, `apps/web/public/` | `git mv` so history is kept |
 | `next.config.ts`, `tsconfig.json`, `eslint.config.mjs`, `components.json`, `next-env.d.ts` | `apps/web/` | `@/*` path alias still points to `./src/*` |
 | `package.json` dependencies | `apps/web/package.json` | Same versions. The root keeps only scripts and `@neondatabase/serverless` (for the db scripts) |
-| `src/lib/types.ts`, `record-schemas.ts`, `family-roles.ts`, `labels.ts`, `dates.ts`, `format.ts`, `schedule.ts`, `insights.ts`, `child-profile.ts`, `password-policy.ts` | `packages/shared/src/` | These import only each other and types, so they can run on a phone. I checked each file's imports |
+| `src/lib/types.ts`, `record-schemas.ts`, `family-roles.ts`, `labels.ts`, `dates.ts` (done in M1); later `format.ts`, `schedule.ts`, `insights.ts`, `child-profile.ts`, `password-policy.ts` | `packages/shared/src/` | These import only each other and types, so they can run on a phone. I checked each file's imports |
 | `src/lib/log-icons.ts` | stays in web | Uses `lucide-react`. Mobile gets its own icon map |
 | `src/mock/` | stays in web | Sample family. Mobile shows it through the API later, or not at all at first |
 | `src/lib/db.ts`, `records.ts`, `data.ts`, `sharing.ts`, `checkins.ts`, `families.ts`, `account.ts`, `consents.ts`, `auth/` | stay in web | Server-only. They must **never** be imported by mobile |
@@ -419,9 +419,9 @@ Each step keeps `pnpm dev` working, passes `pnpm lint && pnpm typecheck`, and ru
 - [ ] If that fails, try the JWT plugin route (`authClient.token()` + JWKS). Write the result in `HANDOFF.md` and settle §3 before M2
 
 ### M1. Monorepo (no behaviour change)
-- [ ] Add `packages:` to `pnpm-workspace.yaml`. Move the web app to `apps/web` with `git mv`. Add the root scripts. Move `.env.local` (you)
-- [ ] Create `packages/shared`, move the shared lib files, update imports, add `transpilePackages`
-- [ ] `pnpm dev`, `pnpm build`, `pnpm lint`, `pnpm typecheck`, `pnpm db:test-rls` all pass. Run the browser smoke test at 390px
+- [x] Add `packages:` to `pnpm-workspace.yaml`. Move the web app to `apps/web` with `git mv`. Add the root scripts. Move `.env.local` (you)
+- [x] Create `packages/shared`, move the shared lib files, update imports, add `transpilePackages`. So far: `types`, `record-schemas`, `family-roles`, `labels`, `dates`. The other pure files (`format`, `schedule`, `insights`, `child-profile`, `password-policy`) move when mobile first needs them
+- [x] `pnpm dev`, `pnpm build`, `pnpm lint`, `pnpm typecheck`, `pnpm db:setup`, `pnpm db:test-rls` all pass. Browser smoke test done at 390px and 1280px
 - [ ] You set Vercel's Root Directory to `apps/web`, then push to `dev` and check dev.lanternway.co
 
 ### M2. API v1 (web side only, testable with a script)

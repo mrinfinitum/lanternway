@@ -15,6 +15,21 @@ _Last updated: Nov 1, 2026. Replaces the Oct 24 handoff (Stage 1 is long done)._
 | `dev` | Latest: family sharing (see `git log`), deployed to **https://dev.lanternway.co** (noindex + prototype banner) |
 | Working tree | Clean. Medication reminder settings + care calendar are committed and on dev. Migration 007 is applied to the shared Neon database. |
 
+### Monorepo, M1 (Nov 1, branch `mobile/m1-monorepo`, not pushed)
+- **Layout:**
+  - the website moved to `apps/web/` with `git mv` (`src/`, `public/`, `next.config.ts`, `tsconfig.json`, `eslint.config.mjs`, `components.json`, `AGENTS.md`);
+  - `packages/shared/` (`@lanternway/shared`) holds `types`, `record-schemas`, `family-roles`, `labels` and `dates`;
+  - `db/`, `scripts/`, `brand/` and the docs stay at the root.
+- **Imports:** `@/lib/types` became `@lanternway/shared/types`, and the same for the other four files. The web compiles the shared package through `transpilePackages`.
+- **Scripts:** root scripts forward to the web app. `db:setup` and `db:test-rls` read `apps/web/.env.local`.
+- **No behaviour change.** Checked:
+  - lint, typecheck, build, `db:setup` and `db:test-rls` (all passing);
+  - a browser smoke test at 390px and 1280px: sign in, add a child, quick log → Home, add a med with type-ahead, calendar, Timeline, Family sharing. No console errors. The QA account was deleted.
+- **Before merging to `dev`, the user must:**
+  1. set Vercel's Root Directory to `apps/web`;
+  2. move their `.env.local` to `apps/web/.env.local`.
+- **Lockfile:** pnpm dropped a duplicate peer copy of `jose`/`zod` under `@better-auth/core`. Both versions were already installed, and the peer warnings are the same as on `dev`.
+
 ### Medication reminders + care calendar (reviewed and tested Nov 1)
 - `db/migrations/007_medication_reminders.sql`: adds `medication_reminder` to the `records.kind` check. Reminders are records whose parent is the medication, so the existing RLS covers them and deleting a med deletes its reminders.
 - `src/app/(app)/medications/reminders.tsx`: reminder settings (times, days, push or text, phone). They're private by default ("Maya's 8:00 AM reminder"), and the medication is named only if the parent opts in. **Nothing is sent yet**, and the UI says so.
@@ -40,7 +55,7 @@ _Last updated: Nov 1, 2026. Replaces the Oct 24 handoff (Stage 1 is long done)._
   - Multiple kids are supported, with a switcher in the header.
   - A **sample family** (Maya and Theo, fictional mock data) can be entered or left from the header menu.
 - **Everything saves to the account:** logs, milestones, medications + dose changes, care team, therapy goals and sessions, IEP/504 plans, goals and progress, supports, school messages.
-  - All of it lives in one `records` table, validated server-side by `src/lib/record-schemas.ts`.
+  - All of it lives in one `records` table, validated server-side by `packages/shared/src/record-schemas.ts`.
   - The client store (`records-store.tsx`) saves optimistically, then persists through server actions in a serial queue.
 - **About Me:** a visual profile with per-section editing, plus share presets (Teacher, Caregiver, Medical, Camp). Private info is off by default, and consent is recorded before a link appears. **The share link and PDF are still placeholders.**
 - **Teacher check-in links (real):**
@@ -70,7 +85,8 @@ _Last updated: Nov 1, 2026. Replaces the Oct 24 handoff (Stage 1 is long done)._
 
 ## Architecture cheat sheet
 
-- **Next.js 16.4** App Router with `cacheComponents` + `partialPrefetching`. Read `node_modules/next/dist/docs/` before using unfamiliar APIs (`AGENTS.md`).
+- **Monorepo (from M1):** `apps/web` (this website), `packages/shared` (`@lanternway/shared`: types, record schemas, labels, dates, family roles; no React, Node or DB code) and, later, `apps/mobile`. Web paths below (`src/...`) are under `apps/web/`. Run every command from the repo root.
+- **Next.js 16.4** App Router with `cacheComponents` + `partialPrefetching`. Read `apps/web/node_modules/next/dist/docs/` before using unfamiliar APIs (`apps/web/AGENTS.md`).
   - Every `(app)` page has `export const instant = false`. Add it to any new page.
   - Anything reading cookies, params or the clock sits under `<Suspense>`. Call `await connection()` before `new Date()` or DB work on pages that read no cookies (see `getToday()` and `/c/[token]`).
   - `"use server"` files may export only async functions.
@@ -90,7 +106,7 @@ _Last updated: Nov 1, 2026. Replaces the Oct 24 handoff (Stage 1 is long done)._
 
 ## Environment and accounts (no secrets here)
 
-- **`.env.local`** (git-ignored) holds `DATABASE_URL_ADMIN`, `DATABASE_URL`, `NEON_AUTH_BASE_URL`, `NEON_AUTH_COOKIE_SECRET` and `RESEND_API_KEY`. Never print or commit these.
+- **`apps/web/.env.local`** (git-ignored; at the repo root before M1) holds `DATABASE_URL_ADMIN`, `DATABASE_URL`, `NEON_AUTH_BASE_URL`, `NEON_AUTH_COOKIE_SECRET` and `RESEND_API_KEY`. Never print or commit these.
 - **Vercel:**
   - Team NSoul (`team_QoiswXU8qLWxgCOD5vvpbPMJ`), project `lanternway`, account **geofftracy-7003**, not pgamemes.
   - Preview env vars for gitBranch `dev` are set via the REST API. Avoid `vercel link`, which rewrites `.env.local`.
@@ -133,7 +149,7 @@ pnpm build            # catches Suspense/cacheComponents issues dev misses (don'
 - Short messages ("yes", "push", "do these"). Act on them, explain results in plain language, and keep summaries short.
 - **Deploy to dev only.** Ask before anything touching `main` or production, paid services, new SDKs, or analytics.
 - Prefers recommended defaults; ask only when it's genuinely their call.
-- The user handles their own account setup: Vercel, Cloudflare, Resend, Neon. Walk them through it step by step and never ask them to paste secrets into chat. They put keys in `.env.local` themselves.
+- The user handles their own account setup: Vercel, Cloudflare, Resend, Neon. Walk them through it step by step and never ask them to paste secrets into chat. They put keys in `apps/web/.env.local` themselves.
 
 ## Next up
 
