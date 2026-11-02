@@ -14,6 +14,7 @@ import {
   Trash2,
   Users,
 } from "lucide-react";
+import { IfAllowed } from "@/components/access";
 import { Field, FormDialog, SelectField, TextAreaField, text } from "@/components/form-dialog";
 import { EmptyState } from "@/components/lumi-tip";
 import { PageHeader, SectionHeading } from "@/components/page-header";
@@ -80,9 +81,11 @@ export function SchoolManager({ childId, childName, school, today, plans, goals,
                 : `No IEP or 504 plan for ${childName} yet.`}
           </p>
           <p className="mt-1 mb-3 text-sm">
-            {school?.planStatus === "evaluating"
-              ? "When the school shares the plan, add it here to follow goals, services, and accommodations."
-              : "If there's a plan, add it to follow goal progress, services, and accommodations here."}
+            <IfAllowed to="edit" otherwise="When a plan is added, you'll see goal progress, services, and accommodations here.">
+              {school?.planStatus === "evaluating"
+                ? "When the school shares the plan, add it here to follow goals, services, and accommodations."
+                : "If there's a plan, add it to follow goal progress, services, and accommodations here."}
+            </IfAllowed>
           </p>
           <PlanForm childId={childId} today={today} />
         </EmptyState>
@@ -141,7 +144,12 @@ export function SchoolManager({ childId, childName, school, today, plans, goals,
           </div>
           {allGoals.length === 0 && (
             <EmptyState>
-              <p className="text-sm">No goals yet. Add each goal from the plan to follow its progress.</p>
+              <p className="text-sm">
+                No goals yet.{" "}
+                <IfAllowed to="edit" otherwise="When they're added, you'll see each goal's progress here.">
+                  Add each goal from the plan to follow its progress.
+                </IfAllowed>
+              </p>
             </EmptyState>
           )}
           {allGoals.map((g) => (

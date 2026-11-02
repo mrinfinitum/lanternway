@@ -19,8 +19,8 @@ export function useAccess() {
   return { role, canEdit: role === "admin", canLog: role !== "view" };
 }
 
-/** Renders its children only when the person may make this kind of change. */
-export function IfAllowed({ to, children }: { to: "edit" | "log"; children: React.ReactNode }) {
+/** Renders its children only when the person may make this kind of change (else `otherwise`). */
+export function IfAllowed({ to, children, otherwise = null }: { to: "edit" | "log"; children: React.ReactNode; otherwise?: React.ReactNode }) {
   const { canEdit, canLog } = useAccess();
-  return (to === "edit" ? canEdit : canLog) ? <>{children}</> : null;
+  return <>{(to === "edit" ? canEdit : canLog) ? children : otherwise}</>;
 }

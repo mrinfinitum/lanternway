@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { ArrowLeft, ChevronRight, Mail, Pencil, Phone, Plus, UserMinus } from "lucide-react";
+import { IfAllowed } from "@/components/access";
 import { Field, FormDialog, SelectField, text } from "@/components/form-dialog";
 import { EmptyState } from "@/components/lumi-tip";
 import { SectionHeading } from "@/components/page-header";
@@ -45,7 +46,11 @@ export function CareTeamList({
         {current.length === 0 ? (
           <EmptyState>
             <p className="font-bold text-teal">No one on {childName}&apos;s care team yet.</p>
-            <p className="mt-1 text-sm">Add therapists, doctors, and specialists to keep contacts, schedules, and goals together.</p>
+            <p className="mt-1 text-sm">
+              <IfAllowed to="edit" otherwise="When someone is added, you'll see their contact details, schedule, and goals here.">
+                Add therapists, doctors, and specialists to keep contacts, schedules, and goals together.
+              </IfAllowed>
+            </p>
           </EmptyState>
         ) : (
           <ul className="grid gap-3 md:grid-cols-2">

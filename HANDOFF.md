@@ -56,7 +56,7 @@ _Last updated: Nov 1, 2026. Replaces the Oct 24 handoff (Stage 1 is long done)._
   - Invite links: hashed, shown once, single use, 7 or 30 days, revocable, `share_family` consent. **Anyone with the link can accept** (the user's choice). Not signed in → sign in/up → the `lw-join` cookie brings them back to `/join` (`afterSignInPath()`).
   - A family always keeps an admin (trigger). The only admin of a shared family can't delete their account until they hand off. Export covers only families you're an admin of. Adding a child goes into a family you're an admin of (or a new one).
   - Tested end to end with two QA accounts (invite → sign in → join → log → role change → leave; revoke; last-admin block). **Not tested:** the "Create an account to join" path through email verification (needs a real code), though it uses the same redirect helper.
-  - Known polish: empty states (e.g. "Add one to keep doses…") still invite non-admins to add things they can't.
+  - Empty states and the Home welcome tip have wording for log/view members (`IfAllowed otherwise=`).
 - **Medication catalog:** 69 medications (names, classes and forms; **no doses**) in Neon, with type-ahead when adding a med.
 - **Privacy and compliance:**
   - draft Privacy, Terms and Consumer Health Data policies under `(legal)`;

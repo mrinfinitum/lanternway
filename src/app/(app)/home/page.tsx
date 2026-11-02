@@ -205,7 +205,17 @@ export default async function HomePage() {
         </section>
       </div>
 
-      {weekLogs.length === 0 && (
+      {weekLogs.length === 0 && access.role === "view" && (
+        <LumiTip title={`Welcome, ${child.firstName}!`}>
+          <p>As the family logs {child.firstName}&apos;s days, you&apos;ll see how things are going here.</p>
+        </LumiTip>
+      )}
+      {weekLogs.length === 0 && access.role === "log" && (
+        <LumiTip title={`Welcome, ${child.firstName}!`}>
+          <p>Start small: tap one of the buttons above to log how today went. A few taps a day is plenty.</p>
+        </LumiTip>
+      )}
+      {weekLogs.length === 0 && access.role === "admin" && (
         <LumiTip title={`Welcome, ${child.firstName}!`}>
           <p>
             Start small: tap one of the buttons above to log how today went. A few taps a day is plenty, and{" "}

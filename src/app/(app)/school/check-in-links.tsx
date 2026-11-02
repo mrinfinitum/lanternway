@@ -90,7 +90,9 @@ export function CheckInLinks({
         <EmptyState>
           <p className="font-bold text-teal">No check-in links yet.</p>
           <p className="mt-1 text-sm">
-            Send one to {childName}&apos;s teacher, aide, or therapist. They tap four ratings and an optional note, no account needed.
+            {canEdit
+              ? `Send one to ${childName}'s teacher, aide, or therapist. They tap four ratings and an optional note, no account needed.`
+              : `When a family admin sends one to ${childName}'s teacher, aide, or therapist, their check-ins will show here.`}
           </p>
         </EmptyState>
       ) : (

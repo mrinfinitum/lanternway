@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { CalendarClock, Pencil, Pill, Plus, TrendingUp, CircleStop } from "lucide-react";
+import { IfAllowed } from "@/components/access";
 import { Field, FormDialog, SelectField, TextAreaField, text } from "@/components/form-dialog";
 import { EmptyState } from "@/components/lumi-tip";
 import { SectionHeading } from "@/components/page-header";
@@ -68,7 +69,11 @@ export function MedicationManager({ childId, childName, today, medications, chan
         {current.length === 0 ? (
           <EmptyState>
             <p className="font-bold text-teal">No current medications for {childName}.</p>
-            <p className="mt-1 text-sm">Add one to keep doses, the prescriber, and refills in one place.</p>
+            <p className="mt-1 text-sm">
+              <IfAllowed to="edit" otherwise="When one is added, you'll see the dose, prescriber, and refills here.">
+                Add one to keep doses, the prescriber, and refills in one place.
+              </IfAllowed>
+            </p>
           </EmptyState>
         ) : (
           <div className="grid gap-4 md:grid-cols-2">
