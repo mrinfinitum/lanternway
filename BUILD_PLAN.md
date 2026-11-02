@@ -86,6 +86,6 @@ Sample family (fictional): **Maya**, age 10, autistic + ADHD. Diagnosed autism a
 ## Stage 4: Mobile apps (step by step in `MOBILE_PLAN.md` §6)
 - [x] M0: mobile auth spike (bearer token through `/api/v1`, branch `spike/mobile-auth`)
 - [x] M1: pnpm workspace monorepo: `apps/web`, `packages/shared` (Vercel Root Directory → `apps/web` before merging)
-- [ ] M2: JSON API `/api/v1` for every screen
+- [x] M2: JSON API `/api/v1` for every screen (bearer token; `pnpm api:test`, 111 checks)
 - [ ] Expo app sharing the Neon backend (M3 onward)
 - [ ] Widgets, quick-log from lock screen, push notifications

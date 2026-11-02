@@ -15,7 +15,37 @@ _Last updated: Nov 1, 2026. Replaces the Oct 24 handoff (Stage 1 is long done)._
 | `dev` | Latest: family sharing (see `git log`), deployed to **https://dev.lanternway.co** (noindex + prototype banner) |
 | Working tree | Clean. Medication reminder settings + care calendar are committed and on dev. Migration 007 is applied to the shared Neon database. |
 
-### Monorepo, M1 (Nov 1, branch `mobile/m1-monorepo`, not pushed)
+### Mobile API, M2 (Nov 1, branch `mobile/m2-api`, not pushed)
+- **What it is:** a JSON API for the phone at `/api/v1`, on the same Next.js app. It has 30 route files under `apps/web/src/app/api/v1/`, listed in `MOBILE_PLAN.md` §2 and §6/M2.
+  - **Auth:** `lib/api/auth.ts`, the spike's bearer-token approach. The phone sends `Authorization: Bearer <Neon Auth session token>`, which is checked with Neon Auth on every call.
+  - **Every route:** `lib/api/http.ts` (`withUser`, `childAccess` / `familyAccess`, `todayFor`) gives a 401 when signed out, a 403 for too low a role and a 404 for another family's data.
+  - **Screen data:** `lib/api/screens.ts` returns what each screen needs.
+- **Data-layer refactor (its own commit):**
+  - `lib/child-data.ts` has cookie-free record readers taking `(userId, childId, …)`.
+  - `data.ts` keeps its signatures and fills those in from the request.
+  - `loadChildRecords` / `loadChildCheckIns` take the user, and `saveRecord(user, …)` takes the user for `loggedBy`.
+  - Website unchanged: browser-checked at 390px and 1280px as an admin (Home, Log + save, Medications, Therapy + provider page, School tabs, About Me, Family) and as a view-only member (same pages, with no add/edit/invite controls). No console errors.
+- **Test:** `pnpm api:test http://localhost:3141`, with a dev server on 3141. **111/111 pass.**
+  - It uses four QA accounts: an admin, a "can log" member and a "can view" member of one family, plus another family's admin.
+  - 401 for all 29 signed-in routes, both signed out and with a made-up token.
+  - 403 for 13 admin-only actions as "log" and as "view"; view can't log; log can log.
+  - 404 for every read and 12 writes into another family.
+  - Invite and check-in tokens are shown once, plus the usual flows: join, revoke, roles, leave, delete account, password change, sign out, sign out everywhere.
+  - It cleans up after itself. **Don't pipe it through `head`:** that kills it before cleanup.
+- **Found and fixed:**
+  1. Neon Auth rate-limits session checks (`429 over_request_rate_limit`) after about a hundred quick calls. The API now answers `503` + `Retry-After` instead of 401, so the phone retries rather than signing out, and the test waits it out.
+  2. Saving over another family's record id answered 200 while the database changed nothing. Now it's 404.
+  3. Sign-out with a made-up token answered 200. Now it's 401.
+- **Open:**
+  - Whether to cache sessions briefly (rate limit vs. revoke delay) is the user's call; see `MOBILE_PLAN.md` §3.
+  - `/auth/verify-email` hasn't been tested with a real emailed code.
+  - The sample family isn't served by the API (saved kids only).
+
+### Mobile auth spike, M0 (Nov 1, branch `spike/mobile-auth`, not merged; its code now lives in M2)
+- **Result:** the phone signs in through our own `/api/v1/auth/sign-in`, gets the Neon Auth session token in JSON, and sends it as a bearer token. The server checks it with the Neon Auth SDK's framework-agnostic `createAuthServer()`. No new dependencies; the JWT plugin and `jose` aren't needed.
+- **Found in passing:** Neon Auth answers an unverified sign-in with `422 email_not_confirmed` (the web sign-in now handles it, `e02a069`).
+
+### Monorepo, M1 (Nov 1, merged to `dev` as `0f0b7e7`)
 - **Layout:**
   - the website moved to `apps/web/` with `git mv` (`src/`, `public/`, `next.config.ts`, `tsconfig.json`, `eslint.config.mjs`, `components.json`, `AGENTS.md`);
   - `packages/shared/` (`@lanternway/shared`) holds `types`, `record-schemas`, `family-roles`, `labels` and `dates`;
@@ -92,7 +122,8 @@ _Last updated: Nov 1, 2026. Replaces the Oct 24 handoff (Stage 1 is long done)._
   - `"use server"` files may export only async functions.
   - After writes, call `refresh()` from `next/cache`.
 - **`src/proxy.ts`** (Next 16's middleware) protects app routes with `auth.middleware({ loginUrl: "/sign-in" })`. `/c/*` and the legal pages are public.
-- **Data access:** screens only import `src/lib/data.ts`. Each getter reads Neon for saved kids (UUID ids, via `isSavedChildId`) and `@/mock` for the sample family. Supporting modules:
+- **Mobile API (`/api/v1`, M2):** JSON route handlers for the phone. They're bearer-token only, never cookies, and not in the `proxy.ts` matcher. Each wraps its handler in `withUser` and checks `childAccess` / `familyAccess`, then calls the same lib functions as the website (`child-data.ts`, `records.ts`, `sharing.ts`, `checkins.ts`, …). **Every new screen or action needs its `/api/v1` route and checks in `scripts/api-test.mjs`.** Neon Auth rate limits come back as 503, never 401.
+- **Data access:** screens only import `src/lib/data.ts` (cookie wrappers over the cookie-free readers in `src/lib/child-data.ts`). Each getter reads Neon for saved kids (UUID ids, via `isSavedChildId`) and `@/mock` for the sample family. Supporting modules:
   - `records.ts`: `loadChildRecords`, `saveRecord`, `deleteRecord`.
   - `checkins.ts`: links, revoke, public context and submit.
   - `families.ts`.
@@ -121,6 +152,7 @@ _Last updated: Nov 1, 2026. Replaces the Oct 24 handoff (Stage 1 is long done)._
 pnpm dev --port 3123
 pnpm lint && pnpm typecheck
 pnpm db:test-rls      # family isolation + check-in link rules
+pnpm api:test http://localhost:3123   # mobile API: 401/403/404 and flows (needs the dev server)
 pnpm build            # catches Suspense/cacheComponents issues dev misses (don't run while dev is running)
 ```
 
