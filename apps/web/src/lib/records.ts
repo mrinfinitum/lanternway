@@ -1,11 +1,11 @@
 /**
  * Saved records for a family's own children (logs, medications, care team, school…),
  * stored in Neon's `records` table with row-level security. Server-only.
- * Screens read through src/lib/data.ts; writes come from saveRecordAction.
+ * Screens read through src/lib/data.ts (and the mobile API through child-data.ts);
+ * writes come from the persistRecord server action and /api/v1.
  */
 
 import { cache } from "react";
-import { getSignedInUser } from "@/lib/auth/server";
 import { isSavedChildId } from "@/lib/child-profile";
 import { asUser } from "@/lib/db";
 import { RECORD_KINDS, cleanRecord, type RecordCollection } from "@lanternway/shared/record-schemas";
@@ -22,13 +22,11 @@ export type ChildRecords = Record<RecordCollection, Array<Record<string, unknown
 const emptyRecords = (): ChildRecords =>
   Object.fromEntries(Object.keys(RECORD_KINDS).map((c) => [c, []])) as unknown as ChildRecords;
 
-/** Every saved record for one child, grouped by collection. One query per request. */
-export const loadChildRecords = cache(async (childId: string): Promise<ChildRecords> => {
+/** Every saved record for one child, as `userId` sees it (RLS), grouped by collection. One query per request. */
+export const loadChildRecords = cache(async (userId: string, childId: string): Promise<ChildRecords> => {
   const out = emptyRecords();
-  if (!isSavedChildId(childId)) return out;
-  const user = await getSignedInUser();
-  if (!user) return out;
-  const rows = await asUser(user.id, async (db) =>
+  if (!userId || !isSavedChildId(childId)) return out;
+  const rows = await asUser(userId, async (db) =>
     (await db.query<{ id: string; kind: string; data: Record<string, unknown> }>(
       "select id, kind, data from records where child_id = $1 order by occurred_on nulls last, created_at",
       [childId],
@@ -47,7 +45,11 @@ export const loadChildRecords = cache(async (childId: string): Promise<ChildReco
  * own child. Returns null when it isn't a saved child's record (e.g. the sample
  * family), or a message if something's wrong.
  */
-export async function saveRecord(userId: string, collection: RecordCollection, item: unknown): Promise<"saved" | null | string> {
+export async function saveRecord(
+  user: { id: string; name: string },
+  collection: RecordCollection,
+  item: unknown,
+): Promise<"saved" | null | string> {
   const id = (item as { id?: unknown })?.id;
   if (!isRecordId(id)) return null;
   const spec = RECORD_KINDS[collection];
@@ -60,13 +62,12 @@ export async function saveRecord(userId: string, collection: RecordCollection, i
   if (spec.parent ? !isRecordId(parentId) : !(typeof childId === "string" && isSavedChildId(childId))) return null;
 
   if (collection === "logs") {
-    // Logged by the signed-in parent, not whatever the browser says.
-    const user = await getSignedInUser();
-    data.loggedBy = user?.name.split(" ")[0] || "Parent";
+    // Logged by the signed-in parent, not whatever the browser or phone says.
+    data.loggedBy = user.name.split(" ")[0] || "Parent";
   }
   const occurredOn = spec.date ? ((data[spec.date] as string | undefined) ?? null) : null;
 
-  return asUser(userId, async (db) => {
+  return asUser(user.id, async (db) => {
     let owner: { child_id: string; family_id: string } | undefined;
     if (spec.parent) {
       owner = (await db.query<{ child_id: string; family_id: string }>("select child_id, family_id from records where id = $1", [parentId])).rows[0];

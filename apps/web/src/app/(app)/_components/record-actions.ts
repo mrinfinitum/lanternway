@@ -14,7 +14,7 @@ export async function persistRecord(collection: string, item: unknown): Promise<
   const user = await getSignedInUser();
   if (!user) return { ok: false, error: "Please sign in again." };
   if (!isRecordCollection(collection)) return { ok: false };
-  const result = await saveRecord(user.id, collection, item);
+  const result = await saveRecord(user, collection, item);
   if (result === "saved") {
     refresh();
     return { ok: true };
