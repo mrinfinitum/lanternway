@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { LegalLinks } from "@/components/legal-links";
-import { ChevronRight, ShieldCheck, Sparkles } from "lucide-react";
+import { ChevronRight, ShieldCheck, Sparkles, Users } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
 import { moreItems } from "../_components/nav-items";
 
@@ -37,6 +37,19 @@ export default function MorePage() {
           </li>
         ))}
       </ul>
+      <Link
+        href="/family"
+        className="mt-3 flex items-center gap-4 rounded-2xl bg-cream p-4 transition-colors hover:bg-amber/25"
+      >
+        <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-white">
+          <Users className="size-5" aria-hidden />
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="block font-bold">Family sharing</span>
+          <span className="block text-sm text-muted-foreground">Invite a co-parent, grandparent, or sitter</span>
+        </span>
+        <ChevronRight className="size-5 text-muted-foreground" aria-hidden />
+      </Link>
       <Link
         href="/account"
         className="mt-3 flex items-center gap-4 rounded-2xl bg-cream p-4 transition-colors hover:bg-amber/25"

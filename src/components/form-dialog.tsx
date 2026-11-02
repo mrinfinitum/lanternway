@@ -1,6 +1,7 @@
 "use client";
 
 import { useId, useState } from "react";
+import { useAccess } from "@/components/access";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -29,6 +30,7 @@ export function FormDialog({
   children,
   destructive,
   onOpenChange,
+  need = "edit",
 }: {
   trigger: React.ReactNode;
   title: string;
@@ -40,10 +42,15 @@ export function FormDialog({
   destructive?: (close: () => void) => React.ReactNode;
   /** Called when the dialog opens or closes, e.g. to reset local state. */
   onOpenChange?: (open: boolean) => void;
+  /** Who may open it: "edit" (admins, the default) or "log" (anyone who can add daily logs). */
+  need?: "edit" | "log";
 }) {
   const [open, setOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const errorId = useId();
+  const { canEdit, canLog } = useAccess();
+  // Hidden for family members who can't make this change (the database refuses it too).
+  if (!(need === "log" ? canLog : canEdit)) return null;
 
   return (
     <Dialog

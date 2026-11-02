@@ -2,6 +2,7 @@
 
 import { useId, useState, useSyncExternalStore } from "react";
 import { BellRing, Pencil, Plus, X } from "lucide-react";
+import { useAccess } from "@/components/access";
 import { FormDialog, SelectField, text } from "@/components/form-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -100,8 +101,9 @@ export function ReminderPrompt({
   );
   const [dismissedNow, setDismissedNow] = useState(false);
   const dismissed = dismissedBefore || dismissedNow;
+  const { canEdit } = useAccess();
 
-  if (dismissed || meds.length === 0) return null;
+  if (dismissed || meds.length === 0 || !canEdit) return null;
   return (
     <section aria-labelledby="reminder-prompt" className="rounded-2xl bg-amber/20 p-4">
       <div className="flex items-start justify-between gap-3">

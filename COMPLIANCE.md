@@ -33,6 +33,13 @@ Last updated: Oct 26, 2026.
 
 Keep a copy of each signed agreement outside Lanternway's systems.
 
+## Family sharing (built)
+- An admin invites a co-parent, grandparent or sitter with a role: view, log (daily logs and milestones only), or admin. Roles are enforced by row-level security, not just the UI (migration 008, `pnpm db:test-rls`).
+- Invites are private links: only a SHA-256 hash is stored, shown once, single use, 7 or 30 days, revocable. Anyone holding an unused link can accept it (the owner's choice), so the dialog says to send it only to that person.
+- The admin ticks a consent box before each invite (`share_family`, recorded with role and expiry).
+- A family always keeps an admin (database trigger). The only admin of a shared family can't delete their account until they hand off; data export covers only families you're an admin of.
+- Privacy Policy draft now says family members see each other's names and emails.
+
 ## Medication reminders (settings saved, not sending yet)
 - Lock-screen privacy: reminders don't name the medication unless the parent opts in per reminder.
 - Before turning on **texts**: SMS vendor DPA, confirm the number (one-time code), clear opt-in wording, STOP/HELP replies, US carrier (10DLC) registration. Texts with a medication name count as health data leaving Lanternway; keep the private wording as the default.

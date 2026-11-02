@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { CloudRain, Ear, Heart, MessageCircleHeart, Pill, Sparkles, Star, Sun } from "lucide-react";
+import { IfAllowed } from "@/components/access";
 import { LumiTip } from "@/components/lumi-tip";
 import { PageHeader } from "@/components/page-header";
 import { ageOn } from "@/lib/dates";
@@ -62,7 +63,11 @@ export function AboutMeView({
       <PageHeader
         title="About Me"
         description={`Everything someone new should know about ${child.firstName}.`}
-        action={<SharePanel profile={profile} childId={child.id} />}
+        action={
+          <IfAllowed to="edit">
+            <SharePanel profile={profile} childId={child.id} />
+          </IfAllowed>
+        }
       />
 
       {welcome && (
@@ -197,7 +202,11 @@ export function AboutMeView({
         </HealthBox>
       </HealthDetails>
 
-      {isSavedChildId(child.id) && <RemoveChild childId={child.id} name={child.firstName} />}
+      {isSavedChildId(child.id) && (
+        <IfAllowed to="edit">
+          <RemoveChild childId={child.id} name={child.firstName} />
+        </IfAllowed>
+      )}
     </div>
   );
 }

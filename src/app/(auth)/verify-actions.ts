@@ -2,6 +2,7 @@
 
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import { afterSignInPath } from "@/lib/join-cookie";
 import { auth } from "@/lib/auth/server";
 import { VERIFY_COOKIE } from "./verify-cookie";
 
@@ -26,7 +27,7 @@ export async function verifyCode(_prev: VerifyState, form: FormData): Promise<Ve
     return { error: "That code doesn't match. Please check the email and try again." };
   }
   (await cookies()).delete(VERIFY_COOKIE);
-  redirect("/home");
+  redirect(await afterSignInPath());
 }
 
 export async function resendCode(): Promise<VerifyState> {

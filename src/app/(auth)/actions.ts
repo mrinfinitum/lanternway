@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth/server";
 import { recordConsents } from "@/lib/consents";
+import { afterSignInPath } from "@/lib/join-cookie";
 import { passwordProblem } from "@/lib/password-policy";
 import { rememberEmailToVerify } from "./verify-cookie";
 
@@ -42,7 +43,7 @@ export async function signIn(_prev: AuthFormState, form: FormData): Promise<Auth
     }
     return { error: friendly(error), email };
   }
-  redirect("/home");
+  redirect(await afterSignInPath());
 }
 
 export async function signUp(_prev: AuthFormState, form: FormData): Promise<AuthFormState> {

@@ -14,9 +14,16 @@ export { isSavedChildId };
 type Row = { id: string; profile: Omit<Child, "id"> };
 const toChild = (r: Row): Child => ({ ...r.profile, id: r.id });
 
-/** This user's family id, creating the family (with them as admin) the first time. */
+/**
+ * The family this user adds kids to: the first one they're an admin of, creating one
+ * (with them as admin) if they have none. Someone invited into another family with
+ * "log" or "view" gets their own family for their own kids.
+ */
 async function ensureFamily(db: PoolClient, userId: string): Promise<string> {
-  const existing = await db.query<{ family_id: string }>("select family_id from family_members where user_id = $1 order by created_at limit 1", [userId]);
+  const existing = await db.query<{ family_id: string }>(
+    "select family_id from family_members where user_id = $1 and role = 'admin' order by created_at limit 1",
+    [userId],
+  );
   if (existing.rows[0]) return existing.rows[0].family_id;
   const { rows } = await db.query<{ id: string }>("insert into families (created_by) values ($1) returning id", [userId]);
   await db.query("insert into family_members (family_id, user_id, role) values ($1, $2, 'admin')", [rows[0].id, userId]);

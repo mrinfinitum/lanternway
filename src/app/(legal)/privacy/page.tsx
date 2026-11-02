@@ -80,6 +80,9 @@ export default function PrivacyPage() {
         <li>
           <strong>People you choose to share with:</strong> for example, a one-page About Me you send to a teacher, or a
           check-in link. You pick what&apos;s included, we ask for your consent before sharing, and you can turn links off.
+          If you invite a family member (a co-parent, grandparent, or sitter), they get their own sign-in and see your
+          children&apos;s records. You choose whether they can only view, also add daily logs, or manage everything, and you
+          can change that or remove them at any time. We show family members each other&apos;s names and email addresses.
         </li>
         <li>
           <strong>Service providers</strong> that run Lanternway for us, under contracts that limit their use of your data:

@@ -173,6 +173,95 @@ try {
   check("expired link: form context gives nothing", ctxExpired === 0);
   check("expired link: submit is refused", (await submit(oldToken)) === false);
 
+  // Family sharing (migration 008): invite links, roles, and keeping an admin.
+  const V = "rls-test-user-viewer";
+  const L = "rls-test-user-logger";
+  const X = "rls-test-user-latecomer";
+  const invite = async (role, expires = "now() + interval '7 days'") => {
+    const t = randomBytes(32).toString("base64url");
+    const r = await as(A, async (c) => c.query(`insert into family_invites (family_id, token_hash, role, label, expires_at) values ($1, $2, $3, 'Test', ${expires})`, [a.f, createHash("sha256").update(t).digest("hex"), role]));
+    return r?.error ? null : t;
+  };
+  const accept = (user, t) => as(user, async (c) => (await c.query("select accept_family_invite($1) as s", [t])).rows[0].s);
+  const viewToken = await invite("view");
+  const logToken = await invite("log");
+  check("an admin can create invite links", Boolean(viewToken && logToken));
+  const bInvites = await as(B, async (c) => (await c.query("select count(*)::int n from family_invites")).rows[0].n);
+  check("B cannot see A's invites", bInvites === 0);
+  const bInviteIntoA = await as(B, async (c) => c.query("insert into family_invites (family_id, token_hash, role, label, expires_at) values ($1, 'x', 'admin', 'Me', now() + interval '1 day')", [a.f]));
+  check("B cannot create an invite into A's family", Boolean(bInviteIntoA?.error));
+  const preview = await as(null, async (c) => (await c.query("select * from family_invite_preview($1)", [viewToken])).rows);
+  check("public invite preview: role and status only", preview.length === 1 && preview[0].role === "view" && preview[0].status === "open" && Object.keys(preview[0]).length === 3);
+  const previewUnknown = await as(null, async (c) => (await c.query("select * from family_invite_preview($1)", ["nope"])).rows.length);
+  check("public invite preview: unknown link gives nothing", previewUnknown === 0);
+  const anonAccept = await as(null, async (c) => c.query("select accept_family_invite($1)", [viewToken]));
+  check("accepting needs a signed-in person", Boolean(anonAccept?.error));
+  check("a signed-in person can accept an invite", (await accept(V, viewToken)) === "joined");
+  check("an accepted invite can't be used by someone else", (await accept(X, viewToken)) === "used");
+  check("accepting your own invite again is harmless", (await accept(V, viewToken)) === "already");
+  check("log invite accepted", (await accept(L, logToken)) === "joined");
+  const xSees = await as(X, async (c) => (await c.query("select count(*)::int n from children")).rows[0].n);
+  check("someone with a used link sees nothing", xSees === 0);
+
+  const vSees = await as(V, async (c) => (await c.query("select id from children")).rows.map((r) => r.id));
+  check("view member sees the family's child", vSees.length === 1 && vSees[0] === a.ch);
+  const vLog = await as(V, async (c) => c.query("insert into records (id, family_id, child_id, kind, data) values (gen_random_uuid(), $1, $2, 'log', '{}')", [a.f, a.ch]));
+  check("view member cannot add a log", Boolean(vLog?.error));
+  const vChild = await as(V, async (c) => (await c.query("update children set profile = profile where id = $1", [a.ch])).rowCount);
+  check("view member cannot edit About Me", vChild === 0);
+  const vRecDel = await as(V, async (c) => (await c.query("delete from records where family_id = $1", [a.f])).rowCount);
+  check("view member cannot delete records", vRecDel === 0);
+
+  const logId = "55555555-5555-4555-8555-555555555555";
+  const lLog = await as(L, async (c) => c.query("insert into records (id, family_id, child_id, kind, data) values ($1, $2, $3, 'log', '{}')", [logId, a.f, a.ch]));
+  check("log member can add a daily log", !lLog?.error);
+  const lLogEdit = await as(L, async (c) => (await c.query("update records set data = '{\"x\":1}' where id = $1", [logId])).rowCount);
+  check("log member can edit a daily log", lLogEdit === 1);
+  const lMed = await as(L, async (c) => c.query("insert into records (id, family_id, child_id, kind, data) values (gen_random_uuid(), $1, $2, 'medication', '{}')", [a.f, a.ch]));
+  check("log member cannot add a medication", Boolean(lMed?.error));
+  const lRelabel = await as(L, async (c) => (await c.query("update records set kind = 'medication' where id = $1", [logId])).rowCount);
+  check("log member cannot turn a log into another kind", lRelabel === 0 || lRelabel?.error);
+  const lChild = await as(L, async (c) => (await c.query("update children set profile = profile where id = $1", [a.ch])).rowCount);
+  check("log member cannot edit About Me", lChild === 0);
+  const lNewChild = await as(L, async (c) => c.query("insert into children (family_id, profile) values ($1, '{}')", [a.f]));
+  check("log member cannot add a child", Boolean(lNewChild?.error));
+  const lLink = await as(L, async (c) => c.query("insert into checkin_respondents (family_id, child_id, name, role) values ($1, $2, 'T', 'teacher')", [a.f, a.ch]));
+  check("log member cannot set up teacher check-ins", Boolean(lLink?.error));
+  const lInvites = await as(L, async (c) => (await c.query("select count(*)::int n from family_invites")).rows[0].n);
+  check("log member cannot see invites", lInvites === 0);
+  const lInvite = await as(L, async (c) => c.query("insert into family_invites (family_id, token_hash, role, label, expires_at) values ($1, 'y', 'admin', 'Me', now() + interval '1 day')", [a.f]));
+  check("log member cannot create invites", Boolean(lInvite?.error));
+  const lPromote = await as(L, async (c) => (await c.query("update family_members set role = 'admin' where user_id = $1", [L])).rowCount);
+  check("log member cannot make themselves admin", lPromote === 0);
+
+  const members = await as(V, async (c) => (await c.query("select * from my_family_members()")).rows);
+  check("members list shows this family's members only", members.length === 3 && members.every((m) => m.family_id === a.f));
+  const bMembers = await as(B, async (c) => (await c.query("select * from my_family_members()")).rows);
+  check("B's members list doesn't include A's family", bMembers.length === 1 && bMembers[0].user_id === B);
+
+  const demoteSelf = await as(A, async (c) => c.query("update family_members set role = 'view' where user_id = $1", [A]));
+  check("the only admin can't demote themselves", Boolean(demoteSelf?.error));
+  const leaveSelf = await as(A, async (c) => c.query("delete from family_members where user_id = $1", [A]));
+  check("the only admin can't leave the family", Boolean(leaveSelf?.error));
+  const promote = await as(A, async (c) => (await c.query("update family_members set role = 'admin' where user_id = $1", [L])).rowCount);
+  check("an admin can change a member's role", promote === 1);
+  const remove = await as(A, async (c) => (await c.query("delete from family_members where user_id = $1", [L])).rowCount);
+  check("an admin can remove a member", remove === 1);
+  const vLeave = await as(V, async (c) => (await c.query("delete from family_members where user_id = $1", [V])).rowCount);
+  check("a member can leave", vLeave === 1);
+  const vAfter = await as(V, async (c) => (await c.query("select count(*)::int n from children")).rows[0].n);
+  check("after leaving, they see nothing", vAfter === 0);
+
+  const revoked = await invite("view");
+  await as(A, async (c) => c.query("update family_invites set revoked_at = now() where token_hash = $1", [createHash("sha256").update(revoked).digest("hex")]));
+  check("revoked invite can't be accepted", (await accept(X, revoked)) === "invalid");
+  const expired = await invite("view", "now() - interval '1 minute'");
+  check("expired invite can't be accepted", (await accept(X, expired)) === "invalid");
+
+  const bJoinsA = await accept(B, await invite("view"));
+  const bGone = await as(B, async (c) => (await c.query("delete from families where id = $1", [b.f])).rowCount);
+  check("an admin can still delete their whole family", bJoinsA === "joined" && bGone === 1);
+
   const ddl = await as(A, async (c) => c.query("create table sneaky (id int)"));
   check("website role still cannot create tables", Boolean(ddl?.error));
 } finally {

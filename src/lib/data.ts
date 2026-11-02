@@ -14,6 +14,7 @@ import { redirect } from "next/navigation";
 import { cache } from "react";
 import { getSignedInUser } from "@/lib/auth/server";
 import { listChildren } from "@/lib/families";
+import { getAccessForChild, type Access } from "@/lib/sharing";
 import { isSavedChildId } from "@/lib/child-profile";
 import { loadChildRecords } from "@/lib/records";
 import { isSavedLinkToken, loadChildCheckIns, savedLinkFormContext } from "@/lib/checkins";
@@ -105,6 +106,19 @@ export async function getCurrentChild(): Promise<Child> {
   if (!child) redirect("/start");
   return child;
 }
+
+/**
+ * What the signed-in person may do with the child being viewed: their role in that
+ * child's family (lib/sharing.ts). Admin for the sample family and before any kids exist.
+ * The database enforces this too; screens use it to hide what they can't change.
+ */
+export const getCurrentAccess = cache(async (): Promise<Access> => {
+  const admin: Access = { role: "admin", adminNames: [] };
+  if (await isSampleFamily()) return admin;
+  const [user, child] = await Promise.all([getSignedInUser(), getCurrentChildOrNull()]);
+  if (!user || !child) return admin;
+  return (await getAccessForChild(user.id, child.id)) ?? { role: "view", adminNames: [] };
+});
 
 export async function getChild(childId: string): Promise<Child | null> {
   return (await getChildren()).find((c) => c.id === childId) ?? null;

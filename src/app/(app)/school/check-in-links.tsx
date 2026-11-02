@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useId, useState, useTransition } from "react";
 import { Ban, Check, Copy, ExternalLink, Mail, Plus } from "lucide-react";
+import { useAccess } from "@/components/access";
 import { Field, SelectField, text } from "@/components/form-dialog";
 import { EmptyState } from "@/components/lumi-tip";
 import { Badge } from "@/components/ui/badge";
@@ -56,6 +57,7 @@ export function CheckInLinks({
   const [revoked, setRevoked] = useState<string[]>([]);
   const [copied, setCopied] = useState<string | null>(null);
   const [, startRevoke] = useTransition();
+  const { canEdit } = useAccess();
 
   const status = (l: Row) => {
     if (l.revokedAt || revoked.includes(l.id)) return "Revoked";
@@ -78,7 +80,7 @@ export function CheckInLinks({
 
   return (
     <div className="space-y-3">
-      {saved ? (
+      {saved && !canEdit ? null : saved ? (
         <NewLink childId={childId} childName={childName} respondents={respondents} />
       ) : (
         <p className="text-sm text-muted-foreground">These are sample links. Add your own child to send real ones.</p>
@@ -126,9 +128,11 @@ export function CheckInLinks({
                         </Button>
                       </>
                     )}
-                    <Button size="sm" variant="ghost" className="rounded-full" onClick={() => revoke(l)}>
-                      <Ban /> Revoke
-                    </Button>
+                    {canEdit && (
+                      <Button size="sm" variant="ghost" className="rounded-full" onClick={() => revoke(l)}>
+                        <Ban /> Revoke
+                      </Button>
+                    )}
                   </div>
                 )}
               </li>

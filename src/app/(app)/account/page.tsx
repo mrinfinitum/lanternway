@@ -20,6 +20,7 @@ const consentLabels: Record<ConsentKind, string> = {
   test_data: "Agreed to use made-up details while testing",
   share_profile: "Consented to share an About Me",
   share_checkin: "Asked someone for check-ins about your child",
+  share_family: "Invited someone to see your family's records",
 };
 
 const box = "space-y-3 rounded-2xl bg-card p-4 ring-1 ring-border sm:p-5";

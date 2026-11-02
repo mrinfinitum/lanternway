@@ -36,6 +36,9 @@ export function SideNav() {
         </ul>
       </nav>
       <div className="mt-auto space-y-3 px-2">
+        <Link href="/family" className="block text-sm font-semibold text-teal/80 underline-offset-4 hover:underline">
+          Family sharing
+        </Link>
         <Link href="/account" className="block text-sm font-semibold text-teal/80 underline-offset-4 hover:underline">
           Account &amp; privacy
         </Link>

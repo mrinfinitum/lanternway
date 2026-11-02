@@ -2,7 +2,7 @@
 
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { deleteAccountData } from "@/lib/account";
+import { deleteAccountData, NEEDS_ANOTHER_ADMIN } from "@/lib/account";
 import { auth, getSignedInUser } from "@/lib/auth/server";
 import { CURRENT_CHILD_COOKIE, SAMPLE_FAMILY_COOKIE } from "@/lib/data";
 import { passwordProblem } from "@/lib/password-policy";
@@ -51,7 +51,10 @@ export async function deleteAccount(_prev: FormState, form: FormData): Promise<F
 
   try {
     await deleteAccountData(user.id);
-  } catch {
+  } catch (err) {
+    if (err instanceof Error && err.message === NEEDS_ANOTHER_ADMIN) {
+      return { error: "You're the only admin of a family other people use. Make someone else an admin, or remove them, under Family sharing first. Nothing was deleted." };
+    }
     return { error: "We couldn't delete your account right now. Nothing was deleted. Please try again or contact us." };
   }
   const store = await cookies();

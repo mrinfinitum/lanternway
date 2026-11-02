@@ -12,7 +12,7 @@ _Last updated: Nov 1, 2026. Replaces the Oct 24 handoff (Stage 1 is long done)._
 |---|---|
 | Repo | https://github.com/mrinfinitum/lanternway |
 | `main` (production) | `2e3fdee` (Stage 1 mock-data prototype). **Don't push or deploy to production.** The user hasn't decided when to promote dev. |
-| `dev` | `e0e46f0`, deployed to **https://dev.lanternway.co** (noindex + prototype banner) |
+| `dev` | Latest: family sharing (see `git log`), deployed to **https://dev.lanternway.co** (noindex + prototype banner) |
 | Working tree | Clean. Medication reminder settings + care calendar are committed and on dev. Migration 007 is applied to the shared Neon database. |
 
 ### Medication reminders + care calendar (reviewed and tested Nov 1)
@@ -51,6 +51,12 @@ _Last updated: Nov 1, 2026. Replaces the Oct 24 handoff (Stage 1 is long done)._
   - Revoking takes effect immediately.
   - Check-ins appear for kids without a plan too.
   - Real check-ins feed Home teacher stats, the medication before/after charts, the Timeline and Reports.
+- **Family sharing (Nov 1):** `/family` (linked from More and the sidebar) and the public `/join/[invite]` page.
+  - Roles: **admin** (everything), **log** (reads everything; adds/edits daily logs and milestones only), **view** (reads only). Enforced by RLS in migration 008 and mirrored in the UI: `getCurrentAccess()` (`data.ts`) → `AccessProvider` in the app layout → `useAccess()` / `IfAllowed` (`src/components/access.tsx`). `FormDialog` hides itself unless the person can edit (`need="log"` for log forms). Non-admins see a short note at the top of each page.
+  - Invite links: hashed, shown once, single use, 7 or 30 days, revocable, `share_family` consent. **Anyone with the link can accept** (the user's choice). Not signed in → sign in/up → the `lw-join` cookie brings them back to `/join` (`afterSignInPath()`).
+  - A family always keeps an admin (trigger). The only admin of a shared family can't delete their account until they hand off. Export covers only families you're an admin of. Adding a child goes into a family you're an admin of (or a new one).
+  - Tested end to end with two QA accounts (invite → sign in → join → log → role change → leave; revoke; last-admin block). **Not tested:** the "Create an account to join" path through email verification (needs a real code), though it uses the same redirect helper.
+  - Known polish: empty states (e.g. "Add one to keep doses…") still invite non-admins to add things they can't.
 - **Medication catalog:** 69 medications (names, classes and forms; **no doses**) in Neon, with type-ahead when adding a med.
 - **Privacy and compliance:**
   - draft Privacy, Terms and Consumer Health Data policies under `(legal)`;
@@ -132,11 +138,10 @@ pnpm build            # catches Suspense/cacheComponents issues dev misses (don'
 ## Next up
 
 **Pick from these (in rough priority order):**
-1. **Family sharing:** invite a co-parent or caregiver with view, log or admin roles. The schema already has `family_members.role`, and the RLS helpers distinguish writable from admin.
-2. **Real About Me share links + PDF**: hashed tokens, expiry, revoke, view log (same pattern as check-ins).
-3. **Teacher accounts** per `APP_MAP.md`: they see only children a parent connected them to, and only the check-in form, About Me and accommodations.
-4. **Sending medication reminders**: needs decisions or paid services, so ask first. Details are in `BUILD_PLAN.md` (web push + scheduler; SMS needs a paid provider and 10DLC).
-5. **Polish:**
+1. **Real About Me share links + PDF**: hashed tokens, expiry, revoke, view log (same pattern as check-ins).
+2. **Teacher accounts** per `APP_MAP.md`: they see only children a parent connected them to, and only the check-in form, About Me and accommodations.
+3. **Sending medication reminders**: needs decisions or paid services, so ask first. Details are in `BUILD_PLAN.md` (web push + scheduler; SMS needs a paid provider and 10DLC).
+4. **Polish:**
    - Lumi moments (ask before inventing new Lumi art);
    - an accessibility/contrast audit;
    - a 390px pass on every route.

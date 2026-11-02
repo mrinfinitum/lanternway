@@ -8,6 +8,7 @@ import { Stat } from "@/components/stat";
 import { Card, CardContent } from "@/components/ui/card";
 import {
   getCheckIns,
+  getCurrentAccess,
   getCurrentChild,
   getIepPlan,
   getLogs,
@@ -39,7 +40,7 @@ function nextWeekday(today: IsoDate, dow: number): IsoDate {
 const weekdayByName: Record<string, number> = { Mondays: 1, Tuesdays: 2, Wednesdays: 3, Thursdays: 4, Fridays: 5 };
 
 export default async function HomePage() {
-  const [child, today, user] = await Promise.all([getCurrentChild(), getToday(), getSignedInUser()]);
+  const [child, today, user, access] = await Promise.all([getCurrentChild(), getToday(), getSignedInUser(), getCurrentAccess()]);
   const weekFrom = addDays(today, -6);
   const [weekLogs, todayLogs, checkIns, plan, medications, providers] = await Promise.all([
     getLogs(child.id, { from: weekFrom, to: today }),
@@ -95,26 +96,28 @@ export default async function HomePage() {
         <h1 className="text-2xl font-extrabold md:text-3xl">Hi {user?.name.split(" ")[0] || "there"}</h1>
       </div>
 
-      {/* Quick log */}
+      {/* Quick log (not for view-only family members) */}
       <section aria-labelledby="quick-log">
         <SectionHeading id="quick-log">How&apos;s {child.firstName}&apos;s day?</SectionHeading>
-        <div className="grid grid-cols-3 gap-3 sm:grid-cols-6">
-          {logKindOrder.map((kind) => {
-            const Icon = logKindIcons[kind];
-            return (
-              <Link
-                key={kind}
-                href={`/log?kind=${kind}`}
-                className="flex flex-col items-center gap-2 rounded-2xl bg-cream px-2 py-4 text-sm font-bold transition-colors hover:bg-amber/30"
-              >
-                <span className="flex size-10 items-center justify-center rounded-full bg-white">
-                  <Icon className="size-5" aria-hidden />
-                </span>
-                {logKindLabels[kind]}
-              </Link>
-            );
-          })}
-        </div>
+        {access.role !== "view" && (
+          <div className="grid grid-cols-3 gap-3 sm:grid-cols-6">
+            {logKindOrder.map((kind) => {
+              const Icon = logKindIcons[kind];
+              return (
+                <Link
+                  key={kind}
+                  href={`/log?kind=${kind}`}
+                  className="flex flex-col items-center gap-2 rounded-2xl bg-cream px-2 py-4 text-sm font-bold transition-colors hover:bg-amber/30"
+                >
+                  <span className="flex size-10 items-center justify-center rounded-full bg-white">
+                    <Icon className="size-5" aria-hidden />
+                  </span>
+                  {logKindLabels[kind]}
+                </Link>
+              );
+            })}
+          </div>
+        )}
         <TodayLogged childId={child.id} today={today} serverLogs={todayLogs} />
       </section>
 

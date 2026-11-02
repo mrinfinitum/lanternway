@@ -59,7 +59,7 @@ Sample family (fictional): **Maya**, age 10, autistic + ADHD. Diagnosed autism a
 - [x] Neon Auth: sign-in required for the app; email + password (sign up, sign in, sign out); dev.lanternway.co trusted; Google turned off
 - [x] Family tables (families, family_members, children) with RLS tied to `neon_auth` users (`pnpm db:test-rls`: 10 checks); new accounts start on /start with their own empty family; Add a child, About Me edits, and Remove save to Neon; sample family available from the header menu
 - [x] Logs, medications, therapy, and school records in Neon (`records` table, RLS, server-side validation, end-to-end browser test)
-- [ ] Family invites with roles (view / log / admin) and teacher access
+- [ ] Family invites with roles (view / log / admin) and teacher access (family invites done; teacher access to do)
 - [x] Data layer reads the family's own kids from Neon; sample family stays on mock data
 - [ ] Custom email sender (verification codes, password reset) before real users
 - [ ] File storage choice (documents, photos)
@@ -69,7 +69,7 @@ Sample family (fictional): **Maya**, age 10, autistic + ADHD. Diagnosed autism a
 - [ ] Send medication reminders. Push: service worker, VAPID keys, `web-push` library, a scheduler (Vercel Cron every few minutes needs Vercel Pro), ask permission on the device; iPhone needs the app on the Home Screen. Text: SMS provider (paid; e.g. Twilio), confirm the number, STOP/HELP handling, US carrier (10DLC) registration. Skip reminders for stopped meds and paused reminders; respect each reminder's time zone
 - [ ] Lanternway-sent check-in emails/reminders to teachers (links are shared from the parent's own email/messages for now)
 - [ ] PDF export for reports and About Me
-- [ ] Family invites with roles (view / log / admin)
+- [x] Family invites with roles (view / log / admin): `/family`, `/join/[invite]`, migration 008
 - [ ] Teacher accounts: `school_contacts.user_id`, `teacher_access`, `invites`; teacher reads only via narrow Postgres functions (`APP_MAP.md` §6)
 - [ ] `/join/[invite]` flow and post-sign-in routing (family / students / both / neither)
 - [x] Data export + delete account (Account & privacy page; sessions removed with the account)

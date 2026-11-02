@@ -18,6 +18,7 @@ export const config = {
     "/kids/:path*",
     "/start/:path*",
     "/account/:path*",
+    "/family/:path*",
     "/api/account/:path*",
     "/api/medications/:path*",
   ],
