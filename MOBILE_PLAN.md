@@ -349,6 +349,31 @@ The reminder settings are already saved (migration 007). Sending them needs:
 - Never put the medication name or dose in a push payload unless the parent opted in.
 - Reminders are **reminders the parent set**, not advice. The app never suggests a time, dose or change.
 
+### Refill reminders (push in the phone app, tap to text or call)
+
+The user chose this design (Nov 1). It sits next to dose reminders and uses the same push setup and permission prompt. There's no SMS from Lanternway.
+
+- **When:** N days before the refill is due. The due date is `lastFilledOn` + `daysSupply`, the same date `refillDueDate()` already shows on Home and the calendar.
+  - N is set per medication: 3, 5, 7 or 10 days, default 5.
+  - The reminder arrives at a fixed morning time in the family's time zone.
+  - No reminder for a stopped medication (`stopDate` in the past) or one without both dates.
+  - When the parent records a new `lastFilledOn`, the next reminder moves with it.
+- **Data:** optional fields on the existing `medication` record, for example `refillReminderDays` (3 | 5 | 7 | 10) and `pharmacyPhone`. The prescriber's phone comes from their `provider` record (`prescriberId`). There's no new record kind and no migration.
+  - The fields only need adding to the `medications` spec in `packages/shared/src/record-schemas.ts`. `PUT /api/v1/records/medications/:id` and the read endpoints pass record fields through that spec generically, so no endpoint changes are needed.
+  - Fields not in the spec are dropped on save, so add them there first.
+- **Delivery:** the same choice as dose reminders.
+  - A local notification scheduled on the phone with `expo-notifications` is enough here, because the date is known days ahead. It's free, nothing leaves the phone, and it's rescheduled whenever the medication changes or the app syncs.
+  - Server push through the Expo push service would reach every family member's phone. It needs the `push_devices` table and the scheduler decisions above.
+- **Wording:** private by default ("Refill coming up for Maya in 5 days"). The medication name appears only if the parent opted in for that medication. Never a dose.
+- **Tap to text or call:** the notification opens the medication's screen with buttons that hand off to the parent's own apps through `Linking.openURL`:
+  - **Text the pharmacy / prescriber:** `sms:<number>` with a pre-written note. The parent reads, edits and sends it from their own Messages app.
+    - The body syntax differs by platform: `sms:+15555550123&body=…` on iOS, `sms:+15555550123?body=…` on Android. Build it per `Platform.OS`, and URL-encode the body.
+    - Example note: "Hi, this is Dana, Maya's parent. Could you please refill Maya's [medication] prescription? Thank you."
+  - **Call:** `tel:+15555550123`.
+  - Use `Linking.canOpenURL` first (an iPad or a phone with no SIM can't text or call), and fall back to showing the number with a Copy button.
+  - Lanternway never sends the message or places the call. The note asks for a refill and nothing else: no dose, symptoms or advice (CLAUDE.md rule 2).
+- **Web:** the website shows the same "refill due" date it shows today, plus the per-medication reminder setting. Tap-to-text links work on the website too, on a phone.
+
 ---
 
 ## 5. App Store and Google Play
@@ -498,6 +523,7 @@ Each step keeps `pnpm dev` working, passes `pnpm lint && pnpm typecheck`, and ru
 - [ ] Decide: local notifications only (free), or server push (FCM project + a scheduler, maybe Vercel Pro)
 - [ ] Local: schedule from the saved reminder settings and reschedule on change, sign-out and pause. Use private wording by default
 - [ ] Server push (if chosen): `push_devices` table **with RLS + `db:test-rls` checks**, a scheduler, Expo push. Skip stopped meds and paused reminders, and respect time zones
+- [ ] Refill reminders (§4): schedule N days before `lastFilledOn` + `daysSupply` from the medication's `refillReminderDays`. Opening it shows tap-to-text (`sms:`, per-platform body syntax) and tap-to-call (`tel:`) buttons for the pharmacy and prescriber, with a Copy fallback. The web side and the record fields are built first in the main checkout
 
 ### Later (Stage 4 extras, each needs its own decision)
 - Home-screen widgets and quick log from the lock screen (iOS WidgetKit / Android widgets need native code via config plugins)
