@@ -12,6 +12,31 @@ _Drafted Nov 1, 2026. A plan for review. Nothing here is built yet._
 - **Sign-in goes through our own server.** Neon's managed Better Auth doesn't support Expo directly (details in §3). The first milestone is a one-day spike to prove the approach before anything else is built.
 - **Start small:** sign in, pick a child, quick log, Today. Then Timeline and Medications, and the rest after that. Push reminders come later and need your decisions first.
 - **You set up the store accounts:** Apple Developer ($99 a year) and Google Play ($25 one time). Everything else in this plan is free to start, except where it's marked **ask first**.
+- **A real native app, one codebase.** You chose this over two separate Swift + Kotlin apps or a wrapped website. Native screens and navigation, native push, offline logging. **No WebView wrapper of the website.**
+
+---
+
+## 0. What "native" means here
+
+**Your choice:** a real app, built once for iOS and Android ("Real app, one codebase"). Not a website in a frame, and not two separate Swift and Kotlin apps.
+
+**What the app is made of:**
+- **Native screens and navigation.** React Native draws real iOS and Android views (UIKit / Android Views), not HTML. Expo Router uses each platform's own navigation stack and tab bar, so you get swipe-back on iOS, the system back button on Android, and native transitions.
+- **Native push.** Notifications go through Apple Push Notification service on iOS and Firebase Cloud Messaging on Android, via `expo-notifications`. Local reminders scheduled on the phone use the same native APIs.
+- **Offline logging.** Quick log saves to an on-device SQLite database first, and syncs when there's a connection (§4).
+- **Native system features:** the Keychain / Keystore for the sign-in token, the system share sheet for check-in and invite links, Dynamic Type, VoiceOver / TalkBack, Reduce Motion, and one-time-code autofill.
+- **No WebView wrapper.** No screen loads a lanternway.co page. Screens that aren't built yet simply aren't in the app until they're native (§4, M6). The only web page the app may ever open is in the system browser for something outside the app, like the privacy policy.
+
+**Why Expo counts as native:**
+- Expo is the framework React Native's own team recommends for new apps. It compiles to a normal Xcode project and a normal Android Studio (Gradle) project, and ships as a standard `.ipa` / `.aab` through the stores like any other app.
+- The JavaScript only describes the screens. Rendering, gestures, storage, notifications and secure storage are the platforms' own code.
+- One codebase covers both platforms. That roughly halves the work compared with separate Swift and Kotlin apps, and it shares types and validation with the website (`packages/shared`).
+
+**Where Swift or Kotlin would go if we ever need it:**
+- **Expo Modules** (`npx create-expo-module --local`): write a small Swift file for iOS and a Kotlin file for Android inside `apps/mobile/modules/<name>/`, then call it from the app like any other function. This is the place for anything Expo doesn't already cover.
+- **Config plugins:** for changes to the native project settings (entitlements, `Info.plist`, `AndroidManifest.xml`) without hand-editing generated files.
+- **Likely first candidates:** a Home Screen / lock-screen widget for quick log (WidgetKit in Swift; an App Widget in Kotlin), and Apple HealthKit / Android Health Connect if that's ever wanted (a separate decision).
+- **Escape hatch:** `npx expo prebuild` writes out the full `ios/` and `android/` projects, so the app can always be opened and changed in Xcode or Android Studio. Nothing locks us in.
 
 ---
 
@@ -209,7 +234,7 @@ The public teacher form stays on the web at `/c/[token]`. Teachers don't need th
 | `DELETE /families/:id/members/:userId` | admin, or yourself (leave) | `removeFromFamily` |
 | `POST /join/:token` | signed in | `joinFamily`. Opened from a universal link (see §4) |
 
-**Reports:** not in the first release. The phone opens the web report page in an in-app browser. That needs a short-lived signed URL, because the browser has no session. Or the phone waits for the PDF export task.
+**Reports:** not in the first release. They come later as a native screen, plus a PDF from the PDF export task, shared with the system share sheet. The phone doesn't open the web report page.
 
 ### What the phone must never do
 
@@ -266,7 +291,7 @@ Build in this order. Each is a small, testable step:
 4. **Today (Home):** what's logged today, this week's summary, coming up.
 5. **Timeline** (read-only first).
 6. **Medications:** list, doses, changes, the calendar, and reminder settings (saved, not sent).
-7. **Therapy, School, About Me, Family sharing, Account** in a later milestone. Until then, a "More" tab opens those pages on the web.
+7. **Therapy, School, About Me, Family sharing, Account** in a later milestone, all as native screens. Until each one is built, it isn't in the app: no web pages inside the app as stand-ins. Internal test builds can ship without them. The **store release waits for at least Account (with delete account)**, because Apple and Google require in-app deletion.
 
 **Look and feel:**
 - Brand tokens as a small theme file (`amber`, `coral`, `teal`, `cream`, `paper`, `white`) and Nunito via `expo-font`.
@@ -373,7 +398,7 @@ Answer these honestly, from what we actually collect. The draft answers, for cou
 | **Kids category / COPPA** | The app is *about* children | It's **for parents**. Pick Medical or Health & Fitness, **not** the Kids category. Age rating: 17+ or 18+ to match the adults-only sign-up. No child accounts |
 | **Sign-in wall** | Reviewers need to get in | Give App Review a demo account with the fictional sample family. Never real data |
 | **Account deletion** (Apple 5.1.1(v), Play) | Required when an app has sign-up | In-app delete is already built on the web. The mobile Account screen calls `/account/delete` |
-| **"Just a website" (Apple 4.2)** | Apps that only wrap a website get rejected | Native quick log, offline outbox and native navigation. "More" links to web pages only at first, for secondary screens |
+| **"Just a website" (Apple 4.2)** | Apps that only wrap a website get rejected | Every screen is native, with native navigation, offline logging, push and the share sheet. No WebView pages anywhere |
 | **Health data and sensitive permissions** | Camera, photos and notifications each need a clear purpose string | Ask only when used, with plain-English purpose strings. No HealthKit / Health Connect for now. Adding them brings more rules and a separate decision |
 | **Data safety mismatches** | Play rejects or removes apps whose form doesn't match the SDKs inside | No analytics or crash SDKs without asking first. Re-check the form whenever a dependency is added |
 | **Subscriptions later (Stage 3)** | Apple and Google require in-app purchase for digital subscriptions bought in the app | Decide later: in-app purchase, or a sign-in-only app with no purchase screens. Don't add Stripe screens to the app without that decision |
@@ -427,7 +452,7 @@ Each step keeps `pnpm dev` working, passes `pnpm lint && pnpm typecheck`, and ru
 ### M6. Read screens
 - [ ] Timeline (week / month / year / all)
 - [ ] Medications list, dose history, calendar, simple charts (ask first: chart library)
-- [ ] "More" tab: Therapy, School, About Me, Family and Account open the web for now (in-app browser)
+- [ ] "More" tab lists only the native screens built so far. No web pages inside the app
 
 ### M7. First internal build
 - [ ] **You:** Apple Developer + Google Play accounts (organization). Then `eas.json` profiles and the first `preview` builds to TestFlight / Play internal testing
