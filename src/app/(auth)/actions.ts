@@ -21,7 +21,7 @@ function friendly(error: { code?: string; message?: string; status?: number }): 
   if (has("password_too_short", "password_short")) return "Please use at least 8 characters for your password.";
   if (has("password_too_long")) return "That password is too long. Please use a shorter one.";
   if (has("invalid_email")) return "That email address doesn't look complete.";
-  if (has("email_not_verified")) return "Please verify your email first. Check your inbox for a code.";
+  if (has("email_not_verified", "email_not_confirmed")) return "Please verify your email first. Check your inbox for a code.";
   if (error.status === 429 || has("rate_limit", "too_many")) return "Too many tries. Please wait a minute and try again.";
   if (error.status === 401) return "That email and password don't match. Please try again.";
   return "Something went wrong on our side. Please try again.";
@@ -37,7 +37,8 @@ export async function signIn(_prev: AuthFormState, form: FormData): Promise<Auth
 
   const { error } = await auth.signIn.email({ email, password });
   if (error) {
-    if (/not_verified|email_not_verified/i.test(error.code ?? "") || (error.status === 403 && /verif/i.test(error.message ?? ""))) {
+    // Neon Auth answers an unverified sign-in with 422 "email_not_confirmed"; older codes said "not_verified".
+    if (/not_verified|not_confirmed/i.test(error.code ?? "") || ((error.status === 403 || error.status === 422) && /verif|confirm/i.test(error.message ?? ""))) {
       await rememberEmailToVerify(email);
       redirect("/verify-email");
     }
