@@ -98,6 +98,22 @@ try {
   const delB2 = await as(A, async (c) => (await c.query("delete from records where id = $1", [recB])).rowCount);
   check("A cannot delete B's record", delB2 === 0);
 
+  // Medication reminders (records kind 'medication_reminder', attached to a medication).
+  const medA = "33333333-3333-4333-8333-333333333333";
+  const remA = "44444444-4444-4444-8444-444444444444";
+  const remSaved = await as(A, async (c) => {
+    await c.query("insert into records (id, family_id, child_id, kind, data) values ($1, $2, $3, 'medication', '{}')", [medA, a.f, a.ch]);
+    return c.query("insert into records (id, family_id, child_id, kind, parent_id, data) values ($1, $2, $3, 'medication_reminder', $4, '{}')", [remA, a.f, a.ch, medA]);
+  });
+  check("A can save a medication reminder for A's child", !remSaved?.error);
+  const bRem = await as(B, async (c) => (await c.query("select count(*)::int n from records where kind = 'medication_reminder'")).rows[0].n);
+  check("B cannot see A's medication reminders", bRem === 0);
+  const remIntoB = await as(A, async (c) => c.query("insert into records (id, family_id, child_id, kind, data) values (gen_random_uuid(), $1, $2, 'medication_reminder', '{}')", [b.f, b.ch]));
+  check("A cannot save a reminder into B's family", Boolean(remIntoB?.error));
+  await as(A, async (c) => c.query("delete from records where id = $1", [medA]));
+  const remGone = await as(A, async (c) => (await c.query("select count(*)::int n from records where id = $1", [remA])).rows[0].n);
+  check("deleting a medication deletes its reminder", remGone === 0);
+
   // Self-deletion of the sign-in account: only ever the caller's own, never with no user.
   const selfDel = await as("00000000-0000-0000-0000-000000000000", async (c) => (await c.query("select delete_my_auth_account() as n")).rows[0].n);
   check("delete_my_auth_account removes nothing for an unknown caller", selfDel === 0);

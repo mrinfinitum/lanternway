@@ -42,6 +42,11 @@ export default function PrivacyPage() {
           .
         </li>
         <li>
+          <strong>Medication reminders, if you set them up:</strong> the times and days you pick, whether you want a push
+          notification or a text, your time zone, and (for texts) the phone number to send them to. Reminders don&apos;t name
+          the medication unless you choose that.
+        </li>
+        <li>
           <strong>Teacher and therapist check-ins:</strong> the name, role, and (if you add it) email of each person you ask
           for check-ins, and the ratings and notes they send through your link. The person using a link only sees your
           child&apos;s first name and the form. We don&apos;t email them; you send the link yourself.

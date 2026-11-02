@@ -33,6 +33,12 @@ Last updated: Oct 26, 2026.
 
 Keep a copy of each signed agreement outside Lanternway's systems.
 
+## Medication reminders (settings saved, not sending yet)
+- Lock-screen privacy: reminders don't name the medication unless the parent opts in per reminder.
+- Before turning on **texts**: SMS vendor DPA, confirm the number (one-time code), clear opt-in wording, STOP/HELP replies, US carrier (10DLC) registration. Texts with a medication name count as health data leaving Lanternway; keep the private wording as the default.
+- Before turning on **push**: ask permission on the device only when the parent turns reminders on; push payloads should carry the private wording only.
+- Privacy Policy draft now lists reminder settings and phone numbers.
+
 ## Before a wider launch
 - Real sharing links (hashed tokens, expiry, revoke, view log)
 - Audit log of who viewed or changed a child's record

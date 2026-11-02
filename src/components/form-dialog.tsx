@@ -28,6 +28,7 @@ export function FormDialog({
   onSave,
   children,
   destructive,
+  onOpenChange,
 }: {
   trigger: React.ReactNode;
   title: string;
@@ -37,6 +38,8 @@ export function FormDialog({
   children: React.ReactNode;
   /** Optional extra action at the bottom-left, e.g. delete. Receives a close callback. */
   destructive?: (close: () => void) => React.ReactNode;
+  /** Called when the dialog opens or closes, e.g. to reset local state. */
+  onOpenChange?: (open: boolean) => void;
 }) {
   const [open, setOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -48,6 +51,7 @@ export function FormDialog({
       onOpenChange={(o) => {
         setOpen(o);
         if (o) setError(null);
+        onOpenChange?.(o);
       }}
     >
       <DialogTrigger asChild>{trigger}</DialogTrigger>

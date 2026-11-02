@@ -9,8 +9,10 @@ import {
   getCurrentChild,
   getLogs,
   getMedicationChanges,
+  getMedicationReminders,
   getMedications,
   getProviders,
+  getTherapySessions,
   getToday,
 } from "@/lib/data";
 import { addDays } from "@/lib/dates";
@@ -25,6 +27,7 @@ import {
   type Comparison,
 } from "@/lib/insights";
 import type { MedicationChange } from "@/lib/types";
+import { CareCalendar } from "../_components/care-calendar";
 import { MedicationManager } from "./medication-manager";
 
 // Reads the signed-in session, so navigations wait for the server (see app layout).
@@ -35,13 +38,15 @@ export const metadata: Metadata = { title: "Medications · Lanternway" };
 export default async function MedicationsPage() {
   const [child, today] = await Promise.all([getCurrentChild(), getToday()]);
   const from = addDays(today, -728);
-  const [medications, changes, logs, checkIns, providers] = await Promise.all([
+  const [medications, changes, reminders, logs, checkIns, providers] = await Promise.all([
     getMedications(child.id),
     getMedicationChanges(child.id),
+    getMedicationReminders(child.id),
     getLogs(child.id, { from, to: today }),
     getCheckIns(child.id, { from, to: today }),
     getProviders(child.id),
   ]);
+  const sessions = (await Promise.all(providers.map((p) => getTherapySessions(p.id)))).flat();
 
   const manager = (
     <MedicationManager
@@ -51,8 +56,27 @@ export default async function MedicationsPage() {
       today={today}
       medications={medications}
       changes={changes}
+      reminders={reminders}
       providers={providers}
     />
+  );
+
+  const calendar = (
+    <section aria-labelledby="calendar-heading">
+      <SectionHeading id="calendar-heading">Calendar</SectionHeading>
+      <CareCalendar
+        key={child.id}
+        childId={child.id}
+        childName={child.firstName}
+        today={today}
+        medications={medications}
+        changes={changes}
+        reminders={reminders}
+        providers={providers}
+        sessions={sessions.map(({ id, providerId, date, durationMinutes, summary }) => ({ id, providerId, date, durationMinutes, summary }))}
+        initialLayers={["meds"]}
+      />
+    </section>
   );
 
   if (medications.length === 0) {
@@ -60,6 +84,7 @@ export default async function MedicationsPage() {
       <div className="space-y-10">
         <PageHeader title="Medications" description="What's been prescribed, when it changed, and how days looked around each change." />
         {manager}
+        {calendar}
         <Disclaimer />
       </div>
     );
@@ -113,6 +138,8 @@ export default async function MedicationsPage() {
       />
 
       {manager}
+
+      {calendar}
 
       <section aria-labelledby="chart-heading">
         <SectionHeading id="chart-heading">The last two years</SectionHeading>

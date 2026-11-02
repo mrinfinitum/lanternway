@@ -9,6 +9,7 @@ import type {
   IepPlan,
   Medication,
   MedicationChange,
+  MedicationReminder,
   Provider,
   SchoolMessage,
 } from "@/lib/types";
@@ -21,6 +22,7 @@ type Collections = {
   children: Child;
   medications: Medication;
   medicationChanges: MedicationChange;
+  medicationReminders: MedicationReminder;
   providers: Provider;
   iepPlans: IepPlan;
   iepGoals: IepGoal;
@@ -35,6 +37,7 @@ const empty = (): Overlay => ({
   children: { saved: {}, removed: [] },
   medications: { saved: {}, removed: [] },
   medicationChanges: { saved: {}, removed: [] },
+  medicationReminders: { saved: {}, removed: [] },
   providers: { saved: {}, removed: [] },
   iepPlans: { saved: {}, removed: [] },
   iepGoals: { saved: {}, removed: [] },

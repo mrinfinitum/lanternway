@@ -64,6 +64,9 @@ Sample family (fictional): **Maya**, age 10, autistic + ADHD. Diagnosed autism a
 - [ ] Custom email sender (verification codes, password reset) before real users
 - [ ] File storage choice (documents, photos)
 - [x] Real check-in links: random 32-byte tokens (only a hash stored), one child + one respondent, 30/90/180-day expiry, revoke, consent before creating; public form saves through two narrow DB functions
+- [x] Calendar on Medications and Therapy: daily doses, reminder times, dose changes, refills, logged sessions and visits, and upcoming weekly appointments (read from the care team schedule)
+- [x] Medication reminder settings (times, days, push or text, phone): saved per medication as `medication_reminder` records (migration 007); private wording by default ("Maya's 8:00 AM reminder"); prompt on Medications for meds without one. **Not sending yet**
+- [ ] Send medication reminders. Push: service worker, VAPID keys, `web-push` library, a scheduler (Vercel Cron every few minutes needs Vercel Pro), ask permission on the device; iPhone needs the app on the Home Screen. Text: SMS provider (paid; e.g. Twilio), confirm the number, STOP/HELP handling, US carrier (10DLC) registration. Skip reminders for stopped meds and paused reminders; respect each reminder's time zone
 - [ ] Lanternway-sent check-in emails/reminders to teachers (links are shared from the parent's own email/messages for now)
 - [ ] PDF export for reports and About Me
 - [ ] Family invites with roles (view / log / admin)

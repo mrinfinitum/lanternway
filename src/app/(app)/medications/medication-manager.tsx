@@ -10,9 +10,10 @@ import { Card, CardContent } from "@/components/ui/card";
 import { formatDate, formatRelativeDays } from "@/lib/format";
 import { providerTypeLabels } from "@/lib/labels";
 import { refillDueDate } from "@/lib/insights";
-import type { IsoDate, Medication, MedicationChange, Provider } from "@/lib/types";
+import type { IsoDate, Medication, MedicationChange, MedicationReminder, Provider } from "@/lib/types";
 import { newId, useEditedThisVisit, useRecordActions, useRecords } from "../_components/records-store";
 import { MedicationNameAndForm } from "./medication-name-field";
+import { ReminderDialog, ReminderPrompt, ReminderRow } from "./reminders";
 
 const OTHER = "__other";
 
@@ -22,13 +23,16 @@ type Props = {
   today: IsoDate;
   medications: Medication[];
   changes: MedicationChange[];
+  reminders: MedicationReminder[];
   providers: Provider[];
 };
 
 /** Current and past medications, with add / change dose / stop / edit. Edits last for this visit. */
-export function MedicationManager({ childId, childName, today, medications, changes, providers }: Props) {
+export function MedicationManager({ childId, childName, today, medications, changes, reminders, providers }: Props) {
   const meds = useRecords("medications", medications).filter((m) => m.childId === childId);
   const allChanges = useRecords("medicationChanges", changes);
+  const allReminders = useRecords("medicationReminders", reminders);
+  const reminderOf = (medId: string) => allReminders.find((r) => r.medicationId === medId);
   const changedThisVisit = useEditedThisVisit("medicationChanges");
   const team = useRecords("providers", providers).filter((p) => p.childId === childId);
   const [status, setStatus] = useState("");
@@ -43,7 +47,7 @@ export function MedicationManager({ childId, childName, today, medications, chan
     .sort((a, b) => b.date.localeCompare(a.date));
 
   const prescriberOf = (m: Medication) => m.prescriberName || team.find((p) => p.id === m.prescriberId)?.name;
-  const ctx = { childId, childName, today, team, historyOf, announce: setStatus };
+  const ctx = { childId, childName, today, team, historyOf, announce: setStatus, reminderOf };
 
   return (
     <div className="space-y-8">
@@ -55,6 +59,12 @@ export function MedicationManager({ childId, childName, today, medications, chan
         <SectionHeading id="current-meds" action={<AddMedication {...ctx} />}>
           Current medications
         </SectionHeading>
+        <ReminderPrompt
+          childId={childId}
+          childName={childName}
+          meds={current.filter((m) => !reminderOf(m.id))}
+          scheduleOf={(id) => historyOf(id).at(-1)?.schedule}
+        />
         {current.length === 0 ? (
           <EmptyState>
             <p className="font-bold text-teal">No current medications for {childName}.</p>
@@ -94,7 +104,11 @@ export function MedicationManager({ childId, childName, today, medications, chan
                         </span>
                       </p>
                     )}
+                    <ReminderRow med={med} reminder={reminderOf(med.id)} childName={childName} schedule={latest?.schedule} />
                     <div className="flex flex-wrap gap-2 pt-1">
+                      {!reminderOf(med.id) && (
+                        <ReminderDialog med={med} childName={childName} schedule={latest?.schedule} label="Reminder" compact />
+                      )}
                       <ChangeDose med={med} {...ctx} />
                       <StopMedication med={med} {...ctx} />
                       <EditMedication med={med} {...ctx} />
@@ -173,6 +187,7 @@ type Ctx = {
   team: Provider[];
   historyOf: (medId: string) => MedicationChange[];
   announce: (message: string) => void;
+  reminderOf: (medId: string) => MedicationReminder | undefined;
 };
 
 const NO_ADVICE = "Record what the prescriber decided. Lanternway doesn't suggest doses or changes.";
@@ -386,7 +401,7 @@ function StopMedication({ med, today, historyOf, announce }: Ctx & { med: Medica
   );
 }
 
-function EditMedication({ med, team, today, historyOf, announce }: Ctx & { med: Medication }) {
+function EditMedication({ med, team, today, historyOf, announce, reminderOf }: Ctx & { med: Medication }) {
   const { save, remove } = useRecordActions();
   const [confirming, setConfirming] = useState(false);
   return (
@@ -426,6 +441,8 @@ function EditMedication({ med, team, today, historyOf, announce }: Ctx & { med: 
             onClick={() => {
               remove("medications", med.id);
               for (const c of historyOf(med.id)) remove("medicationChanges", c.id);
+              const reminder = reminderOf(med.id);
+              if (reminder) remove("medicationReminders", reminder.id);
               announce(`Deleted ${med.name}.`);
               close();
             }}

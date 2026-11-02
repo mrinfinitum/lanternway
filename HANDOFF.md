@@ -1,115 +1,148 @@
 # Lanternway — Handoff for the next chat
 
-_Last updated: Oct 24, 2026. Written at the end of the first build chat._
+_Last updated: Nov 1, 2026. Replaces the Oct 24 handoff (Stage 1 is long done)._
 
 ## Prompt to start a new chat
 
-> Read `CLAUDE.md`, `PRD.md`, `BUILD_PLAN.md`, and `HANDOFF.md`. Stage 1 sections 1–4 are done.
-> Also read `APP_MAP.md` (parent + teacher sign-in). Start Stage 1, section 5 (Parent & teacher sign-in prototype). Check off tasks as you finish them and stop after section 5 so I can review.
+> Read `CLAUDE.md`, `HANDOFF.md`, `BUILD_PLAN.md`, `APP_MAP.md`, and `COMPLIANCE.md`. Then pick the next item from "Next up" and confirm it with me before starting. Push to `dev` only, never `main`.
 
 ## Where things stand
 
-| Stage 1 section | Status |
+| | |
 |---|---|
-| 1. Project setup | Done, committed (`2e3fdee`) and pushed to `origin/main` |
-| 2. Mock data | Done, committed (`2e3fdee`) and pushed |
-| 3. App shell | Done, **not committed yet** |
-| 4. Screens (all 10) | Done, **not committed yet** |
-| 5. Polish & ship | Not started |
+| Repo | https://github.com/mrinfinitum/lanternway |
+| `main` (production) | `2e3fdee` (Stage 1 mock-data prototype). **Don't push or deploy to production.** The user hasn't decided when to promote dev. |
+| `dev` | `e0e46f0`, deployed to **https://dev.lanternway.co** (noindex + prototype banner) |
+| Working tree | Clean. Medication reminder settings + care calendar are committed and on dev. Migration 007 is applied to the shared Neon database. |
 
-- Repo: https://github.com/mrinfinitum/lanternway (`origin`, branch `main`).
-- Sections 3–4 are sitting in the working tree. The user hasn't approved a commit yet. Ask before committing or pushing.
-- `pnpm lint`, `pnpm typecheck`, and `pnpm build` all passed at the end of section 4.
-- The user reviews after each section. Stop there and summarize in plain language.
+### Medication reminders + care calendar (reviewed and tested Nov 1)
+- `db/migrations/007_medication_reminders.sql`: adds `medication_reminder` to the `records.kind` check. Reminders are records whose parent is the medication, so the existing RLS covers them and deleting a med deletes its reminders.
+- `src/app/(app)/medications/reminders.tsx`: reminder settings (times, days, push or text, phone). They're private by default ("Maya's 8:00 AM reminder"), and the medication is named only if the parent opts in. **Nothing is sent yet**, and the UI says so.
+- `src/app/(app)/_components/care-calendar.tsx` + `src/lib/schedule.ts`: a month calendar on Medications and Therapy covering:
+  - doses, reminder times and dose changes;
+  - refills;
+  - logged sessions;
+  - upcoming weekly appointments parsed from the care team's schedule text (it never guesses when there's no weekday).
+- Updates to `record-schemas.ts`, `types.ts`, `data.ts`, mock meds, `db-test-rls.mjs`, the privacy draft, `BUILD_PLAN.md`, `COMPLIANCE.md`, and `CLAUDE.md`.
+- Tested in the browser on a QA account and the sample family, at 390px and 1280px: suggested times, text-number check, private/named wording, pause, "Not now", calendar doses/refills/changes/weekly appointments, and deleting a med removes its reminder. Fixed: the reminder dialog kept unsaved edits after Cancel.
 
-## What the user asked for, in order
+## What's built (on dev)
 
-1. Read the docs and do Stage 1 sections 1–2, then stop for review.
-2. Mid-task: "we are running next.js - git - vercel" → git was initialized. Then they gave the GitHub URL → added as `origin`.
-3. "need transparent logo" → brand crops got transparent backgrounds.
-4. "push to git" → first commit pushed.
-5. "build the UI" → sections 3 and 4 built.
-6. "write the chat and pickup to a md file" → this file.
+- **Auth (Neon Auth, email + password only):**
+  - sign-up asks for 4 consents (18+ parent/guardian, terms, privacy, health data) and a 10+ character password;
+  - email verification by 6-digit code;
+  - forgot/reset password;
+  - sign out everywhere;
+  - change password.
+  - Emails go through Resend SMTP from `noreply@send.lanternway.co`. Delivery is confirmed working.
+- **Families:** each account gets its own family, and kids live in `children.profile`.
+  - Adding a child uses the `/kids/new` intake wizard.
+  - Multiple kids are supported, with a switcher in the header.
+  - A **sample family** (Maya and Theo, fictional mock data) can be entered or left from the header menu.
+- **Everything saves to the account:** logs, milestones, medications + dose changes, care team, therapy goals and sessions, IEP/504 plans, goals and progress, supports, school messages.
+  - All of it lives in one `records` table, validated server-side by `src/lib/record-schemas.ts`.
+  - The client store (`records-store.tsx`) saves optimistically, then persists through server actions in a serial queue.
+- **About Me:** a visual profile with per-section editing, plus share presets (Teacher, Caregiver, Medical, Camp). Private info is off by default, and consent is recorded before a link appears. **The share link and PDF are still placeholders.**
+- **Teacher check-in links (real):**
+  - School → Check-ins → "Ask for check-ins", for an existing or new person, valid for 30, 90 or 180 days. A consent box is recorded as `share_checkin`.
+  - The token is 32 random bytes, and only its SHA-256 hash is stored, so the link is **shown once**. The dialog offers Copy and "Email it", a `mailto:` from the parent's own mail app. Lanternway doesn't email teachers.
+  - The public `/c/[token]` page sees only the child's first name and the form. It gets this through the `checkin_form_context(token)` and `submit_checkin(...)` SECURITY DEFINER functions, which run with no user (`asNobody()` in `db.ts`).
+  - One check-in per link per day; sending again updates it.
+  - Revoking takes effect immediately.
+  - Check-ins appear for kids without a plan too.
+  - Real check-ins feed Home teacher stats, the medication before/after charts, the Timeline and Reports.
+- **Medication catalog:** 69 medications (names, classes and forms; **no doses**) in Neon, with type-ahead when adding a med.
+- **Privacy and compliance:**
+  - draft Privacy, Terms and Consumer Health Data policies under `(legal)`;
+  - a test-data notice;
+  - data export (`/api/account/export`, including check-ins);
+  - account deletion (`delete_my_auth_account()`, migration 004, after a password re-check);
+  - security headers and CSP in `next.config.ts`;
+  - breach plan draft in `docs/compliance/BREACH_RESPONSE.md`.
+  - The tracker is `COMPLIANCE.md`.
+- **"Today":** the real date in the family's time zone, from the `lw-tz` cookie set by `<TimeZoneCookie />` (default America/New_York). The sample family stays pinned to `PROTOTYPE_TODAY` (2026-10-21), because its mock data is built around that date.
 
-## What's built
+## Architecture cheat sheet
 
-### Routes
-| Route | What it is |
-|---|---|
-| `/` | Welcome: Lumi peeking + 3 intro cards → `/home` (no app chrome) |
-| `/home` | Quick-log buttons, this week's stats, coming up (therapy, refills, IEP review), wins, Lumi tip |
-| `/log?kind=mood\|sleep\|appetite\|meltdown\|win\|note` | Quick log. Saves to in-memory state (see below) |
-| `/timeline` | Zoom levels week / month / year / all. Newest first. "Coming up" box for future events |
-| `/medications` | Med cards with refill countdown. 3 stacked charts (dose, teacher focus, sleep). Before/after table per change |
-| `/therapy`, `/therapy/[providerId]` | Providers (current/past) → goals with progress + session notes |
-| `/school` | IEP stats + tabs: Goals, Supports (services week-strip + accommodations), Check-ins (links + recent), Messages, Team |
-| `/about-me` | Profile + "Preview & share" dialog with the one-pager and include toggles |
-| `/reports` → `/reports/view?type=doctor\|iep\|therapist&from=&to=` | Picker → printable report with insights + disclaimer |
-| `/more` | Phone-only menu for Medications, Therapy, About Me, Reports, Welcome tour |
-| `/c/[token]` | Public teacher check-in form. Outside the app shell. `noindex`, `no-referrer` |
+- **Next.js 16.4** App Router with `cacheComponents` + `partialPrefetching`. Read `node_modules/next/dist/docs/` before using unfamiliar APIs (`AGENTS.md`).
+  - Every `(app)` page has `export const instant = false`. Add it to any new page.
+  - Anything reading cookies, params or the clock sits under `<Suspense>`. Call `await connection()` before `new Date()` or DB work on pages that read no cookies (see `getToday()` and `/c/[token]`).
+  - `"use server"` files may export only async functions.
+  - After writes, call `refresh()` from `next/cache`.
+- **`src/proxy.ts`** (Next 16's middleware) protects app routes with `auth.middleware({ loginUrl: "/sign-in" })`. `/c/*` and the legal pages are public.
+- **Data access:** screens only import `src/lib/data.ts`. Each getter reads Neon for saved kids (UUID ids, via `isSavedChildId`) and `@/mock` for the sample family. Supporting modules:
+  - `records.ts`: `loadChildRecords`, `saveRecord`, `deleteRecord`.
+  - `checkins.ts`: links, revoke, public context and submit.
+  - `families.ts`.
+  - `consents.ts`.
+  - `account.ts`: export and delete.
+- **RLS:** `asUser(userId, fn)` runs one transaction with `set_config('app.user_id', …)`. The policies use `my_family_ids()`, `my_writable_family_ids()` and `my_admin_family_ids()`.
+  - The website connects as `lanternway_app`, which isn't the table owner, so the policies always apply.
+  - Migrations run as `lanternway_owner`.
+  - **Every new table needs RLS plus new checks in `scripts/db-test-rls.mjs`** (43 checks at the last run, all passing).
+- **Migrations:** `db/migrations/001…007`, run by `pnpm db:setup` (idempotent: it re-runs all of them and upserts the catalog). Local and dev share **one Neon database**.
 
-Demo check-in link: `/c/q7Rm2xV9pL4tT8wZcK3n` (Ms. Lindqvist, active). Revoked: `Hn3cZ8uL5dF0gJ6wEo2s`. Expired: `aB4kP9sW2mQ7xR1vYt6e`.
+## Environment and accounts (no secrets here)
 
-### Key files
-- `src/lib/types.ts`: all data types.
-- `src/lib/data.ts`: **the only data access screens use.** Async functions filtered by child/plan/provider id, so each can become a Supabase query in Stage 2. Screens never import `@/mock` directly.
-- `src/lib/insights.ts`: averages, weekly series, `compareAround` (before/after a date), `describeComparison` (factual sentence), `rollingAverage` (bridges gaps ≤2 weeks), refill dates.
-- `src/lib/format.ts`: date formatting (always UTC), relative days, times. `src/lib/dates.ts` holds date math on `YYYY-MM-DD` strings.
-- `src/lib/labels.ts`: UI wording (gentle rating labels, check-in questions, provider types…).
-- `src/lib/brand.ts`: all brand image paths + `brandColors`. Swap in SVGs here later.
-- `src/lib/log-icons.ts`: icon per log kind.
-- `src/mock/`: fictional data for Maya. `calendar.ts` pins `PROTOTYPE_TODAY = 2026-10-21` and defines school years, med change dates, and `periodOn()`, which shapes the generated story. Data is generated from fixed seeds (`random.ts`), so it's identical every load.
-- `src/app/(app)/layout.tsx`: shell (sidebar, header, bottom nav, `LogProvider`). Shell pieces live in `src/app/(app)/_components/`.
-- `src/components/`: shared bits (`page-header`, `stat`, `lumi-tip` + `EmptyState`, `disclaimer` with the required `DISCLAIMER` text, `charts/trend-charts`). `src/components/ui/` holds shadcn components.
+- **`.env.local`** (git-ignored) holds `DATABASE_URL_ADMIN`, `DATABASE_URL`, `NEON_AUTH_BASE_URL`, `NEON_AUTH_COOKIE_SECRET` and `RESEND_API_KEY`. Never print or commit these.
+- **Vercel:**
+  - Team NSoul (`team_QoiswXU8qLWxgCOD5vvpbPMJ`), project `lanternway`, account **geofftracy-7003**, not pgamemes.
+  - Preview env vars for gitBranch `dev` are set via the REST API. Avoid `vercel link`, which rewrites `.env.local`.
+  - The CLI flips between accounts; device-login approvals must be done as geofftracy-7003.
+- **Neon:** project `winter-sound-66238869` (org NSoul Co), aws-us-east-1. Neon Auth's trusted domain is `https://dev.lanternway.co`. 2FA isn't available in managed Neon Auth.
+- **DNS:** Cloudflare. `dev.lanternway.co` points to Vercel, and `send.lanternway.co` is verified in Resend.
+- **Git push** (the keychain uses a different GitHub account): `git -c credential.helper= -c credential.helper='!gh auth git-credential' push origin dev`
 
-### The mock data story (what the charts should show)
-- Maya, 10, autistic + ADHD, speaking + AAC. Parents Dana (logs as "Dana") and Chris.
-- Methylphenidate ER: 18 mg (Aug 2023) → 27 mg (Feb 10, 2025) → 36 mg (Mar 3, 2026). Guanfacine ER 1 mg added Sep 15, 2025.
-- After Mar 3, 2026: teacher focus ~1.8 → ~3.7, lunch appetite down. After guanfacine: sleep ~8.75 → ~9.4 hrs.
-- ABA ended Jun 27, 2025 → speech (Priya, Tue) + OT (Sam, Thu) from July 2025.
-- IEP (Maple Grove Elementary): started Nov 12, 2025. Annual review **Nov 10, 2026**. 4 goals. In Jan 2026 her IEP seat ended up by the door and two speech sessions were missed.
+## How to test
 
-## Decisions made (and why)
+```bash
+pnpm dev --port 3123
+pnpm lint && pnpm typecheck
+pnpm db:test-rls      # family isolation + check-in link rules
+pnpm build            # catches Suspense/cacheComponents issues dev misses (don't run while dev is running)
+```
 
-- **Medication chart is stacked small charts, not overlaid.** The build plan says "overlaid", but two y-scales on one chart suggest correlations that aren't there. The charts share one timeline and hover (`syncId`). Numbered coral lines mark med changes. There's a table view under "See the numbers as a table".
-- **Teacher focus is a 4-week rolling average** on charts (weekly single ratings were too jumpy). Gaps of 1–2 missed weeks are bridged. School breaks stay as gaps.
-- **Calm UI:** chart animations are off. Global `prefers-reduced-motion` rule in `globals.css`. Light theme only.
-- **Wording:** "Meltdown" is the log label. Confirmation copy after logging one is supportive. Low ratings read "Hard" / "Very hard", never "bad". Insights only state recorded numbers; there's no advice anywhere.
-- **Radius:** `--radius: 0.75rem`. Cards use `rounded-2xl` (edited in `src/components/ui/card.tsx`).
-- **Brand images:** cropped from `brand/brand-sheet-final.webp` and backgrounds made transparent (Python/Pillow, outside the repo). Originals are copied in `public/brand/*.webp` too. Favicon is `src/app/icon.png` (Lumi head).
-- Did **not** add any analytics, trackers, or paid services. Recharts is the only new runtime dependency besides shadcn's own (`radix-ui`, `cn`, `lucide-react`, `class-variance-authority`, `tw-animate-css`).
-
-## Prototype-only behavior (fake for now, real in Stage 2)
-- Quick-log entries live in React context (`src/app/(app)/_components/log-store.tsx`) and are lost on reload.
-- Check-in form submissions aren't saved, just a thank-you screen.
-- "Revoke" on check-in links and "Turn off link" in About Me only change local state.
-- About Me share link is a placeholder (`lanternway.co/a/…`). No PDF export yet; reports use the browser's print / Save as PDF.
-- "Hi Dana" and the logged-by name are hardcoded.
+- **QA accounts:**
+  1. Sign up with `lanternway-qa+<something>@example.com` by POSTing to `/api/auth/sign-up/email` with `Origin` set.
+  2. Mark the account verified with admin SQL: `update neon_auth."user" set "emailVerified" = true where email = …`.
+  3. **Clean up afterwards:** delete the `families` they created, their `consents`, and their `neon_auth."user"` rows. The only real user in the database is the owner's own account, so leave it alone.
+- **Browser end-to-end test:**
+  - The headless-Chrome CDP harness that lived in `/tmp/lw-tools/` (`e2e.mjs`, `shoot.mjs`) is gone. Recreate it if needed: launch Chrome with `--remote-debugging-port` and set `Emulation.setDeviceMetricsOverride` to 390 wide.
+  - The last run passed 18/18 checks locally and on dev: sign in, add a child, quick log, add a med with type-ahead, add a provider, add an IEP plan + goal + progress, create a check-in link (consent required), submit as the teacher (only the first name shown), parent sees it, revoke kills the link, reload persistence, Home stats, Timeline.
+  - Radix tabs need a `mousedown` event plus `focus()` to switch in scripts.
+- Check every screen at 390px (phone first) and ~1280px.
 
 ## Gotchas
 
-- **Next.js 16.4 with `cacheComponents` + `partialPrefetching` on.** Read `node_modules/next/dist/docs/` before using unfamiliar APIs (see `AGENTS.md`).
-  - Anything reading `params` or `searchParams` must sit inside `<Suspense>` (see `/c/[token]`, `/reports/view`, `/therapy/[providerId]`). Client components using `useSearchParams` too (`/log`, `/reports`).
-  - `/therapy/[providerId]` uses `generateStaticParams`.
-  - The dev overlay's "Insight" badge flags these; fix them, don't ignore them.
-- Screens use `getToday()` (pinned date), never `new Date()`. The quick-log time stamp is the one exception, using the real clock.
-- After replacing an image in `public/`, clear `.next/cache/images` or the old one keeps being served.
-- **zsh:** don't name a shell variable `path`, because it overwrites `PATH`.
-- pnpm was installed globally with `npm install -g --allow-scripts=pnpm pnpm` (without the flag the binary is broken).
-- Headless Chrome screenshots: Chrome has a ~500px minimum window width, and charts don't render inside iframes. Use the DevTools-protocol approach (set `Emulation.setDeviceMetricsOverride` to 390 wide). The helper scripts were in `/tmp/lw-tools/` and may be gone; they're easy to recreate.
+- Browser testing in the Claude app's built-in browser: keep the pane visible. A hidden pane blocks animation frames, so streamed parts of the page never finish loading and it looks broken when it isn't.
+- Pages showing stale content after code changes usually mean a stale dev server: restart it.
+- zsh: quote URLs containing `?`, and don't name a variable `path`.
+- Neon Auth SDK error codes are lowercase. A duplicate sign-up returns 422 `validation_failed`, shown as a neutral message.
+- A stale or revoked session cookie is handled: `getSignedInUser()` catches it and returns null.
+- When state updates come from quick taps, use functional `setState`. Fast taps dropped answers twice: the About Me chips and the teacher form.
+- After replacing an image in `public/`, clear `.next/cache/images`.
 
-## How to verify
-```bash
-pnpm dev          # last session ran it on port 3123: pnpm dev --port 3123
-pnpm lint
-pnpm typecheck    # next typegen && tsc --noEmit
-pnpm build        # catches Suspense/cacheComponents problems dev mode misses
-```
-Check at 390px wide and at desktop (~1280px).
+## How the user likes to work
 
-## Next up: Stage 1, section 5 (Polish & ship)
-- [ ] **Lumi moments:** cheering on wins, comforting on hard-day logs (calm, never sad), sleeping on sleep log, thinking on empty states. Only one Lumi pose image per mood exists so far (full, head, peeking). Other moods may need new art; ask the user before inventing Lumi variations (brand rule: don't restyle Lumi's shape).
-- [ ] **Accessibility:** reduced motion is already handled globally, so verify it. Run a real WCAG AA contrast check: `--muted-foreground #42636b` on cream/paper was hand-calculated at ~5.3:1. Check amber-on-cream chips and badge text too.
-- [ ] **Test at 390px and desktop** for every route, including dialogs and the printed report.
-- [ ] **Deploy to Vercel** and add a "Prototype — sample data" banner. The sidebar and More page already carry a small fictional-data note. Vercel setup needs the user (account, import repo). Ask before connecting anything.
-- Also pending: get approval to commit and push sections 3–4.
+- Short messages ("yes", "push", "do these"). Act on them, explain results in plain language, and keep summaries short.
+- **Deploy to dev only.** Ask before anything touching `main` or production, paid services, new SDKs, or analytics.
+- Prefers recommended defaults; ask only when it's genuinely their call.
+- The user handles their own account setup: Vercel, Cloudflare, Resend, Neon. Walk them through it step by step and never ask them to paste secrets into chat. They put keys in `.env.local` themselves.
+
+## Next up
+
+**Pick from these (in rough priority order):**
+1. **Family sharing:** invite a co-parent or caregiver with view, log or admin roles. The schema already has `family_members.role`, and the RLS helpers distinguish writable from admin.
+2. **Real About Me share links + PDF**: hashed tokens, expiry, revoke, view log (same pattern as check-ins).
+3. **Teacher accounts** per `APP_MAP.md`: they see only children a parent connected them to, and only the check-in form, About Me and accommodations.
+4. **Sending medication reminders**: needs decisions or paid services, so ask first. Details are in `BUILD_PLAN.md` (web push + scheduler; SMS needs a paid provider and 10DLC).
+5. **Polish:**
+   - Lumi moments (ask before inventing new Lumi art);
+   - an accessibility/contrast audit;
+   - a 390px pass on every route.
+
+**The user's own to-dos (remind them; don't do them):**
+- Sign the DPAs: Neon, Vercel, Resend (later an SMS vendor).
+- Fill in the `LEGAL` placeholders in `src/lib/policies.ts`, get a lawyer to review the policies, then remove the draft banner and the test-data notice.
+- Name the people in `docs/compliance/BREACH_RESPONSE.md`.
+- Decide when to promote `dev` to `main` (production).

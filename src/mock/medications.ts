@@ -1,4 +1,4 @@
-import type { Medication, MedicationChange } from "@/lib/types";
+import type { Medication, MedicationChange, MedicationReminder } from "@/lib/types";
 import { CHILD_ID, MED_DATES } from "./calendar";
 
 // What the parent recorded. Lanternway records these; it never recommends
@@ -76,5 +76,19 @@ export const medicationChanges: MedicationChange[] = [
       "Dr. Marsh increased the dose after we shared Mr. Okafor's check-ins from January and February.",
     sideEffectsObserved: ["Smaller appetite at lunch", "Bigger snack after school"],
     notes: "Packing a smaller lunch plus a protein snack for after school.",
+  },
+];
+
+/** Reminder settings the sample parent saved (not sent — sending isn't switched on yet). */
+export const medicationReminders: MedicationReminder[] = [
+  {
+    id: "rem-methylphenidate",
+    medicationId: "med-methylphenidate",
+    times: ["07:15"],
+    days: "every-day",
+    channel: "push",
+    wording: "private",
+    status: "active",
+    timeZone: "America/New_York",
   },
 ];

@@ -195,6 +195,29 @@ export type MedicationChange = {
   notes?: string;
 };
 
+export type ReminderDays = "every-day" | "weekdays" | "weekends";
+export type ReminderChannel = "push" | "text";
+
+/**
+ * A parent's reminder for one medication. Saved settings only for now:
+ * sending (push or text) is switched on later.
+ */
+export type MedicationReminder = {
+  id: string;
+  medicationId: string;
+  /** "HH:MM", 24-hour, in `timeZone`. */
+  times: string[];
+  days: ReminderDays;
+  channel: ReminderChannel;
+  /** For text reminders. Confirmed before any text is sent. */
+  phone?: string;
+  /** "private" (default) never names the medication; "named" includes it. */
+  wording: "private" | "named";
+  status: "active" | "paused";
+  /** IANA time zone the times are in, e.g. "America/Chicago". */
+  timeZone: string;
+};
+
 // ---------------------------------------------------------------------------
 // Therapy hub
 // ---------------------------------------------------------------------------

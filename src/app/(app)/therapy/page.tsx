@@ -1,6 +1,16 @@
 import type { Metadata } from "next";
-import { PageHeader } from "@/components/page-header";
-import { getCurrentChild, getProviders, getTherapyGoals, getTherapySessions, getToday } from "@/lib/data";
+import { PageHeader, SectionHeading } from "@/components/page-header";
+import {
+  getCurrentChild,
+  getMedicationChanges,
+  getMedicationReminders,
+  getMedications,
+  getProviders,
+  getTherapyGoals,
+  getTherapySessions,
+  getToday,
+} from "@/lib/data";
+import { CareCalendar } from "../_components/care-calendar";
 import { CareTeamList } from "./care-team";
 
 // Reads the signed-in session, so navigations wait for the server (see app layout).
@@ -10,7 +20,13 @@ export const metadata: Metadata = { title: "Therapy · Lanternway" };
 
 export default async function TherapyPage() {
   const [child, today] = await Promise.all([getCurrentChild(), getToday()]);
-  const providers = await getProviders(child.id);
+  const [providers, medications, changes, reminders] = await Promise.all([
+    getProviders(child.id),
+    getMedications(child.id),
+    getMedicationChanges(child.id),
+    getMedicationReminders(child.id),
+  ]);
+  const sessions = (await Promise.all(providers.map((p) => getTherapySessions(p.id)))).flat();
   const summaries = Object.fromEntries(
     await Promise.all(
       providers.map(async (p) => {
@@ -34,6 +50,21 @@ export default async function TherapyPage() {
         description={`Everyone who supports ${child.firstName}, their goals, and session notes.`}
       />
       <CareTeamList key={child.id} childId={child.id} childName={child.firstName} today={today} providers={providers} summaries={summaries} />
+      <section aria-labelledby="calendar-heading">
+        <SectionHeading id="calendar-heading">Calendar</SectionHeading>
+        <CareCalendar
+          key={child.id}
+          childId={child.id}
+          childName={child.firstName}
+          today={today}
+          medications={medications}
+          changes={changes}
+          reminders={reminders}
+          providers={providers}
+          sessions={sessions.map(({ id, providerId, date, durationMinutes, summary }) => ({ id, providerId, date, durationMinutes, summary }))}
+          initialLayers={["therapy"]}
+        />
+      </section>
     </div>
   );
 }

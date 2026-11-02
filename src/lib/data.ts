@@ -33,6 +33,7 @@ import type {
   LogKind,
   Medication,
   MedicationChange,
+  MedicationReminder,
   Milestone,
   Provider,
   SchoolMessage,
@@ -169,6 +170,14 @@ export async function getMedicationChanges(
   const db = await saved(childId);
   const source = db ? (db.medicationChanges as unknown as MedicationChange[]) : mock.medicationChanges;
   return inRange(source.filter((c) => ids.has(c.medicationId)), range);
+}
+
+/** Reminder settings for the child's medications. */
+export async function getMedicationReminders(childId: string): Promise<MedicationReminder[]> {
+  const ids = new Set((await getMedications(childId)).map((m) => m.id));
+  const db = await saved(childId);
+  const source = db ? (db.medicationReminders as unknown as MedicationReminder[]) : mock.medicationReminders;
+  return source.filter((r) => ids.has(r.medicationId));
 }
 
 // ---------------------------------------------------------------------------

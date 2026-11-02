@@ -152,6 +152,21 @@ export const RECORD_KINDS = {
       notes: ostr(500),
     },
   },
+  medicationReminders: {
+    kind: "medication_reminder",
+    date: null,
+    parent: "medicationId",
+    fields: {
+      medicationId: uuid(),
+      times: list({ t: "time" }, 6),
+      days: oneOf(["every-day", "weekdays", "weekends"]),
+      channel: oneOf(["push", "text"]),
+      phone: ostr(20),
+      wording: oneOf(["private", "named"]),
+      status: oneOf(["active", "paused"]),
+      timeZone: str(60),
+    },
+  },
   providers: {
     kind: "provider",
     date: "startDate",
@@ -271,7 +286,16 @@ export function cleanRecord(collection: RecordCollection, item: unknown): Record
       if (!fields) return "That kind of log isn't supported.";
       return clean(obj(fields), item, "log") as Record<string, unknown>;
     }
-    return clean(obj(spec.fields as Record<string, Spec>), item, collection) as Record<string, unknown>;
+    const data = clean(obj(spec.fields as Record<string, Spec>), item, collection) as Record<string, unknown>;
+    if (collection === "medicationReminders") {
+      const times = data.times as string[];
+      if (times.length === 0) return "Couldn't save: add at least one reminder time.";
+      data.times = [...new Set(times)].sort();
+      const digits = String(data.phone ?? "").replace(/\D/g, "");
+      if (data.channel === "text" && (digits.length < 10 || digits.length > 15)) return "Couldn't save: add a phone number for text reminders.";
+      if (data.channel === "push") delete data.phone;
+    }
+    return data;
   } catch (err) {
     return err instanceof Error ? `Couldn't save: ${err.message}.` : "Couldn't save that.";
   }

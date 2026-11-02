@@ -9,7 +9,7 @@ import { iepPlan } from "./school";
 import { theo, theoLogs, theoMilestones, theoProviders, theoTherapyGoals, theoTherapySessions } from "./theo";
 
 export { CHILD_ID, DATA_START, PROTOTYPE_TODAY } from "./calendar";
-export { medicationChanges, medications } from "./medications";
+export { medicationChanges, medicationReminders, medications } from "./medications";
 export {
   DEMO_CHECKIN_TOKEN,
   accommodations,
