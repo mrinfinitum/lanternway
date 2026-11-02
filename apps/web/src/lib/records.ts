@@ -43,7 +43,7 @@ export const loadChildRecords = cache(async (userId: string, childId: string): P
  * Save (insert or update) a record. Works out the child and family from the record
  * itself or its parent, so a record can only ever attach to the signed-in family's
  * own child. Returns null when it isn't a saved child's record (e.g. the sample
- * family), or a message if something's wrong.
+ * family) or the id is taken by a record it can't change, or a message if something's wrong.
  */
 export async function saveRecord(
   user: { id: string; name: string },
@@ -77,7 +77,7 @@ export async function saveRecord(
     }
     if (!owner) return null; // not one of this family's children / records
 
-    await db.query(
+    const { rowCount } = await db.query(
       `insert into records (id, family_id, child_id, kind, parent_id, occurred_on, data)
        values ($1, $2, $3, $4, $5, $6, $7)
        on conflict (id) do update
@@ -85,7 +85,8 @@ export async function saveRecord(
          where records.family_id = excluded.family_id and records.kind = excluded.kind`,
       [id, owner.family_id, owner.child_id, spec.kind, spec.parent ? parentId : null, occurredOn, data],
     );
-    return "saved" as const;
+    // No row: the id belongs to another family's record or another kind, which is left alone.
+    return rowCount === 1 ? ("saved" as const) : null;
   });
 }
 
