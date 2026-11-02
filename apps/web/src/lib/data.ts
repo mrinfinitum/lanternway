@@ -1,9 +1,11 @@
 /**
  * Data access for the app. Screens import from here, never from `@/mock`.
  *
- * Every function is async and filters by child/plan/provider id. For the family's
- * own children the records come from Neon (row-level security does the family
- * isolation); for the sample family they come from @/mock.
+ * Every function is async and filters by child/plan/provider id. This file works
+ * out the request's user, child and "today" from cookies; the record readers
+ * themselves are cookie-free (child-data.ts) and shared with the mobile API.
+ * For the family's own children the records come from Neon (row-level security
+ * does the family isolation); for the sample family they come from @/mock.
  *
  * Lists are returned oldest-first unless noted.
  */
@@ -15,10 +17,25 @@ import { cache } from "react";
 import { getSignedInUser } from "@/lib/auth/server";
 import { listChildren } from "@/lib/families";
 import { getAccessForChild, type Access } from "@/lib/sharing";
-import { isSavedChildId } from "@/lib/child-profile";
-import { loadChildRecords } from "@/lib/records";
-import { isSavedLinkToken, loadChildCheckIns, savedLinkFormContext } from "@/lib/checkins";
-import { TIME_ZONE_COOKIE, isInRange, todayIn } from "@lanternway/shared/dates";
+import { isSavedLinkToken, savedLinkFormContext } from "@/lib/checkins";
+import {
+  childAccommodations,
+  childCheckInLinks,
+  childCheckInRespondents,
+  childCheckIns,
+  childIepGoals,
+  childIepPlan,
+  childLogs,
+  childMedicationChanges,
+  childMedicationReminders,
+  childMedications,
+  childMilestones,
+  childProviders,
+  childSchoolMessages,
+  childTherapyGoals,
+  childTherapySessions,
+} from "@/lib/child-data";
+import { TIME_ZONE_COOKIE, todayIn } from "@lanternway/shared/dates";
 import type {
   Accommodation,
   CheckIn,
@@ -42,12 +59,6 @@ import type {
   TherapySession,
 } from "@lanternway/shared/types";
 import * as mock from "@/mock";
-
-const byDate = <T extends { date: IsoDate }>(a: T, b: T) => a.date.localeCompare(b.date);
-
-function inRange<T extends { date: IsoDate }>(items: T[], range?: DateRange): T[] {
-  return items.filter((item) => isInRange(item.date, range)).sort(byDate);
-}
 
 // ---------------------------------------------------------------------------
 // Prototype clock
@@ -125,86 +136,49 @@ export async function getChild(childId: string): Promise<Child | null> {
 }
 
 // ---------------------------------------------------------------------------
-// Where records come from: the database for the family's own children, sample
-// data for the sample family. One query per request loads all of a child's records.
+// Records: the request's user and (where needed) current child, passed to the
+// cookie-free readers in child-data.ts, which the mobile API uses directly.
 // ---------------------------------------------------------------------------
 
-/** The saved child's records, or null for a sample child. */
-async function saved(childId: string) {
-  return isSavedChildId(childId) ? loadChildRecords(childId) : null;
-}
+/** The signed-in user's id for reading saved records (row-level security), or null. */
+const viewerId = async () => (await getSignedInUser())?.id ?? null;
 
-/** Records of the child being viewed, when looking something up by provider or plan id. */
-async function savedForCurrentChild() {
-  const child = await getCurrentChildOrNull();
-  return child && isSavedChildId(child.id) ? loadChildRecords(child.id) : null;
+/** For lookups by provider or plan id: the user and the child being viewed. */
+async function viewerAndChild() {
+  const [userId, child] = await Promise.all([viewerId(), getCurrentChildOrNull()]);
+  return [userId, child?.id ?? null] as const;
 }
-
-const isId = (id: string) => /^[0-9a-f-]{36}$/i.test(id);
 
 export async function getMilestones(childId: string, range?: DateRange): Promise<Milestone[]> {
-  const db = await saved(childId);
-  if (db) return inRange(db.milestones as unknown as Milestone[], range);
-  return inRange(mock.milestones.filter((m) => m.childId === childId), range);
+  return childMilestones(await viewerId(), childId, range);
 }
 
-// ---------------------------------------------------------------------------
 // Daily log
-// ---------------------------------------------------------------------------
 
-export async function getLogs(
-  childId: string,
-  range?: DateRange,
-  kinds?: LogKind[],
-): Promise<LogEntry[]> {
-  const db = await saved(childId);
-  const source = db ? (db.logs as unknown as LogEntry[]) : mock.logs.filter((log) => log.childId === childId);
-  const logs = source.filter((log) => !kinds || kinds.includes(log.kind));
-  return inRange(logs, range).sort(
-    (a, b) => byDate(a, b) || (a.time ?? "").localeCompare(b.time ?? ""),
-  );
+export async function getLogs(childId: string, range?: DateRange, kinds?: LogKind[]): Promise<LogEntry[]> {
+  return childLogs(await viewerId(), childId, range, kinds);
 }
 
-// ---------------------------------------------------------------------------
 // Medications
-// ---------------------------------------------------------------------------
 
 export async function getMedications(childId: string): Promise<Medication[]> {
-  const db = await saved(childId);
-  if (db) return db.medications as unknown as Medication[];
-  return mock.medications.filter((m) => m.childId === childId);
+  return childMedications(await viewerId(), childId);
 }
 
 /** All changes across the child's medications. */
-export async function getMedicationChanges(
-  childId: string,
-  range?: DateRange,
-): Promise<MedicationChange[]> {
-  const ids = new Set((await getMedications(childId)).map((m) => m.id));
-  const db = await saved(childId);
-  const source = db ? (db.medicationChanges as unknown as MedicationChange[]) : mock.medicationChanges;
-  return inRange(source.filter((c) => ids.has(c.medicationId)), range);
+export async function getMedicationChanges(childId: string, range?: DateRange): Promise<MedicationChange[]> {
+  return childMedicationChanges(await viewerId(), childId, range);
 }
 
 /** Reminder settings for the child's medications. */
 export async function getMedicationReminders(childId: string): Promise<MedicationReminder[]> {
-  const ids = new Set((await getMedications(childId)).map((m) => m.id));
-  const db = await saved(childId);
-  const source = db ? (db.medicationReminders as unknown as MedicationReminder[]) : mock.medicationReminders;
-  return source.filter((r) => ids.has(r.medicationId));
+  return childMedicationReminders(await viewerId(), childId);
 }
 
-// ---------------------------------------------------------------------------
 // Therapy hub
-// ---------------------------------------------------------------------------
 
-export async function getProviders(
-  childId: string,
-  { includePast = true }: { includePast?: boolean } = {},
-): Promise<Provider[]> {
-  const db = await saved(childId);
-  const source = db ? (db.providers as unknown as Provider[]) : mock.providers.filter((p) => p.childId === childId);
-  return source.filter((p) => includePast || !p.endDate);
+export async function getProviders(childId: string, options: { includePast?: boolean } = {}): Promise<Provider[]> {
+  return childProviders(await viewerId(), childId, options);
 }
 
 /** Every provider id across the family, for prebuilding provider pages. */
@@ -222,49 +196,28 @@ export async function getProvider(childId: string, providerId: string): Promise<
 }
 
 export async function getTherapyGoals(providerId: string): Promise<TherapyGoal[]> {
-  if (isId(providerId)) {
-    const db = await savedForCurrentChild();
-    return ((db?.therapyGoals ?? []) as unknown as TherapyGoal[]).filter((g) => g.providerId === providerId);
-  }
-  return mock.therapyGoals.filter((g) => g.providerId === providerId);
+  const [userId, childId] = await viewerAndChild();
+  return childTherapyGoals(userId, childId, providerId);
 }
 
-export async function getTherapySessions(
-  providerId: string,
-  range?: DateRange,
-): Promise<TherapySession[]> {
-  if (isId(providerId)) {
-    const db = await savedForCurrentChild();
-    return inRange(((db?.therapySessions ?? []) as unknown as TherapySession[]).filter((s) => s.providerId === providerId), range);
-  }
-  return inRange(mock.therapySessions.filter((s) => s.providerId === providerId), range);
+export async function getTherapySessions(providerId: string, range?: DateRange): Promise<TherapySession[]> {
+  const [userId, childId] = await viewerAndChild();
+  return childTherapySessions(userId, childId, providerId, range);
 }
 
-// ---------------------------------------------------------------------------
 // Check-ins
-// ---------------------------------------------------------------------------
 
-export async function getCheckIns(
-  childId: string,
-  range?: DateRange,
-  respondentId?: string,
-): Promise<CheckIn[]> {
-  const all = isSavedChildId(childId) ? (await loadChildCheckIns(childId)).checkIns : mock.checkIns;
-  return inRange(
-    all.filter((c) => c.childId === childId && (!respondentId || c.respondentId === respondentId)),
-    range,
-  );
+export async function getCheckIns(childId: string, range?: DateRange, respondentId?: string): Promise<CheckIn[]> {
+  return childCheckIns(await viewerId(), childId, range, respondentId);
 }
 
 export async function getCheckInRespondents(childId: string): Promise<CheckInRespondent[]> {
-  if (isSavedChildId(childId)) return (await loadChildCheckIns(childId)).respondents;
-  return mock.respondents.filter((r) => r.childId === childId);
+  return childCheckInRespondents(await viewerId(), childId);
 }
 
 /** Links for a child. Saved links never include their token (only a hash is stored). */
 export async function getCheckInLinks(childId: string): Promise<CheckInLink[]> {
-  if (isSavedChildId(childId)) return (await loadChildCheckIns(childId)).links;
-  return mock.checkInLinks.filter((l) => l.childId === childId);
+  return childCheckInLinks(await viewerId(), childId);
 }
 
 /**
@@ -290,35 +243,19 @@ export async function getCheckInFormContext(token: string): Promise<CheckInFormC
 
 /** The child's current plan, if any. */
 export async function getIepPlan(childId: string): Promise<IepPlan | null> {
-  const db = await saved(childId);
-  if (db) {
-    const plans = (db.iepPlans as unknown as IepPlan[]).sort((a, b) => a.startDate.localeCompare(b.startDate));
-    return plans.at(-1) ?? null;
-  }
-  return mock.iepPlans.find((p) => p.childId === childId) ?? null;
+  return childIepPlan(await viewerId(), childId);
 }
 
 export async function getIepGoals(planId: string): Promise<IepGoal[]> {
-  if (isId(planId)) {
-    const db = await savedForCurrentChild();
-    return ((db?.iepGoals ?? []) as unknown as IepGoal[]).filter((g) => g.planId === planId);
-  }
-  return mock.iepGoals.filter((g) => g.planId === planId);
+  const [userId, childId] = await viewerAndChild();
+  return childIepGoals(userId, childId, planId);
 }
 
 export async function getAccommodations(planId: string): Promise<Accommodation[]> {
-  if (isId(planId)) {
-    const db = await savedForCurrentChild();
-    return ((db?.accommodations ?? []) as unknown as Accommodation[]).filter((a) => a.planId === planId);
-  }
-  return mock.accommodations.filter((a) => a.planId === planId);
+  const [userId, childId] = await viewerAndChild();
+  return childAccommodations(userId, childId, planId);
 }
 
-export async function getSchoolMessages(
-  childId: string,
-  range?: DateRange,
-): Promise<SchoolMessage[]> {
-  const db = await saved(childId);
-  if (db) return inRange(db.schoolMessages as unknown as SchoolMessage[], range);
-  return inRange(mock.schoolMessages.filter((m) => m.childId === childId), range);
+export async function getSchoolMessages(childId: string, range?: DateRange): Promise<SchoolMessage[]> {
+  return childSchoolMessages(await viewerId(), childId, range);
 }

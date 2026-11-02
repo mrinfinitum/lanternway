@@ -9,7 +9,6 @@
 
 import { createHash, randomBytes } from "node:crypto";
 import { cache } from "react";
-import { getSignedInUser } from "@/lib/auth/server";
 import { isSavedChildId } from "@/lib/child-profile";
 import { asNobody, asUser } from "@/lib/db";
 import { isRecordId } from "@/lib/records";
@@ -25,13 +24,11 @@ const hashToken = (token: string) => createHash("sha256").update(token, "utf8").
 
 type ChildCheckInData = { respondents: CheckInRespondent[]; links: CheckInLink[]; checkIns: CheckIn[] };
 
-/** Respondents, links (without tokens), and check-ins for one saved child. One trip per request. */
-export const loadChildCheckIns = cache(async (childId: string): Promise<ChildCheckInData> => {
+/** Respondents, links (without tokens), and check-ins for one saved child, as `userId` sees them. One trip per request. */
+export const loadChildCheckIns = cache(async (userId: string, childId: string): Promise<ChildCheckInData> => {
   const empty: ChildCheckInData = { respondents: [], links: [], checkIns: [] };
-  if (!isSavedChildId(childId)) return empty;
-  const user = await getSignedInUser();
-  if (!user) return empty;
-  return asUser(user.id, async (db) => {
+  if (!userId || !isSavedChildId(childId)) return empty;
+  return asUser(userId, async (db) => {
     const respondents = (await db.query<{ id: string; name: string; role: RespondentRole; email: string | null }>(
       "select id, name, role, email from checkin_respondents where child_id = $1 order by created_at", [childId],
     )).rows.map((r) => ({ id: r.id, childId, name: r.name, role: r.role, ...(r.email ? { email: r.email } : {}) }));

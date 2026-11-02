@@ -146,7 +146,7 @@ Some getters in `data.ts` read cookies (`getChildren`, `getCurrentChild`, `getCu
 
 ### Endpoints by screen
 
-All paths start with `/api/v1`. "Role" is the minimum family role. RLS enforces it, and the API returns `403` early with a friendly message.
+All paths start with `/api/v1`. "Role" is the minimum family role. RLS enforces it, and the API returns `403` early with a friendly message. **As built in M2**, a few of these differ (screen endpoints return records rather than summaries, delete is `DELETE /records/:collection/:id`, family actions sit under `/families/:familyId/...`); see the notes under M2 in §6. The route files under `apps/web/src/app/api/v1/` are the source of truth.
 
 **Session and account**
 
@@ -256,25 +256,38 @@ The public teacher form stays on the web at `/c/[token]`. Teachers don't need th
   - getting one still needs a live session.
 - **Email OTP is supported.** We already use `auth.emailOtp.verifyEmail` / `sendVerificationOtp` on the web, so codes work the same way through our API.
 
-Sources: neon.com/docs/auth/roadmap, /docs/auth/about, /docs/auth/guides/plugins/jwt; better-auth.com/docs/integrations/expo, /plugins/bearer, /plugins/email-otp. Neon's API changes quickly (we're on `@neondatabase/auth` 0.7.0-beta), so the spike re-checks all of this.
+Sources: neon.com/docs/auth/roadmap, /docs/auth/about, /docs/auth/guides/plugins/jwt; better-auth.com/docs/integrations/expo, /plugins/bearer, /plugins/email-otp. Neon's API changes quickly (we're on `@neondatabase/auth` 0.7.0-beta). The spike below confirmed what works today.
 
-### Recommended approach: our server signs in for the phone
+### Settled: our server signs in for the phone (spike passed Nov 1, 2026)
 
-The phone never talks to Neon Auth. Our `/api/v1/auth/*` routes call the Neon Auth server SDK the same way the web's server actions do today (`auth.signIn.email`, `auth.emailOtp.verifyEmail`, …).
+The M0 spike (branch `spike/mobile-auth`) passed all 14 checks against the dev database with no new dependencies. The phone never talks to Neon Auth. Our `/api/v1/auth/*` routes call the Neon Auth server SDK, the same way the web's server actions do.
 
-1. **Sign in.** The phone POSTs email + password to `/api/v1/auth/sign-in`. The server signs in with Neon Auth and returns the session token in the JSON body (or the `Set-Cookie` value it would have set).
+**How it works:**
+- `apps/web/src/lib/api/auth.ts` (from the spike's `bearer.ts`) uses the SDK's framework-agnostic `createAuthServer()` from `@neondatabase/auth/server`, the same thing the Next.js adapter is built on, with a per-request context:
+  - the bearer token goes in as the `__Secure-neon-auth.session_token` cookie;
+  - cookies Neon Auth sets on sign-in are caught, so the route can return the token in JSON;
+  - `Origin` is always our own origin, which is already trusted.
+- Only the session token is passed upstream, never the cached `session_data` cookie. So every check asks Neon Auth, and revoking a session takes effect immediately.
+- `/api/v1` isn't in the `apps/web/src/proxy.ts` matcher, so the web's cookie redirect doesn't touch it. The CSP, trusted domains and the web sign-in are unchanged.
+
+**The steps:**
+1. **Sign in.** The phone POSTs email + password to `/api/v1/auth/sign-in` and gets `{ token, user }` in JSON. No cookies are set. A wrong password returns `401`. An unverified email returns `403 { error: "needs_verification" }`: Neon Auth answers 422 `email_not_confirmed`, which the route maps.
 2. **Store it.** The phone keeps the token in **`expo-secure-store`** (Keychain on iOS, Keystore on Android), with `keychainAccessible: AFTER_FIRST_UNLOCK_THIS_DEVICE_ONLY`. Nothing goes in AsyncStorage, and nothing is backed up to iCloud.
-3. **Use it.** Every request sends `Authorization: Bearer <token>`. `requireUser(request)` turns that into the session cookie the Neon SDK expects and calls `auth.getSession()`, or checks the session another way if the spike finds a cleaner API. A revoked or expired session returns `401`, and the phone goes back to sign-in.
-4. **Sign out** ends the session on the server and wipes SecureStore. "Sign out everywhere" and account deletion already end every session, the phone's included.
-5. **Email verification by code:** sign-up returns `needs_verification`. The phone shows a 6-digit code screen with `textContentType="oneTimeCode"` / `autoComplete="sms-otp"`, so iOS and Android can offer the code from Mail. Then it calls `/auth/verify-email`. The wording and error messages are the same as on the web.
-6. **No OAuth, so no deep-link redirects.** Email + password and codes don't need `trustedOrigins` app schemes. If Google or Apple sign-in is ever added, Apple requires "Sign in with Apple" too. That's a separate decision.
+3. **Use it.** Every request sends `Authorization: Bearer <token>`. `getBearerUser(request)` checks it with Neon Auth (`getSession` with the cookie cache off). A made-up, signed-out or revoked token returns `401`, and the phone goes back to sign-in. If Neon Auth is rate-limiting or down, the API answers `503` with `Retry-After` instead, and the phone retries without signing out.
+4. **Sign out** (`POST /api/v1/auth/sign-out`) ends only this device's session; other devices stay signed in (tested). `POST /api/v1/account/sign-out-everywhere` ends every session, this one included (tested). Account deletion removes all sessions with the user.
+5. **Email verification by code:**
+   - sign-in or sign-up returns `needs_verification`;
+   - the phone shows a 6-digit code screen with `textContentType="oneTimeCode"` / `autoComplete="sms-otp"` (Android), so the phone can offer to fill in the code;
+   - it then calls `/auth/verify-email` and `/auth/resend-code`, which wrap `emailOtp.verifyEmail` / `sendVerificationOtp` like the web does.
+   - Built in M2. If Neon Auth signs the person in when they verify, `/auth/verify-email` returns a token too; otherwise the app signs in next. Not tested with a real emailed code yet (QA accounts are verified with admin SQL).
+6. **No OAuth, so no deep-link redirects.** Email + password and codes don't need `trustedOrigins` app schemes. If Google sign-in is ever added, Apple requires "Sign in with Apple" too. That's a separate decision.
 7. **Optional later:** Face ID / fingerprint to unlock the app (`expo-local-authentication`), which keeps the token behind the device lock. **Ask first**: it's a new SDK, though it's free.
 
-**Fallback if the spike fails:** use Neon's JWT plugin. The server returns a 15-minute JWT plus the session token. The phone refreshes the JWT through `/api/v1/auth/token`, and routes check it with `jose` against Neon's JWKS. `jose` is a new dependency (**ask first**). The last resort is self-hosting Better Auth with `@better-auth/expo`. That's a much bigger change (it moves users out of managed Neon Auth), so it's only worth it if Neon never supports separate frontends.
-
-Also for the spike: Better Auth checks `Origin` on browser requests. The phone talks only to our API routes, not to `/api/auth/*`, so this doesn't come up. Confirm it anyway, and **don't** loosen the web's CSP or trusted origins.
-
----
+**Costs and open points:**
+- **One Neon Auth round trip per API request** (no session cache). Neon's managed auth rate-limits these checks: the M2 test hit `429` after about a hundred quick calls. The API now answers that with `503` + `Retry-After`, so nobody gets signed out. **Decision for you before launch:** cache "token → user" in memory for 30–60 seconds, which cuts the calls but delays a revoke by the same amount. Or ask Neon about the limit. With a handful of calls per screen it may never matter.
+- **Password change** signs out other devices and gives this device a new token (tested in M2); the app stores it.
+- **Session lifetime** is Neon Auth's (Better Auth sessions expire after a period without use). The phone treats any `401` as "sign in again". M2 should check whether `/me` renews the session; if not, add a refresh step.
+- **Not needed:** Neon's JWT plugin, `jose` and self-hosted Better Auth. They stay as fallbacks only if Neon changes how server-side sessions work.
 
 ## 4. Screens, offline, notifications
 
@@ -335,6 +348,31 @@ The reminder settings are already saved (migration 007). Sending them needs:
 - Ask for notification permission only when the parent turns a reminder on, never at first launch.
 - Never put the medication name or dose in a push payload unless the parent opted in.
 - Reminders are **reminders the parent set**, not advice. The app never suggests a time, dose or change.
+
+### Refill reminders (push in the phone app, tap to text or call)
+
+The user chose this design (Nov 1). It sits next to dose reminders and uses the same push setup and permission prompt. There's no SMS from Lanternway.
+
+- **When:** N days before the refill is due. The due date is `lastFilledOn` + `daysSupply`, the same date `refillDueDate()` already shows on Home and the calendar.
+  - N is set per medication: 3, 5, 7 or 10 days, default 5.
+  - The reminder arrives at a fixed morning time in the family's time zone.
+  - No reminder for a stopped medication (`stopDate` in the past) or one without both dates.
+  - When the parent records a new `lastFilledOn`, the next reminder moves with it.
+- **Data:** optional fields on the existing `medication` record, for example `refillReminderDays` (3 | 5 | 7 | 10) and `pharmacyPhone`. The prescriber's phone comes from their `provider` record (`prescriberId`). There's no new record kind and no migration.
+  - The fields only need adding to the `medications` spec in `packages/shared/src/record-schemas.ts`. `PUT /api/v1/records/medications/:id` and the read endpoints pass record fields through that spec generically, so no endpoint changes are needed.
+  - Fields not in the spec are dropped on save, so add them there first.
+- **Delivery:** the same choice as dose reminders.
+  - A local notification scheduled on the phone with `expo-notifications` is enough here, because the date is known days ahead. It's free, nothing leaves the phone, and it's rescheduled whenever the medication changes or the app syncs.
+  - Server push through the Expo push service would reach every family member's phone. It needs the `push_devices` table and the scheduler decisions above.
+- **Wording:** private by default ("Refill coming up for Maya in 5 days"). The medication name appears only if the parent opted in for that medication. Never a dose.
+- **Tap to text or call:** the notification opens the medication's screen with buttons that hand off to the parent's own apps through `Linking.openURL`:
+  - **Text the pharmacy / prescriber:** `sms:<number>` with a pre-written note. The parent reads, edits and sends it from their own Messages app.
+    - The body syntax differs by platform: `sms:+15555550123&body=…` on iOS, `sms:+15555550123?body=…` on Android. Build it per `Platform.OS`, and URL-encode the body.
+    - Example note: "Hi, this is Dana, Maya's parent. Could you please refill Maya's [medication] prescription? Thank you."
+  - **Call:** `tel:+15555550123`.
+  - Use `Linking.canOpenURL` first (an iPad or a phone with no SIM can't text or call), and fall back to showing the number with a Copy button.
+  - Lanternway never sends the message or places the call. The note asks for a refill and nothing else: no dose, symptoms or advice (CLAUDE.md rule 2).
+- **Web:** the website shows the same "refill due" date it shows today, plus the per-medication reminder setting. Tap-to-text links work on the website too, on a phone.
 
 ---
 
@@ -415,8 +453,8 @@ Also do before submitting:
 Each step keeps `pnpm dev` working, passes `pnpm lint && pnpm typecheck`, and runs `pnpm db:test-rls` whenever the database changes. Add these as **Stage 4** in `BUILD_PLAN.md` once you approve the plan.
 
 ### M0. Auth spike (one throwaway branch, about a day)
-- [ ] One test route `GET /api/v1/me` that accepts `Authorization: Bearer <token>`. A tiny Node script signs in a QA account through a test `/api/v1/auth/sign-in`, then calls `/me`. Confirm the session token can be returned and verified server-side with the Neon SDK, and that sign-out everywhere kills it
-- [ ] If that fails, try the JWT plugin route (`authClient.token()` + JWKS). Write the result in `HANDOFF.md` and settle §3 before M2
+- [x] One test route `GET /api/v1/me` that accepts `Authorization: Bearer <token>`. A tiny Node script signs in a QA account through a test `/api/v1/auth/sign-in`, then calls `/me`. Confirm the session token can be returned and verified server-side with the Neon SDK, and that sign-out everywhere kills it
+- [x] ~~If that fails, try the JWT plugin route~~. Not needed: the session-token route passed 14/14 checks (Nov 1). The spike's code was carried into M2; §3 is settled
 
 ### M1. Monorepo (no behaviour change)
 - [x] Add `packages:` to `pnpm-workspace.yaml`. Move the web app to `apps/web` with `git mv`. Add the root scripts. Move `.env.local` (you)
@@ -425,13 +463,21 @@ Each step keeps `pnpm dev` working, passes `pnpm lint && pnpm typecheck`, and ru
 - [ ] You set Vercel's Root Directory to `apps/web`, then push to `dev` and check dev.lanternway.co
 
 ### M2. API v1 (web side only, testable with a script)
-- [ ] Data-layer refactor: cookie-free functions `(user, childId, today)`. Web pages unchanged (separate commit + browser test)
-- [ ] `requireUser(request)` + `/api/v1/auth/*` (sign-up with consents, sign-in, verify code, resend, forgot/reset, sign-out) + `GET /me`
-- [ ] Home, logs + milestones (PUT/DELETE), Timeline endpoints
-- [ ] Medications, calendar, med search
-- [ ] Therapy and School endpoints, check-in links (create shows the token once, revoke)
-- [ ] About Me, add/remove child, Family sharing, join, account (password, sign out everywhere, export, delete)
-- [ ] `scripts/api-test.mjs`: two QA accounts. Check that every endpoint returns `401` signed out and `403` for the wrong role, and that family A can't see family B through the API. Clean up the QA accounts afterwards
+- [x] Data-layer refactor: cookie-free readers in `apps/web/src/lib/child-data.ts` take `(userId, childId, …)`; `data.ts` keeps its signatures. Web pages unchanged (separate commit; browser-checked at 390px and 1280px as an admin and a view-only member)
+- [x] `withUser` (= `requireUser`) + `/api/v1/auth/*` (sign-up with consents, sign-in, verify code, resend, forgot password, sign-out) + `GET /me`
+- [x] Home, logs + milestones (PUT/DELETE), Timeline endpoints
+- [x] Medications, med search. The calendar is worked out on the phone from the Medications and Therapy data (`schedule.ts`)
+- [x] Therapy and School endpoints, check-in links (create shows the token once, revoke)
+- [x] About Me, add/remove child, Family sharing, join, account (password, sign out everywhere, export, delete)
+- [x] `scripts/api-test.mjs` (`pnpm api:test <url>`): four QA accounts (admin, "can log", "can view", another family), 111 checks. Every route answers 401 signed out and with a made-up token, 403 for the wrong role, and 404 across families. Tokens are shown once. Cleans up its QA accounts
+
+**Built differently from §2 (on purpose):**
+- **Screen endpoints return the records, not finished summaries.** `/home` returns this week's logs, check-ins, plan, meds and providers. The phone works out the week stats and "coming up" with the shared code. So `insights.ts`, `format.ts` and `schedule.ts` move to `packages/shared` in M3.
+- **Provider detail** is part of `GET /children/:id/therapy` (all providers' goals and sessions), with no separate `/providers/:id`.
+- **Delete is `DELETE /records/:collection/:id`.** Next.js doesn't allow `records/[id]` next to `records/[collection]/[id]`. The server checks that the record really is of that collection.
+- **Resetting a password** happens on the website's `/reset-password` page from the emailed link. The phone only asks for the email (`/auth/forgot-password`).
+- **Neon Auth rate limits are 503, not 401** (see §3).
+- **Saving over another family's record id now returns 404.** Before, the API answered 200 while the database (correctly) changed nothing. `saveRecord` now reports when the upsert touched no row.
 
 ### M3. Expo app skeleton (ask first: approve the Expo library list in §4)
 - [ ] `apps/mobile` with Expo Router, TypeScript, brand theme, Nunito, and an API client typed from `@lanternway/shared/api`
@@ -477,6 +523,7 @@ Each step keeps `pnpm dev` working, passes `pnpm lint && pnpm typecheck`, and ru
 - [ ] Decide: local notifications only (free), or server push (FCM project + a scheduler, maybe Vercel Pro)
 - [ ] Local: schedule from the saved reminder settings and reschedule on change, sign-out and pause. Use private wording by default
 - [ ] Server push (if chosen): `push_devices` table **with RLS + `db:test-rls` checks**, a scheduler, Expo push. Skip stopped meds and paused reminders, and respect time zones
+- [ ] Refill reminders (§4): schedule N days before `lastFilledOn` + `daysSupply` from the medication's `refillReminderDays`. Opening it shows tap-to-text (`sms:`, per-platform body syntax) and tap-to-call (`tel:`) buttons for the pharmacy and prescriber, with a Copy fallback. The web side and the record fields are built first in the main checkout
 
 ### Later (Stage 4 extras, each needs its own decision)
 - Home-screen widgets and quick log from the lock screen (iOS WidgetKit / Android widgets need native code via config plugins)
