@@ -24,10 +24,9 @@ _Last updated: Nov 1, 2026. Replaces the Oct 24 handoff (Stage 1 is long done)._
   - `api.ts` gained `TimelineResponse` and `MedicationsResponse`, which the routes `satisfies`.
 - **Phone pieces:**
   - `src/lib/use-cached-screen.ts` (saved copy first, then fresh) and `src/components/screen-parts.tsx` (header with child switcher, Last updated / offline note, segmented control, disclaimer).
-  - `src/components/care-calendar.tsx`, `src/components/refill-sheet.tsx`.
+  - `src/components/care-calendar.tsx`, `src/components/refill-sheet.tsx`, `src/components/trend-charts.tsx` (react-native-svg).
 - **Refill links:** `app.json` `ios.infoPlist.LSApplicationQueriesSchemes` and the local config plugin `apps/mobile/plugins/with-phone-links.js` (Android `<queries>`) let `canOpenURL` answer for `sms:` / `tel:` in a real build. Expo Go uses its own settings.
 - **Open:**
-  - Charts wait for approval of `react-native-svg`; a placeholder is in place.
   - Real-phone check of Text/Call.
   - The website's Medications chart uses the first medication in the list even when it has stopped (the phone uses the first current one).
 
