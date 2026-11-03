@@ -13,10 +13,12 @@ import type {
   ApiError,
   HomeResponse,
   MeResponse,
+  MedicationsResponse,
   OkResponse,
   SignInResponse,
   SignUpConsentKey,
   SignUpResponse,
+  TimelineResponse,
   VerifyEmailResponse,
 } from "@lanternway/shared/api";
 
@@ -91,6 +93,13 @@ export const getMe = () => apiFetch<MeResponse>("/api/v1/me");
 
 /** Today for one child: this week's logs, recent check-ins, plan, meds, providers. */
 export const getHome = (childId: string) => apiFetch<HomeResponse>(`/api/v1/children/${encodeURIComponent(childId)}/home`);
+
+/** Timeline for one child: the lifelong record, plus the last month of logs and check-ins. */
+export const getTimeline = (childId: string) => apiFetch<TimelineResponse>(`/api/v1/children/${encodeURIComponent(childId)}/timeline`);
+
+/** Medications for one child: meds, dose changes, reminder settings, care team, and a year of logs and check-ins. */
+export const getMedications = (childId: string) =>
+  apiFetch<MedicationsResponse>(`/api/v1/children/${encodeURIComponent(childId)}/medications`);
 
 /** Save (insert or update) a record by its phone-made id. */
 export const putRecord = (collection: RecordCollection, id: string, body: Record<string, unknown>) =>
