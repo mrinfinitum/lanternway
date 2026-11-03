@@ -4,12 +4,15 @@
  *
  * - A 401 for our token (expired, revoked, signed out elsewhere) clears it and goes
  *   back to sign-in with a gentle note.
- * - A 503 or no connection never signs anyone out: the token is kept and the app
- *   says it can't check right now.
+ * - A 503 or no connection never signs anyone out: the token is kept, and the app
+ *   opens from the last saved account (so logging works offline), or says it
+ *   can't check right now if nothing was saved yet.
  */
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import type { MeResponse } from "@lanternway/shared/api";
 import { clearToken, getMe, getToken, saveToken, setSessionExpiredHandler, signIn as signInRequest, signOutOnServer } from "@/lib/api";
+import { keepOnlyUser, readLastAccount, wipeLocalData, writeCache } from "@/lib/local-db";
+import { outboxChanged } from "@/lib/outbox";
 
 export type Session =
   | { status: "loading" }
@@ -28,6 +31,8 @@ type SessionContext = {
   signOut: () => Promise<void>;
   /** Try loading the account again (after "can't reach Lanternway"). */
   reload: () => Promise<void>;
+  /** Fetch the account again quietly (e.g. a child was added on the website). Keeps the current state if offline. */
+  refreshMe: () => Promise<void>;
   /** Keep the email and password from sign-up or sign-in in memory only (never stored), so confirming the email can sign straight in. */
   rememberForVerify: (email: string, password: string) => void;
   /** After the code is confirmed: sign in with the remembered password for this email, if there is one. */
@@ -46,12 +51,21 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   const load = useCallback(async (): Promise<SignInResult> => {
     const result = await getMe();
     if (result.ok) {
+      // Waiting logs and saved screens belong to one person; drop anyone else's.
+      await keepOnlyUser(result.data.user.id).catch(() => undefined);
+      await writeCache(result.data.user.id, "me", result.data).catch(() => undefined);
       setSession({ status: "signed-in", me: result.data });
       return { ok: true };
     }
     if (result.status === 401) {
       // The expired-session handler has already cleared the token.
       return { ok: false, error: SESSION_ENDED };
+    }
+    // Offline or the server is busy: open the app from the last saved account, so logging still works.
+    const saved = await readLastAccount<MeResponse>().catch(() => null);
+    if (saved) {
+      setSession({ status: "signed-in", me: saved });
+      return { ok: true };
     }
     setSession({ status: "unreachable", error: result.error });
     return { ok: false, error: result.error };
@@ -100,6 +114,9 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     // End the session on the server if we can; the phone forgets it either way.
     await signOutOnServer().catch(() => undefined);
     await clearToken();
+    // Nothing of this person's stays on the phone: waiting logs, saved screens, the child last picked.
+    await wipeLocalData().catch(() => undefined);
+    outboxChanged();
     pending.current = null;
     setSession({ status: "signed-out" });
   }, []);
@@ -109,6 +126,13 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     if (await getToken()) await load();
     else setSession({ status: "signed-out" });
   }, [load]);
+
+  const refreshMe = useCallback(async () => {
+    const result = await getMe();
+    if (!result.ok) return;
+    await writeCache(result.data.user.id, "me", result.data).catch(() => undefined);
+    setSession({ status: "signed-in", me: result.data });
+  }, []);
 
   const rememberForVerify = useCallback((email: string, password: string) => {
     pending.current = { email, password };
@@ -120,8 +144,8 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   );
 
   const value = useMemo(
-    () => ({ session, signIn, finishSignIn, signOut, reload, rememberForVerify, signInAfterVerify }),
-    [session, signIn, finishSignIn, signOut, reload, rememberForVerify, signInAfterVerify],
+    () => ({ session, signIn, finishSignIn, signOut, reload, refreshMe, rememberForVerify, signInAfterVerify }),
+    [session, signIn, finishSignIn, signOut, reload, refreshMe, rememberForVerify, signInAfterVerify],
   );
   return <Context.Provider value={value}>{children}</Context.Provider>;
 }

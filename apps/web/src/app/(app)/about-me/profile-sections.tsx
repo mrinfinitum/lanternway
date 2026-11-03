@@ -1,7 +1,7 @@
 import Image from "next/image";
 import { Cake, Heart, MessageCircleHeart, Sparkles, type LucideIcon } from "lucide-react";
 import { brandImages } from "@/lib/brand";
-import { formatDate } from "@/lib/format";
+import { formatDate } from "@lanternway/shared/format";
 import { communicationStyleLabels } from "@lanternway/shared/labels";
 import type { Child } from "@lanternway/shared/types";
 import { cn } from "@/lib/utils";

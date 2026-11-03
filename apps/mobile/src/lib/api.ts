@@ -8,8 +8,10 @@
  */
 import Constants from "expo-constants";
 import * as SecureStore from "expo-secure-store";
+import type { RecordCollection } from "@lanternway/shared/record-schemas";
 import type {
   ApiError,
+  HomeResponse,
   MeResponse,
   OkResponse,
   SignInResponse,
@@ -86,6 +88,13 @@ export async function apiFetch<T>(path: string, init: { method?: string; body?: 
 
 /** The signed-in person, their families and the children they can see. */
 export const getMe = () => apiFetch<MeResponse>("/api/v1/me");
+
+/** Today for one child: this week's logs, recent check-ins, plan, meds, providers. */
+export const getHome = (childId: string) => apiFetch<HomeResponse>(`/api/v1/children/${encodeURIComponent(childId)}/home`);
+
+/** Save (insert or update) a record by its phone-made id. */
+export const putRecord = (collection: RecordCollection, id: string, body: Record<string, unknown>) =>
+  apiFetch<OkResponse>(`/api/v1/records/${collection}/${encodeURIComponent(id)}`, { method: "PUT", body });
 
 // Sign-in and account (all through /api/v1/auth/*; the phone never calls Neon Auth itself).
 

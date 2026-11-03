@@ -498,11 +498,23 @@ Each step keeps `pnpm dev` working, passes `pnpm lint && pnpm typecheck`, and ru
   - The code step used a known code written into the QA account's pending verification with admin SQL (codes are stored hashed).
 
 ### M5. Quick log + Today
-- [ ] Child picker and header
-- [ ] Quick log tiles and forms, validated with shared `record-schemas`
-- [ ] Offline outbox (SQLite) + sync + "Waiting to sync" status
-- [ ] Today screen with a cached last load
-- [ ] Test on a real phone in airplane mode (dev build)
+- [x] Child picker and header. The role decides what shows: "can view" members see the family's data and "You can see everything here. Sam can make changes." with no quick-log tiles; the log screen itself also refuses
+- [x] Quick log tiles and forms (mood, sleep, appetite, meltdown with the child's own triggers and calming strategies, win, note), in the website's wording. Each is checked with the shared `record-schemas` before it's saved
+- [x] Offline outbox (SQLite, `expo-sqlite`) with phone-made UUIDs (`expo-crypto`):
+  - **When it sends:** right after a save, when the app comes back to the front, every 30 seconds while something waits, and on pull-to-refresh.
+  - **What you see:** "Waiting to sync" while an item waits.
+  - **Refused items** ("This one didn't save") keep the copy, show the server's reason, and offer Try again or Remove it.
+- [x] Today with a cached last load and "Last updated …". The account (`/me`) is cached too, so the app also opens offline. Signing out wipes the outbox, the cache and the remembered child, and a different person signing in drops the last person's items
+- [x] `insights.ts` and `format.ts` moved to `packages/shared` (website imports updated). `schedule.ts` stays on the website until the calendar comes to the phone (M6)
+- [x] Checked in the iOS Simulator with QA accounts:
+  - logging online;
+  - logging with the website stopped ("Waiting to sync", then sent automatically once it was back);
+  - an offline cold start (Today from the cache, with an offline note);
+  - a refused item kept with its reason, then removed;
+  - sign-out wiping the phone's database;
+  - a view-only member;
+  - all three logs appear on the website's Log page.
+- [ ] Test on a real phone in airplane mode (dev build). **Left for you, on your own device**
 
 ### M6. Read screens
 - [ ] Timeline (week / month / year / all)

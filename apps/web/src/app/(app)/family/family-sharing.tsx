@@ -16,7 +16,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { formatDate } from "@/lib/format";
+import { formatDate } from "@lanternway/shared/format";
 import { roleDescriptions, roleLabels, type Family, type FamilyMember, type FamilyRole } from "@lanternway/shared/family-roles";
 import type { IsoDate } from "@lanternway/shared/types";
 import { cn } from "@/lib/utils";

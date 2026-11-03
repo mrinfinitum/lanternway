@@ -17,8 +17,8 @@ import {
   getToday,
 } from "@/lib/data";
 import { addDays, dayOfWeek, daysBetween } from "@lanternway/shared/dates";
-import { formatAverage, formatLongWeekday, formatRelativeDays, formatWeekdayDate, plural } from "@/lib/format";
-import { refillDueDate, summarizeCheckIns, summarizeLogs } from "@/lib/insights";
+import { formatAverage, formatLongWeekday, formatRelativeDays, formatWeekdayDate, plural } from "@lanternway/shared/format";
+import { refillDueDate, summarizeCheckIns, summarizeLogs } from "@lanternway/shared/insights";
 import { logKindIcons, logKindOrder } from "@/lib/log-icons";
 import { appetiteLabels, logKindLabels, moodLabels, ratingLabel } from "@lanternway/shared/labels";
 import type { IsoDate, WinLog } from "@lanternway/shared/types";

@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { brandImages } from "@/lib/brand";
 import { checkInQuestions } from "@lanternway/shared/labels";
-import { formatLongWeekday } from "@/lib/format";
+import { formatLongWeekday } from "@lanternway/shared/format";
 import type { CheckInRatings, IsoDate, Rating } from "@lanternway/shared/types";
 import { sendCheckIn } from "./actions";
 

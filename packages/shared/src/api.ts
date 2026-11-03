@@ -3,7 +3,7 @@
 // Routes not listed here yet return the shapes in their route files' doc comments.
 
 import type { Family, FamilyRole } from "./family-roles";
-import type { Child } from "./types";
+import type { CheckIn, Child, IepPlan, IsoDate, LogEntry, Medication, Provider } from "./types";
 
 export type ApiUser = { id: string; name: string; email: string };
 
@@ -43,3 +43,17 @@ export const SIGN_UP_CONSENTS: readonly SignUpConsent[] = [
 
 /** Any route that just answers that it worked. */
 export type OkResponse = { ok: true };
+
+/** A person's access to one child's family (403s and hidden buttons follow this). */
+export type ChildAccess = { role: FamilyRole; adminNames: string[] };
+
+/** GET /api/v1/children/:childId/home?tz= (Today): the phone works out the week's stats with ./insights. */
+export type HomeResponse = {
+  access: ChildAccess;
+  today: IsoDate;
+  weekLogs: LogEntry[];
+  checkIns: CheckIn[];
+  iepPlan: IepPlan | null;
+  medications: Medication[];
+  providers: Provider[];
+};

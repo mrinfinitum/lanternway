@@ -14,8 +14,8 @@ import {
 } from "@/lib/data";
 import { isSavedChildId } from "@/lib/child-profile";
 import { addDays } from "@lanternway/shared/dates";
-import { formatAverage, formatShortDate, plural } from "@/lib/format";
-import { summarizeCheckIns } from "@/lib/insights";
+import { formatAverage, formatShortDate, plural } from "@lanternway/shared/format";
+import { summarizeCheckIns } from "@lanternway/shared/insights";
 import { respondentRoleLabels } from "@lanternway/shared/labels";
 import { CheckInLinks } from "./check-in-links";
 import { SchoolManager } from "./school-manager";

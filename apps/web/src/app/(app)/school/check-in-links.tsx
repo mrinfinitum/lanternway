@@ -17,7 +17,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { formatDate } from "@/lib/format";
+import { formatDate } from "@lanternway/shared/format";
 import { respondentRoleLabels } from "@lanternway/shared/labels";
 import type { CheckInLink, CheckInRespondent, IsoDate, RespondentRole } from "@lanternway/shared/types";
 import { cn } from "@/lib/utils";

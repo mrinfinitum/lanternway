@@ -17,7 +17,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { ageOn, addDays } from "@lanternway/shared/dates";
-import { formatMonthYear, formatTime, formatWeekdayDate } from "@/lib/format";
+import { formatMonthYear, formatTime, formatWeekdayDate } from "@lanternway/shared/format";
 import type { IsoDate } from "@lanternway/shared/types";
 import { cn } from "@/lib/utils";
 import { useLogStore } from "../_components/log-store";

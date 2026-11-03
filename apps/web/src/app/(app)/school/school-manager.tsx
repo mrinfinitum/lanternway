@@ -24,7 +24,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { addDays } from "@lanternway/shared/dates";
-import { formatDate, formatRelativeDays, formatShortDate } from "@/lib/format";
+import { formatDate, formatRelativeDays, formatShortDate } from "@lanternway/shared/format";
 import { deliveryStatusLabels, schoolMessageTypeLabels } from "@lanternway/shared/labels";
 import type {
   Accommodation,

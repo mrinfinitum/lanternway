@@ -5,8 +5,8 @@ import { BellRing, CalendarClock, ChevronLeft, ChevronRight, HeartHandshake, Pil
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { addDays, dayOfWeek, parseIsoDate } from "@lanternway/shared/dates";
-import { formatLongWeekday, formatMonthYear, formatTime } from "@/lib/format";
-import { refillDueDate } from "@/lib/insights";
+import { formatLongWeekday, formatMonthYear, formatTime } from "@lanternway/shared/format";
+import { refillDueDate } from "@lanternway/shared/insights";
 import { providerTypeLabels } from "@lanternway/shared/labels";
 import { parseWeeklySchedule, reminderOn } from "@/lib/schedule";
 import type { IsoDate, Medication, MedicationChange, MedicationReminder, Provider, TherapySession } from "@lanternway/shared/types";

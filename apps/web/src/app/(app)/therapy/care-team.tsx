@@ -10,7 +10,7 @@ import { SectionHeading } from "@/components/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { formatDate, plural } from "@/lib/format";
+import { formatDate, plural } from "@lanternway/shared/format";
 import { providerTypeLabels } from "@lanternway/shared/labels";
 import type { IsoDate, Provider, ProviderType } from "@lanternway/shared/types";
 import { newId, useRecordActions, useRecords } from "../_components/records-store";

@@ -15,7 +15,23 @@ _Last updated: Nov 1, 2026. Replaces the Oct 24 handoff (Stage 1 is long done)._
 | `dev` | Latest: family sharing (see `git log`), deployed to **https://dev.lanternway.co** (noindex + prototype banner) |
 | Working tree | Clean. Medication reminder settings + care calendar are committed and on dev. Migration 007 is applied to the shared Neon database. |
 
-### Sign-in on the phone, M4 (Nov 2, branch `mobile/m4-sign-in`, not pushed)
+### Quick log + Today on the phone, M5 (Nov 2, branch `mobile/m5-quick-log`, not pushed)
+- **Screens:** `apps/mobile/src/app/(app)/home.tsx` is Today and `(app)/log.tsx?kind=` is the quick log.
+  - Today shows the child picker, role note, tiles, Logged today with badges, refused items, this week, coming up, wins, and Last updated.
+  - The log forms use the controls in `src/components/log-controls.tsx`.
+- **Phone storage:** `src/lib/local-db.ts` (SQLite: `outbox`, `cache`, `prefs`).
+  - `src/lib/outbox.ts` saves first and syncs later: 0/5xx/401 wait, 400/403/404 become "needs attention" with the server's message.
+  - `src/lib/current-child.tsx` remembers the picked child and the role.
+  - The `/me` cache key lets the app open offline.
+- **Shared:** `insights.ts` and `format.ts` moved to `packages/shared` (web imports updated). `api.ts` gained `HomeResponse`, which the web's `/home` route `satisfies`.
+- **Simulator checks** (QA accounts, deleted afterwards; details in `MOBILE_PLAN.md` M5): online, website stopped → waiting → auto-sent, offline cold start, refused item, sign-out wipe, view-only member, logs visible on the website.
+  - The refused item was made by inserting a row into the simulator's SQLite: `xcrun simctl get_app_container booted host.exp.Exponent data`, then find `lanternway.db`.
+- **Open:**
+  - Real phone in airplane mode (the user's device).
+  - Tile symbols are plain text (no icon library); an icon library would need approval.
+  - Sleep times are typed as HH:MM; a native time picker would be a new library.
+
+### Sign-in on the phone, M4 (Nov 2, merged to `dev`)
 - **Screens:** `apps/mobile/src/app/(auth)/` holds sign-in, sign-up, verify and forgot-password; `(app)/home.tsx` is a signed-in placeholder with Sign out.
   - The root `_layout.tsx` uses `Stack.Protected` to show one group or the other.
   - `src/app/index.tsx` redirects to `/home` or `/sign-in`. A route that always exists is needed, or a signed-out `/` is "Unmatched Route".
