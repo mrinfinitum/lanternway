@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth/server";
 import { recordConsents } from "@/lib/consents";
 import { afterSignInPath } from "@/lib/join-cookie";
-import { passwordProblem } from "@/lib/password-policy";
+import { passwordProblem } from "@lanternway/shared/password-policy";
 import { rememberEmailToVerify } from "./verify-cookie";
 
 export type AuthFormState = { error: string; email?: string; name?: string } | null;

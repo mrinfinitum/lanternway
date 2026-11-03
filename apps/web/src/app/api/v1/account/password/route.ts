@@ -1,6 +1,6 @@
 import { authForRequest } from "@/lib/api/auth";
 import { fail, json, readBody, withUser } from "@/lib/api/http";
-import { passwordProblem } from "@/lib/password-policy";
+import { passwordProblem } from "@lanternway/shared/password-policy";
 
 /**
  * POST /api/v1/account/password { currentPassword, newPassword } → { token }.

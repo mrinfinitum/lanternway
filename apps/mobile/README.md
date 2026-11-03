@@ -21,7 +21,9 @@ The first run on a simulator installs Expo Go. Only libraries that Expo Go inclu
 
 ## Layout
 
-- `src/app/`: screens (Expo Router). `_layout.tsx` loads Nunito.
+- `src/app/`: screens (Expo Router). `_layout.tsx` loads Nunito and shows `(auth)/` (sign-in, sign-up, verify, forgot password) or `(app)/` depending on the session.
+- `src/lib/session.tsx`: who's signed in. A 401 for our token goes back to sign-in; no connection or a 503 never signs anyone out.
+- `src/components/ui.tsx`: Screen, Card, Field, Button, Notice, Checkbox in the Lanternway style.
 - `src/theme.ts`: brand colors, fonts, radius, tap size. Use these, never raw hex.
 - `src/lib/api.ts`: the API client. Typed from `@lanternway/shared/api`; bearer token from secure storage; 503 is retried, never treated as signed out.
 - `src/lib/brand.ts`: every brand image, in one place.

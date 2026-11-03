@@ -1,7 +1,7 @@
 import { authForRequest } from "@/lib/api/auth";
 import { fail, json, publicRoute, readBody, str } from "@/lib/api/http";
 import { recordConsents } from "@/lib/consents";
-import { passwordProblem } from "@/lib/password-policy";
+import { passwordProblem } from "@lanternway/shared/password-policy";
 
 const isEmail = (v: string) => /^\S+@\S+\.\S+$/.test(v);
 

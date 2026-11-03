@@ -5,7 +5,7 @@ import { useActionState, useId } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { PASSWORD_HINT, PASSWORD_MIN } from "@/lib/password-policy";
+import { PASSWORD_HINT, PASSWORD_MIN } from "@lanternway/shared/password-policy";
 import { requestReset, resetPassword } from "./password-actions";
 
 const card = "space-y-4 rounded-2xl bg-card p-5 ring-1 ring-border";

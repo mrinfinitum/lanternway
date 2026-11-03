@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { deleteAccountData, NEEDS_ANOTHER_ADMIN } from "@/lib/account";
 import { auth, getSignedInUser } from "@/lib/auth/server";
 import { CURRENT_CHILD_COOKIE, SAMPLE_FAMILY_COOKIE } from "@/lib/data";
-import { passwordProblem } from "@/lib/password-policy";
+import { passwordProblem } from "@lanternway/shared/password-policy";
 
 export type FormState = { error?: string; done?: string } | null;
 

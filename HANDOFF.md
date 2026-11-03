@@ -15,7 +15,23 @@ _Last updated: Nov 1, 2026. Replaces the Oct 24 handoff (Stage 1 is long done)._
 | `dev` | Latest: family sharing (see `git log`), deployed to **https://dev.lanternway.co** (noindex + prototype banner) |
 | Working tree | Clean. Medication reminder settings + care calendar are committed and on dev. Migration 007 is applied to the shared Neon database. |
 
-### Phone app skeleton, M3 (Nov 2, branch `mobile/m3-skeleton`, not pushed)
+### Sign-in on the phone, M4 (Nov 2, branch `mobile/m4-sign-in`, not pushed)
+- **Screens:** `apps/mobile/src/app/(auth)/` holds sign-in, sign-up, verify and forgot-password; `(app)/home.tsx` is a signed-in placeholder with Sign out.
+  - The root `_layout.tsx` uses `Stack.Protected` to show one group or the other.
+  - `src/app/index.tsx` redirects to `/home` or `/sign-in`. A route that always exists is needed, or a signed-out `/` is "Unmatched Route".
+- **Session:** `src/lib/session.tsx`.
+  - States: loading, signed-out (with an optional gentle note), signed-in (with `/me`), and unreachable (token kept).
+  - A 401 for a token we sent clears it, through `setSessionExpiredHandler` in `api.ts`.
+  - The sign-up password is kept in memory only, until the code is confirmed. In practice `/auth/verify-email` returns a token, so it isn't needed then.
+- **Shared:** `password-policy.ts` moved to `packages/shared` (web imports updated). `api.ts` gained `SIGN_UP_CONSENTS` (keep in step with the web form), `SignUpResponse`, `VerifyEmailResponse` and `OkResponse`.
+- **Found while testing:**
+  - iOS autocorrect turned "qa" into "as" in email fields. Email fields now set `autoCorrect={false}`.
+  - Expo's typed routes need `.expo/types`, which only `expo start` generates. They're off (`experiments.typedRoutes` removed), so root typecheck doesn't depend on a dev server.
+  - Metro started with `CI=1` doesn't reload; use `expo start < /dev/null` for a watched, non-interactive run.
+- **Testing the code step with QA accounts:** codes are stored hashed in `neon_auth.verification` as `base64url(sha256(code)):attempts`. Writing a known one for a QA email lets the real verify path run, and `/auth/verify-email` returned a session token. Clean up `neon_auth.verification` rows too (reset rows hold the user id as their value).
+- **Simulator access:** the user granted it in the Claude app's simulator panel ("Let Claude use it").
+
+### Phone app skeleton, M3 (Nov 2, merged to `dev`)
 - **What it is:** `apps/mobile` (`@lanternway/mobile`), Expo SDK 58 with Expo Router (`src/app/`) and TypeScript.
   - Brand: `src/theme.ts` (the website's colors, Nunito via `@expo-google-fonts/nunito`) and `src/lib/brand.ts` (copies of the web brand PNGs).
   - API client: `src/lib/api.ts`, typed from the new `packages/shared/src/api.ts`. The web's `/me` and `/auth/sign-in` routes now `satisfies` those types.
