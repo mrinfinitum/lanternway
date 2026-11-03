@@ -483,7 +483,7 @@ Each step keeps `pnpm dev` working, passes `pnpm lint && pnpm typecheck`, and ru
 - [x] `apps/mobile` with Expo Router, TypeScript, brand theme, Nunito, and an API client typed from `@lanternway/shared/api`. Expo SDK 58. Libraries: the approved `expo-router` (with its required peers `react-native-safe-area-context`, `react-native-screens`, `expo-linking`, `expo-constants`, `expo-status-bar`), `expo-secure-store` and `expo-font`, plus `@expo-google-fonts/nunito` (the Nunito font files). `expo-sqlite` and `expo-crypto` aren't installed until something uses them (M5)
 - [x] Runs in the iOS Simulator (Expo Go, iPhone 18 Pro) against the website's dev server: the placeholder screen calls `GET /api/v1/me` and shows the signed-out answer. `pnpm mobile` starts it. **Android Emulator not tried:** no Android SDK on this Mac yet. iOS and Android bundles both build (`expo export`)
 - [x] Lint (`eslint-config-expo`) and typecheck for mobile are included in the root `pnpm lint` and `pnpm typecheck`
-- [ ] Move `insights.ts`, `format.ts` and `schedule.ts` to `packages/shared`, so the phone can work out Home's week stats, "coming up" and the calendar (needed by M5–M6)
+- [x] Move `insights.ts`, `format.ts` and `schedule.ts` to `packages/shared`, so the phone can work out Home's week stats, "coming up" and the calendar (done in M5–M6)
 
 ### M4. Sign-in on the phone
 - [x] Sign in, sign up (4 consents, the website's wording, in `@lanternway/shared/api`), verify by code, forgot password (the reset itself happens on the website's page from the email), sign out. Token in SecureStore (`AFTER_FIRST_UNLOCK_THIS_DEVICE_ONLY`), never AsyncStorage
@@ -517,9 +517,23 @@ Each step keeps `pnpm dev` working, passes `pnpm lint && pnpm typecheck`, and ru
 - [ ] Test on a real phone in airplane mode (dev build). **Left for you, on your own device**
 
 ### M6. Read screens
-- [ ] Timeline (week / month / year / all)
-- [ ] Medications list, dose history, calendar, simple charts (ask first: chart library)
-- [ ] "More" tab lists only the native screens built so far. No web pages inside the app
+- [x] Tabs: Today, Timeline, More (`expo-router/tabs`, part of the approved `expo-router`). Tab symbols are plain text until an icon library is approved
+- [x] Timeline (week / month / year / all). The rows and grouping come from `packages/shared/src/timeline.ts`, which the website's Timeline now uses too. Wins, notes and meltdowns still waiting in the outbox show up before they sync
+- [x] Medications (under More): current and past medications, the refill line (due date, pharmacy, reminder days, "not sending yet"), reminder settings, the care calendar (medications and therapy layers, tap a day), and per-medication dose history with the six weeks before and after each change. Read-only for every role on the phone for now; changes stay on the website
+- [x] "Ask for a refill" sheet (`packages/shared/src/refills.ts`): the note can be edited before sending; Text uses `smsHref` with `Platform.OS`, Call uses `telHref`, both checked with `Linking.canOpenURL`. The fallback is "Share or copy the note" through the system share sheet, which includes Copy, so `expo-clipboard` isn't needed. `app.json` lists `sms`/`tel` in `LSApplicationQueriesSchemes`, and a local config plugin (`apps/mobile/plugins/with-phone-links.js`) adds Android's `<queries>`. A "can log" or "can view" member's note says "I help care for …", as on the website
+- [x] The calendar's pure parts (`calendarItems`, `monthWeeks`, `shiftMonth`, `reminderSummary`, `describeMedicationChange`) moved to `packages/shared/src/schedule.ts`; the website's calendar and reminders use them. The disclaimer text is in `packages/shared/src/disclaimer.ts` and shows on Medications and dose history, as on the website
+- [ ] Charts. **Waiting for approval of a chart library** (`react-native-svg`). Until then a clearly marked placeholder sits in "The last year", above the same numbers by month (dose, teacher focus, sleep) for the first current medication
+- [x] "More" tab lists only the native screens built so far (Medications) plus the account and Sign out. No web pages inside the app
+- [x] Timeline and Medications are saved on the phone like Today (`src/lib/use-cached-screen.ts`), with "Last updated" and the offline note; sign-out wipes them
+- [x] Checked in the iOS Simulator with QA accounts (an admin and a "can view" member):
+  - every zoom level;
+  - the medication list, calendar layers and days, the dose history;
+  - the refill sheet: edited note, Text opened Messages, the share sheet's Copy put the edited note on the clipboard;
+  - the view member's wording and note;
+  - an offline cold start (Timeline and Medications from the saved copy);
+  - sign-out wiping the phone's database.
+  - The website's Timeline and Medications pages were checked in the browser with the same QA data after the move.
+- [ ] Real phone: the simulator's Messages app can't compose, so the pre-filled text and Call need checking on a device. **Left for you**
 
 ### M7. First internal build
 - [ ] **You:** Apple Developer + Google Play accounts (organization). Then `eas.json` profiles and the first `preview` builds to TestFlight / Play internal testing
