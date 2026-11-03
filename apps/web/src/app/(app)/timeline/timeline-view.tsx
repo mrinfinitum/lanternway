@@ -16,12 +16,11 @@ import {
   Waves,
   type LucideIcon,
 } from "lucide-react";
-import { ageOn, addDays } from "@lanternway/shared/dates";
-import { formatMonthYear, formatTime, formatWeekdayDate } from "@lanternway/shared/format";
+import { formatTime, formatWeekdayDate } from "@lanternway/shared/format";
+import { logEvent, timelineView, zoomOptions, type TimelineEvent, type Zoom } from "@lanternway/shared/timeline";
 import type { IsoDate } from "@lanternway/shared/types";
 import { cn } from "@/lib/utils";
 import { useLogStore } from "../_components/log-store";
-import { zoomLevels, type TimelineEvent, type Zoom } from "./events";
 
 const categoryStyle: Record<TimelineEvent["category"], { icon: LucideIcon; className: string }> = {
   diagnosis: { icon: Flag, className: "bg-teal text-paper" },
@@ -37,13 +36,6 @@ const categoryStyle: Record<TimelineEvent["category"], { icon: LucideIcon; class
   day: { icon: CalendarDays, className: "bg-white text-muted-foreground ring-1 ring-border" },
 };
 
-const zoomOptions: { value: Zoom; label: string; days?: number }[] = [
-  { value: "week", label: "Week", days: 7 },
-  { value: "month", label: "Month", days: 30 },
-  { value: "year", label: "Year", days: 365 },
-  { value: "all", label: "All" },
-];
-
 export function TimelineView({
   events,
   today,
@@ -58,45 +50,11 @@ export function TimelineView({
 
   const all = useMemo(() => {
     // Entries logged during this visit show up too.
-    const local: TimelineEvent[] = added.flatMap((l): TimelineEvent[] => {
-      if (l.kind === "win") return [{ id: l.id, date: l.date, time: l.time, category: "win", level: "daily", title: l.text }];
-      if (l.kind === "note") return [{ id: l.id, date: l.date, time: l.time, category: "note", level: "daily", title: l.text }];
-      if (l.kind === "meltdown") {
-        return [{ id: l.id, date: l.date, time: l.time, category: "meltdown", level: "daily", title: `Meltdown · ${l.trigger}`, detail: `About ${l.durationMinutes} min` }];
-      }
-      return [];
-    });
+    const local = added.map(logEvent).filter((e): e is TimelineEvent => e !== null);
     return [...events, ...local];
   }, [events, added]);
 
-  const option = zoomOptions.find((o) => o.value === zoom)!;
-  const from = option.days ? addDays(today, -(option.days - 1)) : "0000-01-01";
-  const levels = zoomLevels[zoom];
-
-  const visible = all
-    .filter((e) => levels.includes(e.level) && e.date >= from && e.date <= today)
-    .sort((a, b) => b.date.localeCompare(a.date) || (b.time ?? "99").localeCompare(a.time ?? "99"));
-  const upcoming = all
-    .filter((e) => e.level === "major" && e.date > today)
-    .sort((a, b) => a.date.localeCompare(b.date));
-
-  // Group: by day when zoomed in, by month for a year, by year (with age) for everything.
-  const groupKey = (e: TimelineEvent) => (zoom === "all" ? e.date.slice(0, 4) : zoom === "year" ? e.date.slice(0, 7) : e.date);
-  const groupLabel = (key: string) => {
-    if (zoom === "all") {
-      const age = ageOn(birthDate, `${key}-12-31`);
-      return age === 0 ? `${key} · age 0` : `${key} · age ${age - 1}–${age}`;
-    }
-    if (zoom === "year") return formatMonthYear(`${key}-01`);
-    return key === today ? "Today" : formatWeekdayDate(key);
-  };
-  const groups: { key: string; items: TimelineEvent[] }[] = [];
-  for (const e of visible) {
-    const key = groupKey(e);
-    const last = groups.at(-1);
-    if (last?.key === key) last.items.push(e);
-    else groups.push({ key, items: [e] });
-  }
+  const { upcoming, groups } = timelineView(all, zoom, today, birthDate);
 
   return (
     <div>
@@ -136,7 +94,7 @@ export function TimelineView({
       <ol className="space-y-6">
         {groups.map((g) => (
           <li key={g.key}>
-            <h2 className="mb-3 text-sm font-extrabold tracking-wide text-muted-foreground uppercase">{groupLabel(g.key)}</h2>
+            <h2 className="mb-3 text-sm font-extrabold tracking-wide text-muted-foreground uppercase">{g.label}</h2>
             <ol className="relative space-y-3 border-l-2 border-border pl-6">
               {g.items.map((e) => {
                 const style = categoryStyle[e.category];

@@ -3,7 +3,21 @@
 // Routes not listed here yet return the shapes in their route files' doc comments.
 
 import type { Family, FamilyRole } from "./family-roles";
-import type { CheckIn, Child, IepPlan, IsoDate, LogEntry, Medication, Provider } from "./types";
+import type {
+  CheckIn,
+  CheckInRespondent,
+  Child,
+  IepPlan,
+  IsoDate,
+  LogEntry,
+  Medication,
+  MedicationChange,
+  MedicationReminder,
+  Milestone,
+  Provider,
+  SchoolMessage,
+  TherapySession,
+} from "./types";
 
 export type ApiUser = { id: string; name: string; email: string };
 
@@ -56,4 +70,33 @@ export type HomeResponse = {
   iepPlan: IepPlan | null;
   medications: Medication[];
   providers: Provider[];
+};
+
+/** GET /api/v1/children/:childId/timeline?tz=: the phone builds the rows with ./timeline. */
+export type TimelineResponse = {
+  access: ChildAccess;
+  today: IsoDate;
+  milestones: Milestone[];
+  medications: Medication[];
+  medicationChanges: MedicationChange[];
+  iepPlan: IepPlan | null;
+  schoolMessages: SchoolMessage[];
+  providers: Provider[];
+  sessions: TherapySession[];
+  logs: LogEntry[];
+  checkIns: CheckIn[];
+  respondents: CheckInRespondent[];
+};
+
+/** GET /api/v1/children/:childId/medications?tz=: a year of logs and check-ins for "before and after" and the calendar (./schedule). */
+export type MedicationsResponse = {
+  access: ChildAccess;
+  today: IsoDate;
+  medications: Medication[];
+  medicationChanges: MedicationChange[];
+  reminders: MedicationReminder[];
+  logs: LogEntry[];
+  checkIns: CheckIn[];
+  providers: Provider[];
+  sessions: TherapySession[];
 };

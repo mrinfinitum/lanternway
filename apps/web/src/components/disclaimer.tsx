@@ -1,8 +1,8 @@
 import { ShieldCheck } from "lucide-react";
+import { DISCLAIMER } from "@lanternway/shared/disclaimer";
 import { cn } from "@/lib/utils";
 
-export const DISCLAIMER =
-  "Lanternway is a record-keeping tool and does not provide medical advice.";
+export { DISCLAIMER };
 
 export function Disclaimer({ className }: { className?: string }) {
   return (
