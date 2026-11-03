@@ -7,7 +7,7 @@ import { FormDialog, SelectField, text } from "@/components/form-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { formatTime } from "@/lib/format";
+import { formatTime } from "@lanternway/shared/format";
 import { reminderDaysLabels, reminderMessage } from "@/lib/schedule";
 import type { Medication, MedicationReminder, ReminderChannel, ReminderDays } from "@lanternway/shared/types";
 import { newId, useRecordActions } from "../_components/records-store";

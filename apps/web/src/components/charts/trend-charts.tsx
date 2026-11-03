@@ -12,7 +12,7 @@ import {
   YAxis,
 } from "recharts";
 import { brandColors } from "@/lib/brand";
-import { formatAxisMonth, formatDate } from "@/lib/format";
+import { formatAxisMonth, formatDate } from "@lanternway/shared/format";
 import type { IsoDate } from "@lanternway/shared/types";
 
 // Small multiples on one shared timeline: each measure gets its own chart

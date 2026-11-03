@@ -17,7 +17,7 @@ import {
   getTherapySessions,
 } from "@/lib/data";
 import { addDays, ageOn, daysBetween } from "@lanternway/shared/dates";
-import { formatAverage, formatDate, formatShortDate, plural } from "@/lib/format";
+import { formatAverage, formatDate, formatShortDate, plural } from "@lanternway/shared/format";
 import {
   changeLabel,
   compareAround,
@@ -27,7 +27,7 @@ import {
   summarizeLogs,
   weekStart,
   weeklySeries,
-} from "@/lib/insights";
+} from "@lanternway/shared/insights";
 import { communicationStyleLabels, providerTypeLabels, schoolMessageTypeLabels } from "@lanternway/shared/labels";
 import type { IsoDate, WinLog } from "@lanternway/shared/types";
 import { reportTypes, type ReportType } from "../report-types";

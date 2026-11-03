@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { formatWeekdayDate } from "@/lib/format";
+import { formatWeekdayDate } from "@lanternway/shared/format";
 import type { TherapySession } from "@lanternway/shared/types";
 
 const PAGE = 8;

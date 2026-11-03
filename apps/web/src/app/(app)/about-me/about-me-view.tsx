@@ -6,7 +6,7 @@ import { IfAllowed } from "@/components/access";
 import { LumiTip } from "@/components/lumi-tip";
 import { PageHeader } from "@/components/page-header";
 import { ageOn } from "@lanternway/shared/dates";
-import { formatDate } from "@/lib/format";
+import { formatDate } from "@lanternway/shared/format";
 import { communicationStyleLabels } from "@lanternway/shared/labels";
 import type { Child, IsoDate } from "@lanternway/shared/types";
 import { isSavedChildId } from "@/lib/child-profile";

@@ -5,8 +5,8 @@
  * anything — wording stays factual ("averaged 3.5, was 1.9").
  */
 
-import { addDays, dayOfWeek, daysBetween } from "@lanternway/shared/dates";
-import { formatShortDate } from "@/lib/format";
+import { addDays, dayOfWeek, daysBetween } from "./dates";
+import { formatShortDate } from "./format";
 import type {
   AppetiteLog,
   CheckIn,
@@ -16,7 +16,7 @@ import type {
   MedicationChange,
   MoodLog,
   SleepLog,
-} from "@lanternway/shared/types";
+} from "./types";
 
 export function average(values: number[]): number | null {
   if (values.length === 0) return null;

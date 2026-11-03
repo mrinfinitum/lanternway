@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { getAllProviderIds, getCurrentChild, getProvider, getProviderById, getTherapyGoals, getTherapySessions, getToday } from "@/lib/data";
-import { formatDate } from "@/lib/format";
+import { formatDate } from "@lanternway/shared/format";
 import type { GoalStatus } from "@lanternway/shared/types";
 import { ProviderAddedThisVisit, ProviderHeader } from "../care-team";
 import { SessionList } from "./session-list";

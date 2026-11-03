@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { formatDate, formatRelativeDays } from "@/lib/format";
+import { formatDate, formatRelativeDays } from "@lanternway/shared/format";
 import {
   DEFAULT_REFILL_REMINDER_DAYS,
   REFILL_REMINDER_DAYS,

@@ -17,7 +17,7 @@ import {
   getToday,
 } from "@/lib/data";
 import { addDays } from "@lanternway/shared/dates";
-import { formatAverage, formatDate, formatMonthYear } from "@/lib/format";
+import { formatAverage, formatDate, formatMonthYear } from "@lanternway/shared/format";
 import {
   changeLabel,
   compareAround,
@@ -26,7 +26,7 @@ import {
   weekStart,
   weeklySeries,
   type Comparison,
-} from "@/lib/insights";
+} from "@lanternway/shared/insights";
 import type { MedicationChange } from "@lanternway/shared/types";
 import { CareCalendar } from "../_components/care-calendar";
 import { MedicationManager } from "./medication-manager";

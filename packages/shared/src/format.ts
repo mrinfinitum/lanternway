@@ -1,5 +1,5 @@
-import { daysBetween, parseIsoDate } from "@lanternway/shared/dates";
-import type { IsoDate } from "@lanternway/shared/types";
+import { daysBetween, parseIsoDate } from "./dates";
+import type { IsoDate } from "./types";
 
 // All formatting uses UTC so date-only strings render as the same day everywhere.
 

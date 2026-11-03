@@ -15,8 +15,8 @@ import {
   getToday,
 } from "@/lib/data";
 import { addDays, eachDay } from "@lanternway/shared/dates";
-import { formatAverage, plural } from "@/lib/format";
-import { summarizeLogs } from "@/lib/insights";
+import { formatAverage, plural } from "@lanternway/shared/format";
+import { summarizeLogs } from "@lanternway/shared/insights";
 import { intensityLabels, milestoneCategoryLabels, moodLabels, ratingLabel, schoolMessageTypeLabels } from "@lanternway/shared/labels";
 import type { MilestoneCategory } from "@lanternway/shared/types";
 import type { TimelineEvent } from "./events";
