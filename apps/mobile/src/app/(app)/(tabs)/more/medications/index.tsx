@@ -4,12 +4,13 @@ import { StyleSheet, Text, View } from "react-native";
 import type { MedicationsResponse } from "@lanternway/shared/api";
 import { addDays } from "@lanternway/shared/dates";
 import { formatAverage, formatAxisMonth, formatDate, formatRelativeDays } from "@lanternway/shared/format";
-import { refillDueDate, rollingAverage, weeklySeries } from "@lanternway/shared/insights";
+import { refillDueDate, rollingAverage, weekStart, weeklySeries } from "@lanternway/shared/insights";
 import { refillReminderDate, refillReminderDays } from "@lanternway/shared/refills";
-import { reminderSummary } from "@lanternway/shared/schedule";
+import { describeMedicationChange, reminderSummary } from "@lanternway/shared/schedule";
 import type { IsoDate, Medication } from "@lanternway/shared/types";
 import { CareCalendar } from "@/components/care-calendar";
 import { RefillSheet } from "@/components/refill-sheet";
+import { TrendCharts, type TrendEvent, type TrendPoint } from "@/components/trend-charts";
 import { ChildHeader, Disclaimer, Page, Section, UpdatedNote, s as parts } from "@/components/screen-parts";
 import { Body, Button, Card } from "@/components/ui";
 import { getMedications } from "@/lib/api";
@@ -18,7 +19,7 @@ import { latestChange, prescriberContact, prescriberName } from "@/lib/medicatio
 import { phoneToday } from "@/lib/logs";
 import { useSession } from "@/lib/session";
 import { useCachedScreen } from "@/lib/use-cached-screen";
-import { colors, fonts, radius } from "@/theme";
+import { colors, fonts } from "@/theme";
 
 /** Medications: what's prescribed, refills, reminders (settings only), the calendar, and each medication's dose history. Read-only on the phone for now. */
 export default function Medications() {
@@ -172,9 +173,9 @@ function Detail({ label, value }: { label: string; value?: string }) {
 }
 
 /**
- * The last year by month, for the first current medication: average dose, teacher
- * focus and sleep. The website draws these as charts; the phone shows the numbers
- * until a chart library is chosen.
+ * The last year as charts (the first current medication's dose, teacher focus and
+ * sleep, with numbered lines at each medication change), and the same numbers by
+ * month as a table, as on the website.
  */
 function YearNumbers({ data, today }: { data: MedicationsResponse; today: IsoDate }) {
   const main = data.medications.find((m) => !m.stopDate) ?? data.medications[0];
@@ -192,6 +193,13 @@ function YearNumbers({ data, today }: { data: MedicationsResponse; today: IsoDat
     m.sleep.push(p.sleepHours);
     months.set(key, m);
   });
+  const series: TrendPoint[] = weekly.map((p, i) => ({ week: p.week, dose: doseOn(addDays(p.week, 6)), focus: focus4[i], sleepHours: p.sleepHours }));
+  const medName = (id: string) => data.medications.find((m) => m.id === id)?.name ?? "Medication";
+  const events: TrendEvent[] = data.medicationChanges
+    .filter((c) => c.date >= from && c.date <= today)
+    .sort((a, b) => a.date.localeCompare(b.date))
+    .map((c, i) => ({ week: weekStart(c.date), n: i + 1, label: `${formatDate(c.date)}: ${describeMedicationChange(c, medName(c.medicationId))}` }));
+  const [showTable, setShowTable] = useState(false);
   const avg = (values: (number | null)[]) => {
     const nums = values.filter((v): v is number => typeof v === "number");
     return nums.length ? nums.reduce((a, b) => a + b, 0) / nums.length : null;
@@ -201,28 +209,39 @@ function YearNumbers({ data, today }: { data: MedicationsResponse; today: IsoDat
     <>
       <Section>The last year</Section>
       <Card>
-        {/* Placeholder until a chart library is approved (MOBILE_PLAN.md M6). */}
-        <View style={st.chartPlaceholder} accessible accessibilityLabel="Charts are coming to the phone app. The numbers are below.">
-          <Text style={parts.rowTitle}>Charts are coming to the phone app</Text>
-          <Text style={parts.rowMuted}>Until then, here are the same numbers by month. Dose is {main.name}.</Text>
-        </View>
-        <View style={parts.inner}>
-          <View style={st.tr}>
-            <Text style={[st.th, { flex: 1.4 }]}>Month</Text>
-            <Text style={st.th}>Dose (mg)</Text>
-            <Text style={st.th}>Teacher focus</Text>
-            <Text style={st.th}>Sleep (hrs)</Text>
+        <Text style={parts.rowMuted}>
+          Numbered lines mark medication changes. Teacher ratings come from weekly check-ins, so there are gaps over school breaks.
+        </Text>
+        <TrendCharts data={series} events={events} panels={["dose", "focus", "sleepHours"]} titles={{ dose: `${main.name} dose` }} />
+        {events.map((e) => (
+          <View key={e.n} style={st.event}>
+            <Text style={st.eventNumber}>{e.n}</Text>
+            <Text style={[parts.rowMuted, { flex: 1, color: colors.teal }]}>{e.label}</Text>
           </View>
-          {[...months.entries()].map(([month, m]) => (
-            <View key={month} style={[st.tr, st.rowLine]} accessible>
-              <Text style={[st.td, { flex: 1.4, fontFamily: fonts.semibold }]}>{formatAxisMonth(`${month}-01`)}</Text>
-              <Text style={st.td}>{formatAverage(avg(m.dose), 0)}</Text>
-              <Text style={st.td}>{formatAverage(avg(m.focus))}</Text>
-              <Text style={st.td}>{formatAverage(avg(m.sleep))}</Text>
+        ))}
+        <Button
+          label={showTable ? "Hide the table" : "See the numbers as a table"}
+          kind="secondary"
+          onPress={() => setShowTable(!showTable)}
+        />
+        {showTable && (
+          <View style={parts.inner}>
+            <View style={st.tr}>
+              <Text style={[st.th, { flex: 1.4 }]}>Month</Text>
+              <Text style={st.th}>Dose (mg)</Text>
+              <Text style={st.th}>Teacher focus</Text>
+              <Text style={st.th}>Sleep (hrs)</Text>
             </View>
-          ))}
-        </View>
-        <Text style={parts.rowMuted}>Teacher ratings come from weekly check-ins, so there are gaps over school breaks.</Text>
+            {[...months.entries()].map(([month, m]) => (
+              <View key={month} style={[st.tr, st.rowLine]} accessible>
+                <Text style={[st.td, { flex: 1.4, fontFamily: fonts.semibold }]}>{formatAxisMonth(`${month}-01`)}</Text>
+                <Text style={st.td}>{formatAverage(avg(m.dose), 0)}</Text>
+                <Text style={st.td}>{formatAverage(avg(m.focus))}</Text>
+                <Text style={st.td}>{formatAverage(avg(m.sleep))}</Text>
+              </View>
+            ))}
+          </View>
+        )}
       </Card>
     </>
   );
@@ -232,14 +251,18 @@ const st = StyleSheet.create({
   medName: { fontFamily: fonts.extrabold, fontSize: 20, color: colors.teal },
   details: { flexDirection: "row", flexWrap: "wrap", rowGap: 10 },
   detail: { width: "50%", paddingRight: 8 },
-  chartPlaceholder: {
-    borderWidth: 2,
-    borderStyle: "dashed",
-    borderColor: colors.border,
-    borderRadius: radius.button,
-    padding: 16,
-    gap: 4,
-    alignItems: "center",
+  event: { flexDirection: "row", gap: 8, alignItems: "flex-start" },
+  eventNumber: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    overflow: "hidden",
+    backgroundColor: "rgba(244,130,91,0.3)",
+    textAlign: "center",
+    lineHeight: 22,
+    fontFamily: fonts.extrabold,
+    fontSize: 12,
+    color: colors.teal,
   },
   tr: { flexDirection: "row", gap: 6, paddingVertical: 4 },
   rowLine: { borderTopWidth: 1, borderTopColor: colors.border },
