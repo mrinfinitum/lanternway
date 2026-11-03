@@ -1,13 +1,20 @@
 import { router, type Href } from "expo-router";
-import { Pressable, StyleSheet, Text, View } from "react-native";
-import { Page, s as parts } from "@/components/screen-parts";
+import { Text, View } from "react-native";
+import { NavRow, Page, s as parts } from "@/components/screen-parts";
 import { Button, Card } from "@/components/ui";
 import { useSession } from "@/lib/session";
-import { colors, fonts, minTap, radius } from "@/theme";
 
-/** Only screens that are built natively are listed; the rest join as they're built (MOBILE_PLAN.md M6–M7). */
+/** Every native screen beyond the tabs. No web pages inside the app (MOBILE_PLAN.md §0). */
 const screens: { href: Href; label: string; hint: string }[] = [
   { href: "/more/medications", label: "Medications", hint: "Current and past medications, dose history, refills, calendar" },
+  { href: "/more/therapy", label: "Therapy & care team", hint: "Providers, goals, session notes, calendar" },
+  { href: "/more/school", label: "School", hint: "IEP or 504 plan, goals, supports, check-ins, messages" },
+  { href: "/more/about-me", label: "About Me", hint: "Everything someone new should know" },
+];
+
+const accountScreens: { href: Href; label: string; hint: string }[] = [
+  { href: "/more/family", label: "Family sharing", hint: "Who can see your family’s records, and invites" },
+  { href: "/more/account", label: "Account & privacy", hint: "Password, your data, deleting your account" },
 ];
 
 export default function More() {
@@ -22,42 +29,22 @@ export default function More() {
       </Text>
       <View style={{ gap: 10 }}>
         {screens.map((item) => (
-          <Pressable
-            key={item.label}
-            onPress={() => router.push(item.href)}
-            accessibilityRole="button"
-            accessibilityHint={item.hint}
-            style={({ pressed }) => [st.row, pressed && { backgroundColor: "rgba(247,179,65,0.3)" }]}
-          >
-            <View style={{ flex: 1, gap: 2 }}>
-              <Text style={st.label}>{item.label}</Text>
-              <Text style={parts.rowMuted}>{item.hint}</Text>
-            </View>
-            <Text style={st.chev}>›</Text>
-          </Pressable>
+          <NavRow key={item.label} label={item.label} hint={item.hint} onPress={() => router.push(item.href)} />
         ))}
       </View>
 
+      <Text style={parts.section} accessibilityRole="header">
+        Account
+      </Text>
+      <View style={{ gap: 10 }}>
+        {accountScreens.map((item) => (
+          <NavRow key={item.label} label={item.label} hint={item.hint} onPress={() => router.push(item.href)} />
+        ))}
+      </View>
       <Card>
-        <Text style={parts.cardTitle}>Account</Text>
         <Text style={parts.rowMuted}>Signed in as {user.email}</Text>
         <Button label="Sign out" kind="secondary" onPress={signOut} />
       </Card>
     </Page>
   );
 }
-
-const st = StyleSheet.create({
-  row: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-    minHeight: minTap + 20,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderRadius: radius.card,
-    backgroundColor: colors.cream,
-  },
-  label: { fontFamily: fonts.bold, fontSize: 17, color: colors.teal },
-  chev: { fontFamily: fonts.bold, fontSize: 26, color: colors.teal },
-});

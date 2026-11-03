@@ -29,6 +29,11 @@ type SessionContext = {
   /** After verifying the email: store the token the server gave, or sign in with the password just used. */
   finishSignIn: (token: string) => Promise<SignInResult>;
   signOut: () => Promise<void>;
+  /**
+   * Forget this phone's session without asking the server (it already ended it:
+   * signed out everywhere, or the account was deleted), with an optional note on sign-in.
+   */
+  endHere: (notice?: string) => Promise<void>;
   /** Try loading the account again (after "can't reach Lanternway"). */
   reload: () => Promise<void>;
   /** Fetch the account again quietly (e.g. a child was added on the website). Keeps the current state if offline. */
@@ -121,6 +126,14 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     setSession({ status: "signed-out" });
   }, []);
 
+  const endHere = useCallback(async (notice?: string) => {
+    await clearToken();
+    await wipeLocalData().catch(() => undefined);
+    outboxChanged();
+    pending.current = null;
+    setSession({ status: "signed-out", notice });
+  }, []);
+
   const reload = useCallback(async () => {
     setSession({ status: "loading" });
     if (await getToken()) await load();
@@ -144,8 +157,8 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   );
 
   const value = useMemo(
-    () => ({ session, signIn, finishSignIn, signOut, reload, refreshMe, rememberForVerify, signInAfterVerify }),
-    [session, signIn, finishSignIn, signOut, reload, refreshMe, rememberForVerify, signInAfterVerify],
+    () => ({ session, signIn, finishSignIn, signOut, endHere, reload, refreshMe, rememberForVerify, signInAfterVerify }),
+    [session, signIn, finishSignIn, signOut, endHere, reload, refreshMe, rememberForVerify, signInAfterVerify],
   );
   return <Context.Provider value={value}>{children}</Context.Provider>;
 }
