@@ -92,5 +92,6 @@ Sample family (fictional): **Maya**, age 10, autistic + ADHD. Diagnosed autism a
 - [x] M4: sign-in on the phone (sign up with consents, email code, sign in/out, forgot password; token in secure storage; revoked sessions go back to sign-in, 503s never sign out)
 - [x] M5: quick log + Today on the phone (offline outbox with Waiting to sync, cached Today, view-only members can't log)
 - [x] M6: read screens on the phone (Timeline, Medications with refill sheet, calendar and dose history, More tab, medication charts with react-native-svg)
-- [ ] Expo app sharing the Neon backend (M6 onward: read screens, more native screens)
+- [x] M8: the remaining native screens on the phone (Therapy, School with check-in links, About Me with editing, Family sharing, Account with delete)
+- [ ] Expo app sharing the Neon backend (M7: first internal build, waiting for the Apple and Google accounts)
 - [ ] Widgets, quick-log from lock screen, push notifications
