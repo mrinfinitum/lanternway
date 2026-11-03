@@ -89,5 +89,6 @@ Sample family (fictional): **Maya**, age 10, autistic + ADHD. Diagnosed autism a
 - [x] M1: pnpm workspace monorepo: `apps/web`, `packages/shared` (Vercel Root Directory → `apps/web` before merging)
 - [x] M2: JSON API `/api/v1` for every screen (bearer token; `pnpm api:test`, 111 checks)
 - [x] M3: Expo app skeleton in `apps/mobile` (Expo Router, brand theme, Nunito, typed API client), running in the iOS Simulator
-- [ ] Expo app sharing the Neon backend (M4 onward: sign-in, quick log, read screens)
+- [x] M4: sign-in on the phone (sign up with consents, email code, sign in/out, forgot password; token in secure storage; revoked sessions go back to sign-in, 503s never sign out)
+- [ ] Expo app sharing the Neon backend (M5 onward: quick log, Today, read screens)
 - [ ] Widgets, quick-log from lock screen, push notifications

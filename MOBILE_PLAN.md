@@ -486,8 +486,16 @@ Each step keeps `pnpm dev` working, passes `pnpm lint && pnpm typecheck`, and ru
 - [ ] Move `insights.ts`, `format.ts` and `schedule.ts` to `packages/shared`, so the phone can work out Home's week stats, "coming up" and the calendar (needed by M5–M6)
 
 ### M4. Sign-in on the phone
-- [ ] Sign in, sign up (4 consents), verify by code, forgot/reset, sign out. Token in SecureStore
-- [ ] Expired or revoked session → back to sign-in, gently
+- [x] Sign in, sign up (4 consents, the website's wording, in `@lanternway/shared/api`), verify by code, forgot password (the reset itself happens on the website's page from the email), sign out. Token in SecureStore (`AFTER_FIRST_UNLOCK_THIS_DEVICE_ONLY`), never AsyncStorage
+- [x] Expired or revoked session → back to sign-in with "You've been signed out. Please sign in again." No connection or a 503 never signs anyone out: the app says it can't reach Lanternway, keeps the token, and offers Try again
+- [x] Checked in the iOS Simulator (Expo Go, iPhone 18 Pro) with a QA account:
+  - sign up → code → signed in;
+  - the token survives an app restart;
+  - sign out → wrong password (gentle error) → sign in;
+  - sessions revoked in the database → back to sign-in with the note;
+  - website stopped → "can't reach" while staying signed in → Try again → signed in;
+  - forgot password.
+  - The code step used a known code written into the QA account's pending verification with admin SQL (codes are stored hashed).
 
 ### M5. Quick log + Today
 - [ ] Child picker and header
