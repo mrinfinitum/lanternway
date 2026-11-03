@@ -88,5 +88,6 @@ Sample family (fictional): **Maya**, age 10, autistic + ADHD. Diagnosed autism a
 - [x] M0: mobile auth spike (bearer token through `/api/v1`, branch `spike/mobile-auth`)
 - [x] M1: pnpm workspace monorepo: `apps/web`, `packages/shared` (Vercel Root Directory → `apps/web` before merging)
 - [x] M2: JSON API `/api/v1` for every screen (bearer token; `pnpm api:test`, 111 checks)
-- [ ] Expo app sharing the Neon backend (M3 onward)
+- [x] M3: Expo app skeleton in `apps/mobile` (Expo Router, brand theme, Nunito, typed API client), running in the iOS Simulator
+- [ ] Expo app sharing the Neon backend (M4 onward: sign-in, quick log, read screens)
 - [ ] Widgets, quick-log from lock screen, push notifications

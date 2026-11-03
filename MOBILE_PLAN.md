@@ -480,9 +480,10 @@ Each step keeps `pnpm dev` working, passes `pnpm lint && pnpm typecheck`, and ru
 - **Saving over another family's record id now returns 404.** Before, the API answered 200 while the database (correctly) changed nothing. `saveRecord` now reports when the upsert touched no row.
 
 ### M3. Expo app skeleton (ask first: approve the Expo library list in §4)
-- [ ] `apps/mobile` with Expo Router, TypeScript, brand theme, Nunito, and an API client typed from `@lanternway/shared/api`
-- [ ] Runs in the iOS Simulator and Android Emulator against `pnpm dev`. `pnpm mobile` starts it
-- [ ] Lint and typecheck for mobile are included in the root scripts
+- [x] `apps/mobile` with Expo Router, TypeScript, brand theme, Nunito, and an API client typed from `@lanternway/shared/api`. Expo SDK 58. Libraries: the approved `expo-router` (with its required peers `react-native-safe-area-context`, `react-native-screens`, `expo-linking`, `expo-constants`, `expo-status-bar`), `expo-secure-store` and `expo-font`, plus `@expo-google-fonts/nunito` (the Nunito font files). `expo-sqlite` and `expo-crypto` aren't installed until something uses them (M5)
+- [x] Runs in the iOS Simulator (Expo Go, iPhone 18 Pro) against the website's dev server: the placeholder screen calls `GET /api/v1/me` and shows the signed-out answer. `pnpm mobile` starts it. **Android Emulator not tried:** no Android SDK on this Mac yet. iOS and Android bundles both build (`expo export`)
+- [x] Lint (`eslint-config-expo`) and typecheck for mobile are included in the root `pnpm lint` and `pnpm typecheck`
+- [ ] Move `insights.ts`, `format.ts` and `schedule.ts` to `packages/shared`, so the phone can work out Home's week stats, "coming up" and the calendar (needed by M5–M6)
 
 ### M4. Sign-in on the phone
 - [ ] Sign in, sign up (4 consents), verify by code, forgot/reset, sign out. Token in SecureStore
