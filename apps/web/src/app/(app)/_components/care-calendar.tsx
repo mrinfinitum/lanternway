@@ -4,12 +4,17 @@ import { useMemo, useState } from "react";
 import { BellRing, CalendarClock, ChevronLeft, ChevronRight, HeartHandshake, Pill, Stethoscope } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { addDays, dayOfWeek, parseIsoDate } from "@lanternway/shared/dates";
 import { formatLongWeekday, formatMonthYear, formatTime } from "@lanternway/shared/format";
-import { refillDueDate } from "@lanternway/shared/insights";
-import { providerTypeLabels } from "@lanternway/shared/labels";
-import { parseWeeklySchedule, reminderOn } from "@/lib/schedule";
-import type { IsoDate, Medication, MedicationChange, MedicationReminder, Provider, TherapySession } from "@lanternway/shared/types";
+import {
+  calendarItems,
+  describeCalendarCounts,
+  monthWeeks,
+  shiftMonth,
+  type CalendarItem,
+  type CalendarLayer,
+  type CalendarSession,
+} from "@lanternway/shared/schedule";
+import type { IsoDate, Medication, MedicationChange, MedicationReminder, Provider } from "@lanternway/shared/types";
 import { cn } from "@/lib/utils";
 import { useRecords } from "./records-store";
 
@@ -17,21 +22,8 @@ import { useRecords } from "./records-store";
 // repeats: daily doses, reminder times, dose changes, refills, logged sessions,
 // and upcoming weekly appointments read from the care team's schedules.
 
-export type CalendarSession = Pick<TherapySession, "id" | "providerId" | "date" | "durationMinutes" | "summary">;
-
-type Layer = "meds" | "therapy";
-
-type DayItem = {
-  id: string;
-  layer: Layer;
-  /** "dose" = scheduled that day; "event" = change or refill; "session" = logged; "planned" = from the schedule. */
-  type: "dose" | "event" | "session" | "planned";
-  title: string;
-  detail?: string;
-  time?: string;
-};
-
-const isVisit = (p?: Provider) => p?.type === "psychiatry" || p?.type === "pediatrics";
+type Layer = CalendarLayer;
+type DayItem = CalendarItem;
 
 export function CareCalendar({
   childId,
@@ -63,94 +55,18 @@ export function CareCalendar({
   const [month, setMonth] = useState(today.slice(0, 7));
   const [selected, setSelected] = useState<IsoDate>(today);
 
-  const itemsOn = useMemo(() => {
-    const historyOf = (id: string) =>
-      allChanges.filter((c) => c.medicationId === id).sort((a, b) => a.date.localeCompare(b.date));
-    const schedules = team.map((p) => ({ p, weekly: parseWeeklySchedule(p.schedule) }));
-    const teamById = new Map(team.map((p) => [p.id, p]));
-
-    return (date: IsoDate): DayItem[] => {
-      const out: DayItem[] = [];
-
-      // Medications: the dose taken that day, its reminder times, and any change or refill.
-      for (const m of meds) {
-        const history = historyOf(m.id);
-        const latest = history.filter((c) => c.date <= date).at(-1);
-        const active = m.startDate <= date && (!m.stopDate || date <= m.stopDate) && latest && latest.type !== "stop";
-        if (active) {
-          const times = allReminders
-            .filter((r) => r.medicationId === m.id && reminderOn(r, date) && (!m.stopDate || date <= m.stopDate))
-            .flatMap((r) => r.times)
-            .sort();
-          out.push({
-            id: `dose-${m.id}`,
-            layer: "meds",
-            type: "dose",
-            title: `${m.name} ${latest.doseMg} mg`,
-            detail: [latest.schedule, times.length ? `Reminder ${times.map(formatTime).join(", ")}` : ""].filter(Boolean).join(" · "),
-            time: times[0],
-          });
-        }
-        for (const c of history.filter((c) => c.date === date)) {
-          out.push({
-            id: c.id,
-            layer: "meds",
-            type: "event",
-            title:
-              c.type === "start" ? `Started ${m.name}` : c.type === "stop" ? `Stopped ${m.name}` : `${m.name} changed to ${c.doseMg} mg`,
-            detail: c.reason || undefined,
-          });
-        }
-        const due = !m.stopDate ? refillDueDate(m.lastFilledOn, m.daysSupply) : null;
-        if (due === date) {
-          out.push({ id: `refill-${m.id}`, layer: "meds", type: "event", title: `${m.name} refill due`, detail: m.pharmacy });
-        }
-      }
-
-      // Therapy & visits: what was logged, plus upcoming weekly appointments.
-      const logged = sessions.filter((s) => s.date === date && teamById.has(s.providerId));
-      for (const s of logged) {
-        const p = teamById.get(s.providerId)!;
-        out.push({
-          id: s.id,
-          layer: "therapy",
-          type: "session",
-          title: isVisit(p) ? `Visit with ${p.name}` : `${providerTypeLabels[p.type]} with ${p.name}`,
-          detail: [s.durationMinutes ? `${s.durationMinutes} min` : "", s.summary ?? ""].filter(Boolean).join(" · "),
-        });
-      }
-      if (date >= today) {
-        for (const { p, weekly } of schedules) {
-          if (!weekly || !weekly.weekdays.includes(dayOfWeek(date))) continue;
-          if (date < p.startDate || (p.endDate && date > p.endDate)) continue;
-          if (logged.some((s) => s.providerId === p.id)) continue;
-          out.push({
-            id: `plan-${p.id}-${date}`,
-            layer: "therapy",
-            type: "planned",
-            title: `${providerTypeLabels[p.type]} with ${p.name}`,
-            detail: `Usual time${weekly.time ? ` ${formatTime(weekly.time)}` : ""} · from the care team schedule`,
-            time: weekly.time,
-          });
-        }
-      }
-      return out.sort((a, b) => (a.time ?? "99").localeCompare(b.time ?? "99"));
-    };
-  }, [meds, allChanges, allReminders, team, sessions, today]);
+  const itemsOn = useMemo(
+    () => calendarItems({ today, medications: meds, changes: allChanges, reminders: allReminders, providers: team, sessions }),
+    [meds, allChanges, allReminders, team, sessions, today],
+  );
 
   // The month grid, Sunday first.
   const first = `${month}-01`;
-  const gridStart = addDays(first, -dayOfWeek(first));
-  const days = Array.from({ length: 42 }, (_, i) => addDays(gridStart, i));
-  const weeks = [0, 1, 2, 3, 4, 5].map((w) => days.slice(w * 7, w * 7 + 7)).filter((w) => w.some((d) => d.startsWith(month)));
+  const weeks = monthWeeks(month);
   const shown = (d: IsoDate) => itemsOn(d).filter((i) => layers.includes(i.layer));
   const selectedItems = shown(selected);
 
-  const shiftMonth = (n: number) => {
-    const d = parseIsoDate(first);
-    d.setUTCMonth(d.getUTCMonth() + n);
-    setMonth(d.toISOString().slice(0, 7));
-  };
+  const goMonth = (n: number) => setMonth(shiftMonth(month, n));
   const toggle = (layer: Layer) =>
     setLayers((prev) => (prev.includes(layer) ? prev.filter((l) => l !== layer) : [...prev, layer]));
 
@@ -159,13 +75,13 @@ export function CareCalendar({
       <CardContent className="space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-1">
-            <Button variant="ghost" size="icon-lg" className="rounded-full" aria-label="Previous month" onClick={() => shiftMonth(-1)}>
+            <Button variant="ghost" size="icon-lg" className="rounded-full" aria-label="Previous month" onClick={() => goMonth(-1)}>
               <ChevronLeft />
             </Button>
             <h3 className="min-w-36 text-center text-lg font-extrabold" aria-live="polite">
               {formatMonthYear(first)}
             </h3>
-            <Button variant="ghost" size="icon-lg" className="rounded-full" aria-label="Next month" onClick={() => shiftMonth(1)}>
+            <Button variant="ghost" size="icon-lg" className="rounded-full" aria-label="Next month" onClick={() => goMonth(1)}>
               <ChevronRight />
             </Button>
             {month !== today.slice(0, 7) && (
@@ -231,7 +147,7 @@ export function CareCalendar({
                       <button
                         type="button"
                         aria-pressed={isSelected}
-                        aria-label={`${formatLongWeekday(d)}: ${describeCounts(doses, events, logged, planned)}`}
+                        aria-label={`${formatLongWeekday(d)}: ${describeCalendarCounts(items)}`}
                         onClick={() => setSelected(d)}
                         className={cn(
                           "flex h-14 w-full flex-col items-center gap-1 rounded-xl bg-white px-0.5 pt-1 text-sm transition-colors hover:bg-cream md:h-24 md:items-stretch md:px-1.5",
@@ -326,16 +242,6 @@ export function CareCalendar({
       </CardContent>
     </Card>
   );
-}
-
-function describeCounts(doses: number, events: number, logged: number, planned: number): string {
-  const parts = [
-    doses && `${doses} medication${doses === 1 ? "" : "s"}`,
-    events && `${events} change${events === 1 ? "" : "s"} or refill${events === 1 ? "" : "s"}`,
-    logged && `${logged} session${logged === 1 ? "" : "s"} logged`,
-    planned && `${planned} usual appointment${planned === 1 ? "" : "s"}`,
-  ].filter(Boolean);
-  return parts.length ? parts.join(", ") : "nothing recorded";
 }
 
 function Dot({ className }: { className: string }) {

@@ -7,8 +7,7 @@ import { FormDialog, SelectField, text } from "@/components/form-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { formatTime } from "@lanternway/shared/format";
-import { reminderDaysLabels, reminderMessage } from "@/lib/schedule";
+import { reminderDaysLabels, reminderMessage, reminderSummary } from "@lanternway/shared/schedule";
 import type { Medication, MedicationReminder, ReminderChannel, ReminderDays } from "@lanternway/shared/types";
 import { newId, useRecordActions } from "../_components/records-store";
 
@@ -35,18 +34,6 @@ const timeZoneHere = () => {
     return "America/New_York";
   }
 };
-
-/** One-line summary of a reminder, e.g. "7:15 AM · Every day · Push". */
-export function reminderSummary(r: MedicationReminder): string {
-  return [
-    r.times.map(formatTime).join(", "),
-    reminderDaysLabels[r.days],
-    r.channel === "push" ? "Push notification" : "Text message",
-    r.status === "paused" ? "Paused" : "",
-  ]
-    .filter(Boolean)
-    .join(" · ");
-}
 
 /** Shown on a medication card: the reminder (with Edit) or an Add button. */
 export function ReminderRow({

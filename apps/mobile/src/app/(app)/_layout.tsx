@@ -38,7 +38,7 @@ export default function AppLayout() {
           headerTitleStyle: { fontFamily: fonts.bold, color: colors.teal },
         }}
       >
-        <Stack.Screen name="home" />
+        <Stack.Screen name="(tabs)" />
         <Stack.Screen name="log" options={{ headerShown: true }} />
       </Stack>
     </CurrentChildProvider>

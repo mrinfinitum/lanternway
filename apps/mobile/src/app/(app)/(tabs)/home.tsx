@@ -1,156 +1,65 @@
-import { router, useFocusEffect } from "expo-router";
-import { useCallback, useEffect, useRef, useState } from "react";
-import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { router } from "expo-router";
+import { useEffect, useRef } from "react";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 import type { HomeResponse } from "@lanternway/shared/api";
 import { addDays, dayOfWeek, daysBetween } from "@lanternway/shared/dates";
 import { formatAverage, formatLongWeekday, formatRelativeDays, formatWeekdayDate, plural } from "@lanternway/shared/format";
 import { refillDueDate, summarizeCheckIns, summarizeLogs } from "@lanternway/shared/insights";
 import { appetiteLabels, logKindLabels, moodLabels, ratingLabel } from "@lanternway/shared/labels";
 import type { IsoDate, LogEntry } from "@lanternway/shared/types";
+import { ChildHeader, Page, UpdatedNote } from "@/components/screen-parts";
 import { Body, Button, Card, Notice } from "@/components/ui";
 import { getHome } from "@/lib/api";
 import { canLog, useCurrentChild } from "@/lib/current-child";
-import { readCache, writeCache } from "@/lib/local-db";
 import { describeLog, logKindOrder, logKindSymbols, phoneToday } from "@/lib/logs";
 import { discardOutboxItem, retryOutboxItem, syncOutbox, useOutbox, type OutboxItem } from "@/lib/outbox";
 import { useSession } from "@/lib/session";
-import { colors, fonts, minTap, radius } from "@/theme";
-
-type Loaded = { data: HomeResponse; savedAt: string; childId: string };
+import { useCachedScreen } from "@/lib/use-cached-screen";
+import { colors, fonts, radius } from "@/theme";
 
 /** Today: quick log, what's logged today (including what's waiting to sync), this week, coming up. */
 export default function Today() {
-  const { session, signOut, refreshMe } = useSession();
-  const { kids, current, select } = useCurrentChild();
+  const { session, refreshMe } = useSession();
+  const { current } = useCurrentChild();
   const userId = session.status === "signed-in" ? session.me.user.id : "";
   const outbox = useOutbox(userId);
-  const [loaded, setLoaded] = useState<Loaded | null>(null);
-  const [offline, setOffline] = useState(false);
-  const [refreshing, setRefreshing] = useState(false);
-  const [picking, setPicking] = useState(false);
   const childId = current?.child.id ?? null;
-
-  const load = useCallback(async () => {
-    if (!childId || !userId) return;
-    const key = `home:${childId}`;
-    const cached = await readCache<HomeResponse>(userId, key);
-    if (cached) setLoaded((prev) => (prev?.childId === childId ? prev : { data: cached.body, savedAt: cached.savedAt, childId }));
-    const result = await getHome(childId);
-    if (result.ok) {
-      const savedAt = await writeCache(userId, key, result.data);
-      setLoaded({ data: result.data, savedAt, childId });
-      setOffline(false);
-    } else if (result.status !== 401) {
-      setOffline(true);
-    }
-  }, [childId, userId]);
-
-  // Load when the screen shows (e.g. back from logging) and when the child changes.
-  useFocusEffect(
-    useCallback(() => {
-      void load();
-    }, [load]),
-  );
+  const { data, savedAt, offline, refreshing, refresh, reload } = useCachedScreen("home", userId, childId, getHome);
 
   // When waiting logs reach the server, load again so they show as saved.
   const waiting = outbox.filter((i) => i.status === "waiting").length;
   const lastWaiting = useRef(waiting);
   useEffect(() => {
-    if (waiting < lastWaiting.current) void load();
+    if (waiting < lastWaiting.current) void reload();
     lastWaiting.current = waiting;
-  }, [waiting, load]);
-
-  async function refresh() {
-    setRefreshing(true);
-    await Promise.all([refreshMe(), syncOutbox(userId)]);
-    await load();
-    setRefreshing(false);
-  }
+  }, [waiting, reload]);
 
   if (session.status !== "signed-in") return null;
   const { user } = session.me;
-  const today = (loaded?.childId === childId ? loaded.data.today : null) ?? phoneToday();
-  const data = loaded?.childId === childId ? loaded.data : null;
+  const today = data?.today ?? phoneToday();
 
   return (
-    <SafeAreaView style={s.page} edges={["top"]}>
-      <ScrollView contentContainerStyle={s.content} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refresh} tintColor={colors.teal} />}>
-        <View style={s.headerRow}>
-          <View style={{ flex: 1 }}>
-            <Text style={s.date}>{formatLongWeekday(today)}</Text>
-            <Text style={s.hello} accessibilityRole="header">
-              Hi {user.name.split(" ")[0] || "there"}
-            </Text>
-          </View>
-          {current && (
-            <Pressable
-              onPress={() => kids.length > 1 && setPicking(!picking)}
-              accessibilityRole={kids.length > 1 ? "button" : "text"}
-              accessibilityLabel={kids.length > 1 ? `Viewing ${current.child.firstName}. Switch child` : `Viewing ${current.child.firstName}`}
-              style={s.childChip}
-            >
-              <View style={s.avatar}>
-                <Text style={s.avatarText}>{current.child.firstName.slice(0, 1)}</Text>
-              </View>
-              <Text style={s.childName}>{current.child.firstName}</Text>
-              {kids.length > 1 && <Text style={s.chev}>{picking ? "▴" : "▾"}</Text>}
-            </Pressable>
-          )}
-        </View>
+    <Page refreshing={refreshing} onRefresh={() => refresh(() => Promise.all([refreshMe(), syncOutbox(userId)]))}>
+      <ChildHeader kicker={formatLongWeekday(today)} title={`Hi ${user.name.split(" ")[0] || "there"}`} />
 
-        {picking && (
-          <Card>
-            {kids.map((k) => (
-              <Pressable
-                key={k.child.id}
-                onPress={() => {
-                  select(k.child.id);
-                  setPicking(false);
-                }}
-                accessibilityRole="button"
-                accessibilityState={{ selected: k.child.id === childId }}
-                style={s.pickRow}
-              >
-                <Text style={[s.rowTitle, k.child.id === childId && { textDecorationLine: "underline" }]}>{k.child.firstName}</Text>
-                <Text style={s.rowMuted}>{k.role === "admin" ? "Admin" : k.role === "log" ? "Can log" : "Can view"}</Text>
-              </Pressable>
-            ))}
-          </Card>
-        )}
+      {!current ? (
+        <Card>
+          <Text style={[s.section, { textAlign: "center" }]}>No children yet</Text>
+          <Body muted>Add your first child on the Lanternway website for now. Pull down here to refresh once you have.</Body>
+        </Card>
+      ) : (
+        <TodayBody
+          data={data}
+          today={today}
+          role={current.role}
+          childName={current.child.firstName}
+          outbox={outbox.filter((i) => i.childId === current.child.id)}
+          userId={userId}
+        />
+      )}
 
-        {!current ? (
-          <Card>
-            <Text style={[s.section, { textAlign: "center" }]}>No children yet</Text>
-            <Body muted>Add your first child on the Lanternway website for now. Pull down here to refresh once you have.</Body>
-          </Card>
-        ) : (
-          <TodayBody
-            data={data}
-            today={today}
-            role={current.role}
-            childName={current.child.firstName}
-            outbox={outbox.filter((i) => i.childId === current.child.id)}
-            userId={userId}
-          />
-        )}
-
-        {offline && (
-          <Notice
-            tone="info"
-            text={
-              loaded?.childId === childId
-                ? `You’re offline or Lanternway is busy. Showing what was saved ${updatedAgo(loaded.savedAt)}. Logging still works.`
-                : "You’re offline or Lanternway is busy. Logging still works, and it will sync later."
-            }
-          />
-        )}
-        {loaded?.childId === childId && !offline && <Text style={s.updated}>Last updated {updatedAgo(loaded.savedAt)}</Text>}
-
-        <Text style={[s.rowMuted, { textAlign: "center", marginTop: 16 }]}>Signed in as {user.email}</Text>
-        <Button label="Sign out" kind="secondary" onPress={signOut} />
-      </ScrollView>
-    </SafeAreaView>
+      <UpdatedNote savedAt={savedAt} offline={offline} offlineExtra="Logging still works, and it will sync later." />
+    </Page>
   );
 }
 
@@ -315,27 +224,7 @@ function comingUp(data: HomeResponse, today: IsoDate) {
   return items.filter((u) => u.date >= today && daysBetween(today, u.date) <= 30).sort((a, b) => a.date.localeCompare(b.date));
 }
 
-function updatedAgo(iso: string): string {
-  const minutes = Math.round((Date.now() - Date.parse(iso)) / 60000);
-  if (minutes < 1) return "just now";
-  if (minutes < 60) return `${minutes} min ago`;
-  const hours = Math.round(minutes / 60);
-  if (hours < 24) return `${hours} hr ago`;
-  return new Date(iso).toLocaleDateString(undefined, { month: "short", day: "numeric" });
-}
-
 const s = StyleSheet.create({
-  page: { flex: 1, backgroundColor: colors.white },
-  content: { padding: 20, gap: 14, paddingBottom: 40 },
-  headerRow: { flexDirection: "row", alignItems: "center", gap: 12, marginTop: 8 },
-  date: { fontFamily: fonts.semibold, fontSize: 14, color: colors.muted },
-  hello: { fontFamily: fonts.extrabold, fontSize: 28, color: colors.teal },
-  childChip: { flexDirection: "row", alignItems: "center", gap: 8, minHeight: minTap, paddingHorizontal: 8 },
-  avatar: { width: 40, height: 40, borderRadius: 20, backgroundColor: colors.amber, alignItems: "center", justifyContent: "center" },
-  avatarText: { fontFamily: fonts.extrabold, fontSize: 18, color: colors.teal },
-  childName: { fontFamily: fonts.bold, fontSize: 17, color: colors.teal },
-  chev: { fontFamily: fonts.bold, fontSize: 14, color: colors.teal },
-  pickRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", minHeight: minTap },
   section: { fontFamily: fonts.extrabold, fontSize: 20, color: colors.teal, marginTop: 8 },
   tiles: { flexDirection: "row", flexWrap: "wrap", gap: 10 },
   tile: {
@@ -382,5 +271,4 @@ const s = StyleSheet.create({
   statUnit: { fontFamily: fonts.regular, fontSize: 15, color: colors.muted },
   statHint: { fontFamily: fonts.regular, fontSize: 13, color: colors.muted },
   upRow: { gap: 2, minHeight: 40 },
-  updated: { fontFamily: fonts.regular, fontSize: 13, color: colors.muted, textAlign: "center" },
 });

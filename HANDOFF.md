@@ -15,8 +15,23 @@ _Last updated: Nov 1, 2026. Replaces the Oct 24 handoff (Stage 1 is long done)._
 | `dev` | Latest: family sharing (see `git log`), deployed to **https://dev.lanternway.co** (noindex + prototype banner) |
 | Working tree | Clean. Medication reminder settings + care calendar are committed and on dev. Migration 007 is applied to the shared Neon database. |
 
-### Quick log + Today on the phone, M5 (Nov 2, branch `mobile/m5-quick-log`, not pushed)
-- **Screens:** `apps/mobile/src/app/(app)/home.tsx` is Today and `(app)/log.tsx?kind=` is the quick log.
+### Read screens on the phone, M6 (Nov 3, branch `mobile/m6-read-screens`, not pushed)
+- **Navigation:** `apps/mobile/src/app/(app)/(tabs)/` has the tab bar (Today, Timeline, More). More is its own stack: `more/index.tsx` lists native screens only; `more/medications/index.tsx` and `more/medications/[medId].tsx` (dose history). The quick log stays a stack screen above the tabs.
+- **Shared code:**
+  - `packages/shared/src/timeline.ts` (rows and zoom grouping, moved from the website's `timeline/events.ts` and page).
+  - `schedule.ts` (moved from `apps/web/src/lib`, plus the calendar builder).
+  - `disclaimer.ts`.
+  - `api.ts` gained `TimelineResponse` and `MedicationsResponse`, which the routes `satisfies`.
+- **Phone pieces:**
+  - `src/lib/use-cached-screen.ts` (saved copy first, then fresh) and `src/components/screen-parts.tsx` (header with child switcher, Last updated / offline note, segmented control, disclaimer).
+  - `src/components/care-calendar.tsx`, `src/components/refill-sheet.tsx`, `src/components/trend-charts.tsx` (react-native-svg).
+- **Refill links:** `app.json` `ios.infoPlist.LSApplicationQueriesSchemes` and the local config plugin `apps/mobile/plugins/with-phone-links.js` (Android `<queries>`) let `canOpenURL` answer for `sms:` / `tel:` in a real build. Expo Go uses its own settings.
+- **Open:**
+  - Real-phone check of Text/Call.
+  - The website's Medications chart uses the first medication in the list even when it has stopped (the phone uses the first current one).
+
+### Quick log + Today on the phone, M5 (Nov 2, merged to `dev`)
+- **Screens:** `apps/mobile/src/app/(app)/home.tsx` (now `(tabs)/home.tsx`) is Today and `(app)/log.tsx?kind=` is the quick log.
   - Today shows the child picker, role note, tiles, Logged today with badges, refused items, this week, coming up, wins, and Last updated.
   - The log forms use the controls in `src/components/log-controls.tsx`.
 - **Phone storage:** `src/lib/local-db.ts` (SQLite: `outbox`, `cache`, `prefs`).

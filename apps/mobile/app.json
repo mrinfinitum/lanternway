@@ -8,7 +8,13 @@
     "userInterfaceStyle": "light",
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "co.lanternway.app"
+      "bundleIdentifier": "co.lanternway.app",
+      "infoPlist": {
+        "LSApplicationQueriesSchemes": [
+          "sms",
+          "tel"
+        ]
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -25,7 +31,8 @@
       "expo-status-bar",
       "expo-secure-store",
       "expo-font",
-      "expo-sqlite"
+      "expo-sqlite",
+      "./plugins/with-phone-links"
     ],
     "scheme": "lanternway",
     "splash": {
