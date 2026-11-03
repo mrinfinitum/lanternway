@@ -15,7 +15,23 @@ _Last updated: Nov 1, 2026. Replaces the Oct 24 handoff (Stage 1 is long done)._
 | `dev` | Latest: family sharing (see `git log`), deployed to **https://dev.lanternway.co** (noindex + prototype banner) |
 | Working tree | Clean. Medication reminder settings + care calendar are committed and on dev. Migration 007 is applied to the shared Neon database. |
 
-### Mobile API, M2 (Nov 1, branch `mobile/m2-api`, not pushed)
+### Phone app skeleton, M3 (Nov 2, branch `mobile/m3-skeleton`, not pushed)
+- **What it is:** `apps/mobile` (`@lanternway/mobile`), Expo SDK 58 with Expo Router (`src/app/`) and TypeScript.
+  - Brand: `src/theme.ts` (the website's colors, Nunito via `@expo-google-fonts/nunito`) and `src/lib/brand.ts` (copies of the web brand PNGs).
+  - API client: `src/lib/api.ts`, typed from the new `packages/shared/src/api.ts`. The web's `/me` and `/auth/sign-in` routes now `satisfies` those types.
+  - The client sends `Authorization: Bearer` from `expo-secure-store` and the device's time zone in `X-Time-Zone`. It retries 503s and never treats them as signed out.
+  - The placeholder screen calls `GET /api/v1/me` and shows the answer.
+- **Running it:** `pnpm dev` + `pnpm mobile` (press `i`). In development the app calls port 3000 on the computer running Metro; `EXPO_PUBLIC_API_URL` overrides that. See `apps/mobile/README.md`.
+- **Tested:**
+  - Opened in the iOS Simulator (Expo Go, iPhone 18 Pro): logo, Lumi, Nunito, and "Connected to Lanternway. You're not signed in yet." The web log shows `GET /api/v1/me 401`.
+  - iOS and Android bundles build.
+  - Root `pnpm lint`, `pnpm typecheck` and `pnpm build` pass.
+  - **Not tried:** Android Emulator (no Android SDK on this Mac).
+- **Mac setup this needed (the user did it, Nov 2):** `sudo xcode-select -s /Applications/Xcode.app/Contents/Developer`, `sudo xcodebuild -license accept`, `xcodebuild -runFirstLaunch`.
+- **Lockfile note:** installing Expo changed two optional peers for the website: recharts now resolves `react-is` 19.3.1 instead of 16.13.1, and Next sees `babel-plugin-react-compiler` (unused: `reactCompiler` isn't enabled). The web build passes; worth a quick look at a chart page after merging.
+- **Vercel:** installs the whole workspace, mobile included, so installs get slower. Optional: set the Install Command to `pnpm install --filter @lanternway/web...`.
+
+### Mobile API, M2 (Nov 1, merged to `dev`)
 - **What it is:** a JSON API for the phone at `/api/v1`, on the same Next.js app. It has 30 route files under `apps/web/src/app/api/v1/`, listed in `MOBILE_PLAN.md` §2 and §6/M2.
   - **Auth:** `lib/api/auth.ts`, the spike's bearer-token approach. The phone sends `Authorization: Bearer <Neon Auth session token>`, which is checked with Neon Auth on every call.
   - **Every route:** `lib/api/http.ts` (`withUser`, `childAccess` / `familyAccess`, `todayFor`) gives a 401 when signed out, a 403 for too low a role and a 404 for another family's data.
@@ -153,6 +169,7 @@ pnpm dev --port 3123
 pnpm lint && pnpm typecheck
 pnpm db:test-rls      # family isolation + check-in link rules
 pnpm api:test http://localhost:3123   # mobile API: 401/403/404 and flows (needs the dev server)
+pnpm mobile           # phone app (Expo); press i for the iOS Simulator; needs pnpm dev running
 pnpm build            # catches Suspense/cacheComponents issues dev misses (don't run while dev is running)
 ```
 

@@ -1,5 +1,6 @@
 import { authForRequest } from "@/lib/api/auth";
 import { fail, json, publicRoute, readBody, str } from "@/lib/api/http";
+import type { SignInResponse } from "@lanternway/shared/api";
 
 /**
  * POST /api/v1/auth/sign-in { email, password } → { token, user }.
@@ -22,5 +23,5 @@ export const POST = publicRoute(async (request) => {
   }
   const token = newToken();
   if (!token || !data?.user) return fail(502, "Sign-in didn't finish. Please try again.");
-  return json({ token, user: { id: data.user.id, name: data.user.name ?? "", email: data.user.email } });
+  return json({ token, user: { id: data.user.id, name: data.user.name ?? "", email: data.user.email } } satisfies SignInResponse);
 });

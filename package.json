@@ -6,6 +6,7 @@
     "dev": "pnpm --filter @lanternway/web dev",
     "build": "pnpm --filter @lanternway/web build",
     "start": "pnpm --filter @lanternway/web start",
+    "mobile": "pnpm --filter @lanternway/mobile start",
     "lint": "pnpm -r lint",
     "typecheck": "pnpm -r typecheck",
     "db:setup": "node --env-file=apps/web/.env.local scripts/db-setup.mjs",
