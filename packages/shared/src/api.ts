@@ -4,9 +4,12 @@
 
 import type { Family, FamilyRole } from "./family-roles";
 import type {
+  Accommodation,
   CheckIn,
+  CheckInLink,
   CheckInRespondent,
   Child,
+  IepGoal,
   IepPlan,
   IsoDate,
   LogEntry,
@@ -16,6 +19,7 @@ import type {
   Milestone,
   Provider,
   SchoolMessage,
+  TherapyGoal,
   TherapySession,
 } from "./types";
 
@@ -100,3 +104,47 @@ export type MedicationsResponse = {
   providers: Provider[];
   sessions: TherapySession[];
 };
+
+/** GET /api/v1/children/:childId (About Me). PATCH takes the whole Child back (admins). */
+export type ChildResponse = { child: Child; access: ChildAccess };
+
+/** GET /api/v1/children/:childId/therapy?tz= */
+export type TherapyResponse = {
+  access: ChildAccess;
+  today: IsoDate;
+  providers: Provider[];
+  goals: TherapyGoal[];
+  sessions: TherapySession[];
+  medications: Medication[];
+  medicationChanges: MedicationChange[];
+  reminders: MedicationReminder[];
+};
+
+/** GET /api/v1/children/:childId/school */
+export type SchoolResponse = {
+  access: ChildAccess;
+  iepPlan: IepPlan | null;
+  goals: IepGoal[];
+  accommodations: Accommodation[];
+  messages: SchoolMessage[];
+};
+
+/** GET /api/v1/children/:childId/check-ins: links never include their tokens. */
+export type CheckInsResponse = {
+  access: ChildAccess;
+  respondents: CheckInRespondent[];
+  links: CheckInLink[];
+  checkIns: CheckIn[];
+};
+
+/** GET /api/v1/families: invites only for admins, never their tokens. */
+export type FamiliesResponse = { families: Family[] };
+
+/**
+ * POST check-in-links and family invites: the token, returned this once. The phone
+ * shares `<site>/c/<token>` or `<site>/join/<token>` and doesn't keep it.
+ */
+export type TokenResponse = { token: string };
+
+/** POST /api/v1/account/password: this phone's new token (other devices are signed out). */
+export type PasswordChangeResponse = { ok: true; token?: string };
