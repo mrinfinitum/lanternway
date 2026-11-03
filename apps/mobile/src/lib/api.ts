@@ -2,12 +2,21 @@
  * The phone's client for the Lanternway API (/api/v1 on the website). The phone
  * never talks to the database or to Neon Auth directly (MOBILE_PLAN.md §2–3).
  *
- * Every response is typed from @lanternway/shared/api. Sign-in (M4) stores the
- * session token in the device's secure storage; this sends it as a bearer token.
+ * Every response is typed from @lanternway/shared/api. Sign-in stores the session
+ * token in the device's secure storage (Keychain / Keystore, this device only,
+ * never AsyncStorage or backups); this sends it as a bearer token.
  */
 import Constants from "expo-constants";
 import * as SecureStore from "expo-secure-store";
-import type { ApiError, MeResponse } from "@lanternway/shared/api";
+import type {
+  ApiError,
+  MeResponse,
+  OkResponse,
+  SignInResponse,
+  SignUpConsentKey,
+  SignUpResponse,
+  VerifyEmailResponse,
+} from "@lanternway/shared/api";
 
 /**
  * Where the API lives: EXPO_PUBLIC_API_URL if set (e.g. https://dev.lanternway.co),
@@ -27,6 +36,12 @@ const secure = { keychainAccessible: SecureStore.AFTER_FIRST_UNLOCK_THIS_DEVICE_
 export const getToken = () => SecureStore.getItemAsync(TOKEN_KEY, secure);
 export const saveToken = (token: string) => SecureStore.setItemAsync(TOKEN_KEY, token, secure);
 export const clearToken = () => SecureStore.deleteItemAsync(TOKEN_KEY, secure);
+
+/** Called when the server says a token we sent is no longer a live session (401). */
+let onSessionExpired: (() => void) | null = null;
+export function setSessionExpiredHandler(handler: (() => void) | null) {
+  onSessionExpired = handler;
+}
 
 export type ApiResult<T> = { ok: true; data: T } | { ok: false; status: number; error: string };
 
@@ -60,6 +75,8 @@ export async function apiFetch<T>(path: string, init: { method?: string; body?: 
       await wait(Math.min(Number(res.headers.get("retry-after")) || 5, 15) * 1000);
       continue;
     }
+    // Only a 401 for a token we sent means "signed out" (a wrong password on sign-in is a 401 too).
+    if (res.status === 401 && token) onSessionExpired?.();
     const body = (await res.json().catch(() => null)) as T | ApiError | null;
     if (res.ok && body) return { ok: true, data: body as T };
     const error = body && typeof body === "object" && "error" in body ? body.error : "Something went wrong. Please try again.";
@@ -69,3 +86,24 @@ export async function apiFetch<T>(path: string, init: { method?: string; body?: 
 
 /** The signed-in person, their families and the children they can see. */
 export const getMe = () => apiFetch<MeResponse>("/api/v1/me");
+
+// Sign-in and account (all through /api/v1/auth/*; the phone never calls Neon Auth itself).
+
+export const signIn = (email: string, password: string) =>
+  apiFetch<SignInResponse>("/api/v1/auth/sign-in", { method: "POST", body: { email, password } });
+
+export const signUp = (input: { name: string; email: string; password: string; consents: Record<SignUpConsentKey, boolean> }) =>
+  apiFetch<SignUpResponse>("/api/v1/auth/sign-up", { method: "POST", body: input });
+
+export const verifyEmail = (email: string, code: string) =>
+  apiFetch<VerifyEmailResponse>("/api/v1/auth/verify-email", { method: "POST", body: { email, code } });
+
+export const resendCode = (email: string) => apiFetch<OkResponse>("/api/v1/auth/resend-code", { method: "POST", body: { email } });
+
+export const forgotPassword = (email: string) => apiFetch<OkResponse>("/api/v1/auth/forgot-password", { method: "POST", body: { email } });
+
+/** Ends this device's session on the server. */
+export const signOutOnServer = () => apiFetch<OkResponse>("/api/v1/auth/sign-out", { method: "POST" });
+
+/** A page on the website (policies, password reset), for opening in the system browser. */
+export const websiteUrl = (path: string) => `${API_URL}${path}`;

@@ -27,9 +27,6 @@
       "expo-font"
     ],
     "scheme": "lanternway",
-    "experiments": {
-      "typedRoutes": true
-    },
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",

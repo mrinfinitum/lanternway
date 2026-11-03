@@ -5,7 +5,7 @@ import { useActionState, useId } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { PASSWORD_HINT, PASSWORD_MIN } from "@/lib/password-policy";
+import { PASSWORD_HINT, PASSWORD_MIN } from "@lanternway/shared/password-policy";
 import type { AuthFormState } from "./actions";
 
 type Mode = "sign-in" | "sign-up";

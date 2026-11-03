@@ -19,3 +19,27 @@ export type MeResponse = {
 
 /** POST /api/v1/auth/sign-in { email, password } */
 export type SignInResponse = { token: string; user: ApiUser };
+
+/** POST /api/v1/auth/sign-up { name, email, password, consents: { adult, terms, healthData, testing } } */
+export type SignUpResponse = { status: "needs_verification" };
+
+/** POST /api/v1/auth/verify-email { email, code }: a token too when Neon Auth signs the person in. */
+export type VerifyEmailResponse = { verified: true; token?: string; user?: ApiUser };
+
+export type SignUpConsentKey = "adult" | "terms" | "healthData" | "testing";
+export type SignUpConsent = { key: SignUpConsentKey; text: string; links?: readonly { label: string; path: string }[] };
+
+/** The four sign-up agreements, in the website's words (keep in step with apps/web/src/app/(auth)/auth-form.tsx). */
+export const SIGN_UP_CONSENTS: readonly SignUpConsent[] = [
+  { key: "adult", text: "I’m 18 or older and a parent or legal guardian of the children I’ll add, or I have their permission." },
+  { key: "terms", text: "I agree to the Terms of Use and Privacy Policy.", links: [{ label: "Terms of Use", path: "/terms" }, { label: "Privacy Policy", path: "/privacy" }] },
+  {
+    key: "healthData",
+    text: "I consent to Lanternway storing the health information I choose to enter about my child (like diagnoses, medications, therapy, and school needs) to provide the service, as described in the Consumer Health Data Privacy Policy.",
+    links: [{ label: "Consumer Health Data Privacy Policy", path: "/health-data-privacy" }],
+  },
+  { key: "testing", text: "I understand this is a test version and I’ll use made-up details, not real information about my child." },
+];
+
+/** Any route that just answers that it worked. */
+export type OkResponse = { ok: true };

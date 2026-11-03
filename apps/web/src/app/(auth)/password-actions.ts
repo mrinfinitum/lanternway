@@ -3,7 +3,7 @@
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth/server";
-import { passwordProblem } from "@/lib/password-policy";
+import { passwordProblem } from "@lanternway/shared/password-policy";
 
 export type ResetState = { error?: string; sent?: boolean; email?: string } | null;
 
