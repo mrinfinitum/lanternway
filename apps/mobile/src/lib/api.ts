@@ -9,16 +9,25 @@
 import Constants from "expo-constants";
 import * as SecureStore from "expo-secure-store";
 import type { RecordCollection } from "@lanternway/shared/record-schemas";
+import type { Child, RespondentRole } from "@lanternway/shared/types";
+import type { FamilyRole } from "@lanternway/shared/family-roles";
 import type {
   ApiError,
+  CheckInsResponse,
+  ChildResponse,
+  FamiliesResponse,
   HomeResponse,
   MeResponse,
   MedicationsResponse,
   OkResponse,
+  PasswordChangeResponse,
+  SchoolResponse,
   SignInResponse,
   SignUpConsentKey,
   SignUpResponse,
+  TherapyResponse,
   TimelineResponse,
+  TokenResponse,
   VerifyEmailResponse,
 } from "@lanternway/shared/api";
 
@@ -100,6 +109,62 @@ export const getTimeline = (childId: string) => apiFetch<TimelineResponse>(`/api
 /** Medications for one child: meds, dose changes, reminder settings, care team, and a year of logs and check-ins. */
 export const getMedications = (childId: string) =>
   apiFetch<MedicationsResponse>(`/api/v1/children/${encodeURIComponent(childId)}/medications`);
+
+const child = (childId: string) => `/api/v1/children/${encodeURIComponent(childId)}`;
+
+/** About Me: the child's whole profile. */
+export const getChild = (childId: string) => apiFetch<ChildResponse>(child(childId));
+
+/** Save the whole About Me profile (admins). */
+export const saveChild = (profile: Child) => apiFetch<OkResponse>(child(profile.id), { method: "PATCH", body: profile });
+
+export const getTherapy = (childId: string) => apiFetch<TherapyResponse>(`${child(childId)}/therapy`);
+
+export const getSchool = (childId: string) => apiFetch<SchoolResponse>(`${child(childId)}/school`);
+
+/** People asked for check-ins, their links (never the tokens) and the check-ins. */
+export const getCheckIns = (childId: string) => apiFetch<CheckInsResponse>(`${child(childId)}/check-ins`);
+
+/** A new check-in link. The token comes back this once; share it and let it go. Admins. */
+export const createCheckInLink = (
+  childId: string,
+  input: { days: number; respondentId?: string; respondent?: { name: string; role: RespondentRole; email?: string } },
+) => apiFetch<TokenResponse>(`${child(childId)}/check-in-links`, { method: "POST", body: { ...input, consent: true } });
+
+export const revokeCheckInLink = (linkId: string) =>
+  apiFetch<OkResponse>(`/api/v1/check-in-links/${encodeURIComponent(linkId)}/revoke`, { method: "POST" });
+
+const family = (familyId: string) => `/api/v1/families/${encodeURIComponent(familyId)}`;
+
+/** My families, members and (for admins) invites without their tokens. */
+export const getFamilies = () => apiFetch<FamiliesResponse>("/api/v1/families");
+
+/** A new family invite. The token comes back this once. Admins. */
+export const createInvite = (familyId: string, input: { label: string; role: FamilyRole; days: number }) =>
+  apiFetch<TokenResponse>(`${family(familyId)}/invites`, { method: "POST", body: { ...input, consent: true } });
+
+export const cancelInvite = (familyId: string, inviteId: string) =>
+  apiFetch<OkResponse>(`${family(familyId)}/invites/${encodeURIComponent(inviteId)}/cancel`, { method: "POST" });
+
+export const setMemberRole = (familyId: string, memberId: string, role: FamilyRole) =>
+  apiFetch<OkResponse>(`${family(familyId)}/members/${encodeURIComponent(memberId)}`, { method: "PATCH", body: { role } });
+
+/** Remove someone (admins), or leave the family (your own id). */
+export const removeMember = (familyId: string, memberId: string) =>
+  apiFetch<OkResponse>(`${family(familyId)}/members/${encodeURIComponent(memberId)}`, { method: "DELETE" });
+
+// Account
+
+export const changePassword = (currentPassword: string, newPassword: string) =>
+  apiFetch<PasswordChangeResponse>("/api/v1/account/password", { method: "POST", body: { currentPassword, newPassword } });
+
+export const signOutEverywhere = () => apiFetch<OkResponse>("/api/v1/account/sign-out-everywhere", { method: "POST" });
+
+/** Everything stored for this account (the website's export). */
+export const exportAccount = () => apiFetch<Record<string, unknown>>("/api/v1/account/export");
+
+export const deleteAccount = (password: string) =>
+  apiFetch<OkResponse>("/api/v1/account/delete", { method: "POST", body: { password, confirm: "DELETE" } });
 
 /** Save (insert or update) a record by its phone-made id. */
 export const putRecord = (collection: RecordCollection, id: string, body: Record<string, unknown>) =>

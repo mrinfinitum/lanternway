@@ -94,8 +94,9 @@ export default async function MedicationsPage() {
 
   const medName = (id: string) => medications.find((m) => m.id === id)?.name ?? "Medication";
 
-  // Chart data: weekly averages plus the main medication's dose that week.
-  const main = medications[0];
+  // Chart data: weekly averages plus the main medication's dose that week. The main one is the
+  // first current medication (a stopped one only when nothing is current), as on the phone.
+  const main = medications.find((m) => !m.stopDate) ?? medications[0];
   const mainChanges = changes.filter((c) => c.medicationId === main.id);
   const doseOn = (date: string) =>
     mainChanges.filter((c) => c.date <= date).at(-1)?.doseMg ?? null;

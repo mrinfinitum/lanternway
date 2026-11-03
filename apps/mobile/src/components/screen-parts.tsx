@@ -4,7 +4,7 @@
  * record-keeping disclaimer.
  */
 import { useState, type ReactNode } from "react";
-import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Alert, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { DISCLAIMER } from "@lanternway/shared/disclaimer";
 import { Card, Notice } from "@/components/ui";
@@ -134,6 +134,69 @@ export function Section({ children }: { children: ReactNode }) {
   );
 }
 
+/** A cream row that opens another screen (cream means "tap this"). */
+export function NavRow({ label, hint, onPress }: { label: string; hint?: string; onPress: () => void }) {
+  return (
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityHint={hint}
+      style={({ pressed }) => [s.navRow, pressed && { backgroundColor: "rgba(247,179,65,0.3)" }]}
+    >
+      <View style={{ flex: 1, gap: 2 }}>
+        <Text style={s.navLabel}>{label}</Text>
+        {hint ? <Text style={s.rowMuted}>{hint}</Text> : null}
+      </View>
+      <Text style={s.navChev}>›</Text>
+    </Pressable>
+  );
+}
+
+/** A small pill: amber for good news, coral for a problem, white otherwise. */
+export function Badge({ text, tone = "plain" }: { text: string; tone?: "plain" | "good" | "problem" | "selected" }) {
+  const bg = { plain: colors.white, good: "rgba(247,179,65,0.35)", problem: "rgba(244,130,91,0.2)", selected: colors.teal }[tone];
+  return (
+    <Text style={[s.badge, { backgroundColor: bg }, tone === "plain" && { borderWidth: 1, borderColor: colors.border }, tone === "selected" && { color: colors.white }]}>
+      {text}
+    </Text>
+  );
+}
+
+/** A label above a value, for details on a card. */
+export function Detail({ label, value, half = true }: { label: string; value?: string; half?: boolean }) {
+  return (
+    <View style={half ? { width: "50%", paddingRight: 8 } : undefined}>
+      <Text style={s.rowMuted}>{label}</Text>
+      <Text style={s.rowTitle}>{value || "—"}</Text>
+    </View>
+  );
+}
+
+/** A choice shown as a card: cream to tap, a teal border when it's the one picked. */
+export function OptionCard({ title, hint, selected, onPress }: { title: string; hint?: string; selected: boolean; onPress: () => void }) {
+  return (
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="radio"
+      accessibilityState={{ selected }}
+      style={[s.option, selected && { borderColor: colors.teal }]}
+    >
+      <Text style={s.rowTitle}>{title}</Text>
+      {hint ? <Text style={s.rowMuted}>{hint}</Text> : null}
+    </Pressable>
+  );
+}
+
+/** The phone's own confirm dialog. Resolves true when the person picks the action. */
+export function confirm(title: string, message: string, action: string, destructive = false): Promise<boolean> {
+  return new Promise((resolve) =>
+    Alert.alert(title, message, [
+      { text: "Cancel", style: "cancel", onPress: () => resolve(false) },
+      { text: action, style: destructive ? "destructive" : "default", onPress: () => resolve(true) },
+    ]),
+  );
+}
+
 export function Disclaimer() {
   return <Text style={s.disclaimer}>{DISCLAIMER}</Text>;
 }
@@ -160,5 +223,37 @@ export const s = StyleSheet.create({
   segmentText: { fontFamily: fonts.bold, fontSize: 15, color: colors.teal },
   /** A white box nested inside a paper card. */
   inner: { backgroundColor: colors.white, borderRadius: radius.button, padding: 12, gap: 6 },
+  navRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    minHeight: minTap + 20,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: radius.card,
+    backgroundColor: colors.cream,
+  },
+  navLabel: { fontFamily: fonts.bold, fontSize: 17, color: colors.teal },
+  navChev: { fontFamily: fonts.bold, fontSize: 26, color: colors.teal },
+  badge: {
+    alignSelf: "flex-start",
+    fontFamily: fonts.semibold,
+    fontSize: 12,
+    color: colors.teal,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 999,
+    overflow: "hidden",
+  },
+  option: {
+    minHeight: minTap,
+    backgroundColor: colors.cream,
+    borderRadius: radius.button,
+    borderWidth: 2,
+    borderColor: colors.cream,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    gap: 2,
+  },
   disclaimer: { fontFamily: fonts.regular, fontSize: 13, lineHeight: 18, color: colors.muted, textAlign: "center", marginTop: 8 },
 });

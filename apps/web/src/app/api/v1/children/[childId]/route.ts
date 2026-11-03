@@ -1,6 +1,7 @@
 import { childAccess, fail, json, readBody, todayFor, withUser } from "@/lib/api/http";
 import { sanitizeChild } from "@/lib/child-profile";
 import { deleteChild, listChildren, updateChild } from "@/lib/families";
+import type { ChildResponse } from "@lanternway/shared/api";
 
 type Params = { childId: string };
 
@@ -10,7 +11,7 @@ export const GET = withUser<Params>(async (_request, user, { childId }) => {
   if (access instanceof Response) return access;
   const child = (await listChildren(user.id)).find((c) => c.id === childId);
   if (!child) return fail(404, "We couldn't find that.");
-  return json({ child, access });
+  return json({ child, access } satisfies ChildResponse);
 });
 
 /** PATCH /api/v1/children/:childId (the whole About Me profile, as the website saves it) → { ok }. Admins. */

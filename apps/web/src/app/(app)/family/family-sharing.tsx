@@ -75,8 +75,8 @@ function FamilyCard({ family, today }: { family: Family; today: IsoDate }) {
   };
   const remove = (m: FamilyMember) => {
     const message = m.isMe
-      ? `Leave ${familyTitle(family)}? You'll stop seeing ${kidNames(family.kids) || "their"} records right away.`
-      : `Remove ${nameOf(m)}? They'll stop seeing ${kidNames(family.kids) || "the family's"} records right away.`;
+      ? `Leave ${familyTitle(family)}? You'll stop seeing ${family.kids.length ? `${kidNames(family.kids)}'s` : "their"} records right away.`
+      : `Remove ${nameOf(m)}? They'll stop seeing ${family.kids.length ? `${kidNames(family.kids)}'s` : "the family's"} records right away.`;
     if (window.confirm(message)) run(() => removeFromFamily(family.id, m.userId));
   };
 

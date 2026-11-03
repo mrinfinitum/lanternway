@@ -542,11 +542,22 @@ Each step keeps `pnpm dev` working, passes `pnpm lint && pnpm typecheck`, and ru
 - [ ] App icon + splash from `brand/` (Lumi from Lanternway)
 
 ### M8. Remaining native screens
-- [ ] Therapy (providers, goals, sessions)
-- [ ] School (IEP, goals, supports, messages, check-in links with the share sheet)
-- [ ] About Me (view + per-section edit)
-- [ ] Family sharing (invite via share sheet, roles, leave)
-- [ ] Account (password, sign out everywhere, export, **delete account**)
+All under More (`apps/mobile/src/app/(app)/(tabs)/more/`). No new libraries: links and the data export go through React Native's own Share sheet, and confirmations use the phone's own alert. The UI follows the person's role; the server is the real guard (403 for anything their role can't do).
+- [x] Therapy (providers, goals, sessions): the care team (current and past), each provider's goals with progress and session notes (with "To try at home"), Call and Email buttons, and the care calendar starting on the therapy layer
+- [x] School (IEP, goals, supports, messages, check-in links with the share sheet): plan dates and IEP team, goal progress with the target line, services (weeks delivered) and accommodations, messages, teacher check-ins with averages. Admins make check-in links: pick or add a person, 30/90/180 days, the website's consent wording; the link is shown once and shared with Share. Admins can revoke. Plan records are still changed on the website
+- [x] About Me (view + per-section edit): every section of the website's page in its order and words, with an Edit button on each for admins (basics, communication, the seven lists, diagnoses, allergies, emergency contacts). Saves the whole profile (PATCH, checked by the server). Dates are typed as year-month-day for now, since a date picker would be a new library. Edits need a connection and aren't queued
+- [x] Family sharing (invite via share sheet, roles, leave): members and roles; admins change roles (with a confirm for Admin), remove people, invite (name, role, 7/30 days, consent; the link is shown once and shared with Share) and revoke waiting invites. Anyone else can leave. The last admin can't leave or be demoted, with the website's note
+- [x] Account (password, sign out everywhere, export, **delete account**): password change keeps this phone signed in with the server's new token; sign out everywhere ends this phone's session too, with a note on sign-in; the data export opens in the Share sheet (Save to Files or Copy). Delete asks for the password and DELETE, as on the website, and the only admin of a shared family is refused (NEEDS_ANOTHER_ADMIN, "Nothing was deleted."). After deleting, the phone is wiped and sign-in says "Your account was deleted."
+- [x] Response types for these routes in `packages/shared/src/api.ts` (`ChildResponse`, `TherapyResponse`, `SchoolResponse`, `CheckInsResponse`, `FamiliesResponse`, `TokenResponse`, `PasswordChangeResponse`); the routes `satisfies` them
+- [x] Website fix: the Medications chart uses the first current medication (a stopped one only when nothing is current), as the phone does
+- [x] Checked in the iOS Simulator with QA accounts (admin, "can view" member, and a solo admin), all deleted afterwards:
+  - Therapy, School (all four sections), About Me edit saved and shown;
+  - a check-in link made on the phone: refused without consent, then shown once and shared; opened signed out, it shows only the short form with the child's first name;
+  - a role change and back, an invite created, shown once, then revoked;
+  - password change (the app kept working, and the new password signs in), data export, sign out everywhere;
+  - delete: wrong password refused; the only admin of a shared family refused (409); the solo admin's account, family and child deleted, and the phone wiped;
+  - the view member: no Edit, Invite, link or role controls, the edit screen refuses, and the server answers 403 to About Me, link and invite requests; Leave works.
+  - The website's Medications chart was checked in the browser with a stopped medication listed first.
 
 ### M9. Store submission
 - [ ] Final privacy policy (counsel), a support page, and a web account-deletion page

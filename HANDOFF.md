@@ -15,7 +15,22 @@ _Last updated: Nov 1, 2026. Replaces the Oct 24 handoff (Stage 1 is long done)._
 | `dev` | Latest: family sharing (see `git log`), deployed to **https://dev.lanternway.co** (noindex + prototype banner) |
 | Working tree | Clean. Medication reminder settings + care calendar are committed and on dev. Migration 007 is applied to the shared Neon database. |
 
-### Read screens on the phone, M6 (Nov 3, branch `mobile/m6-read-screens`, not pushed)
+### Remaining native screens on the phone, M8 (Nov 3, branch `mobile/m8-screens`, not pushed)
+- **Screens** (all in `apps/mobile/src/app/(app)/(tabs)/more/`): `therapy/index.tsx`, `therapy/[providerId].tsx`, `school.tsx`, `about-me/index.tsx`, `about-me/edit.tsx?section=`, `family.tsx`, `account.tsx`. `more/index.tsx` lists them.
+- **Pieces:**
+  - `src/components/sheet.tsx` (the page sheet the refill, check-in and invite sheets share);
+  - `src/components/check-in-links.tsx`;
+  - `src/lib/about-me.ts` (section list, kept out of `src/app` so it isn't a route);
+  - `confirm()`, `NavRow`, `Badge`, `Detail` and `OptionCard` in `src/components/screen-parts.tsx`;
+  - `endHere()` in `src/lib/session.tsx` (forget this phone's session after sign out everywhere or deletion, with a note).
+- **Tokens:** check-in and invite tokens are only in the create response; the phone shows and shares the link once and never stores it.
+- **Testing tip:** `xcrun simctl openurl booted "exp://localhost:8081/--/more/school"` opens a screen directly in Expo Go.
+- **Open:**
+  - Dates in About Me are typed as year-month-day (a date picker would need approval).
+  - Plan, therapy and medication records are still changed on the website.
+  - The export goes through the Share sheet as text; a real .json file would need a file library.
+
+### Read screens on the phone, M6 (Nov 3, merged to `dev`)
 - **Navigation:** `apps/mobile/src/app/(app)/(tabs)/` has the tab bar (Today, Timeline, More). More is its own stack: `more/index.tsx` lists native screens only; `more/medications/index.tsx` and `more/medications/[medId].tsx` (dose history). The quick log stays a stack screen above the tabs.
 - **Shared code:**
   - `packages/shared/src/timeline.ts` (rows and zoom grouping, moved from the website's `timeline/events.ts` and page).
