@@ -10,6 +10,7 @@
  * Lists are returned oldest-first unless noted.
  */
 
+import "server-only";
 import { cookies } from "next/headers";
 import { connection } from "next/server";
 import { redirect } from "next/navigation";

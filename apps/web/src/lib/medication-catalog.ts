@@ -9,6 +9,7 @@
  * Server-only: imported by the search route, never by browser code.
  */
 
+import "server-only";
 import { neon } from "@neondatabase/serverless";
 import seed from "../../../../db/seed/medication-catalog.json";
 

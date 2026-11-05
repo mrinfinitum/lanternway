@@ -1,3 +1,4 @@
+import "server-only";
 import { createNeonAuth } from "@neondatabase/auth/next/server";
 import { cookies } from "next/headers";
 import { cache } from "react";

@@ -7,6 +7,7 @@
  * Callers check the user's access to the child first (childAccess in ./http).
  */
 
+import "server-only";
 import {
   childAccommodations,
   childCheckInLinks,

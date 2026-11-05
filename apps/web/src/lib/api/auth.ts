@@ -1,3 +1,4 @@
+import "server-only";
 import { createAuthServer, NEON_AUTH_SESSION_COOKIE_NAME } from "@neondatabase/auth/server";
 
 /**

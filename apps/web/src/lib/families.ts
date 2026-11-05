@@ -3,6 +3,7 @@
  * security. Server-only. Screens go through src/lib/data.ts, not this file.
  */
 
+import "server-only";
 import type { PoolClient } from "@neondatabase/serverless";
 import type { Child } from "@lanternway/shared/types";
 import { asUser } from "@/lib/db";

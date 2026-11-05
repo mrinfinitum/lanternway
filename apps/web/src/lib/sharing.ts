@@ -7,6 +7,7 @@
  *   view  – reads everything; changes nothing
  */
 
+import "server-only";
 import { createHash, randomBytes } from "node:crypto";
 import { isSavedChildId } from "@/lib/child-profile";
 import { asNobody, asUser } from "@/lib/db";

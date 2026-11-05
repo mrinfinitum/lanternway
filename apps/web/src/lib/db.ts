@@ -1,3 +1,4 @@
+import "server-only";
 import { Pool, type PoolClient } from "@neondatabase/serverless";
 
 /**

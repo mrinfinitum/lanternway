@@ -3,6 +3,7 @@
  * Server-only. See MOBILE_PLAN.md §2 for the rules every route follows.
  */
 
+import "server-only";
 import { AUTH_UNAVAILABLE, getBearerUser, type ApiUser } from "@/lib/api/auth";
 import { isSavedChildId } from "@/lib/child-profile";
 import { asUser } from "@/lib/db";

@@ -46,6 +46,52 @@ Keep a copy of each signed agreement outside Lanternway's systems.
 - Before turning on **push**: ask permission on the device only when the parent turns reminders on; push payloads should carry the private wording only.
 - Privacy Policy draft now lists reminder settings and phone numbers.
 
+## Website security (checked Nov 4, 2026)
+
+**In place:**
+- **Headers** (`apps/web/next.config.ts`):
+  - CSP limited to our own origin, with `frame-ancestors 'none'`, `object-src 'none'`, `base-uri` and `form-action 'self'`;
+  - HSTS for 2 years including subdomains;
+  - nosniff, `X-Frame-Options: DENY` and a strict Referrer-Policy;
+  - a Permissions-Policy that turns off camera, microphone, location, payment and device APIs;
+  - COOP and CORP set to same-origin;
+  - no `X-Powered-By` header;
+  - `noindex` everywhere except production.
+- **Authorization:**
+  - every server action and `/api/v1` route checks the signed-in user itself, not only the proxy;
+  - row-level security is the final guard (`pnpm db:test-rls`, `pnpm api:test`);
+  - the phone API uses bearer tokens only (no cookies, so no cross-site request forgery) and sends no CORS headers.
+- **Server-only code:** database, auth, cookie and data modules import `server-only`, so a mistaken import into browser code fails the build.
+- **Redirects:** sign-in only returns to `/home` or `/join/<valid invite>`, never to a URL from the request, so there's no open redirect.
+- **Secrets:**
+  - `.env*` files are git-ignored, and no `NEXT_PUBLIC_` variables are used;
+  - the website reads only `DATABASE_URL` (the limited `lanternway_app` role), `NEON_AUTH_BASE_URL` and `NEON_AUTH_COOKIE_SECRET`;
+  - `DATABASE_URL_ADMIN` is used only by local scripts.
+- **Public tokens:** check-in and invite links are 256-bit, stored only as SHA-256 hashes, and expire and can be revoked. Check-in notes are capped at 600 characters in the database.
+- **Dependencies:** `pnpm audit --prod` shows no critical or high advisories.
+  - `pnpm-workspace.yaml` overrides `better-auth` to 1.7.14, because `@neondatabase/auth` 0.7.0-beta pins the vulnerable 1.7.6. Remove the overrides when Neon's SDK ships a patched version.
+  - What's left is 1 low and 2 moderate, in Expo build tooling and an email-template helper, not in the deployed site.
+
+**Known trade-off:** the CSP still allows inline scripts (`'unsafe-inline'`).
+- Next.js streams pages with inline scripts, and nonce-based CSP doesn't work with Partial Prerendering / Cache Components (Next.js CSP guide).
+- React escapes all output and the code has no `dangerouslySetInnerHTML`, which keeps the cross-site scripting risk low.
+- Revisit if Next.js ships hash-based CSP for streamed scripts.
+
+**Settings only the owner can change (Vercel, GitHub, Neon):**
+- **Two-factor authentication** on Vercel, GitHub, Neon, Resend and the domain registrar.
+- **Vercel → Deployment Protection:** keep Vercel Authentication on for preview deployments.
+- **Vercel → Firewall:**
+  - turn on Bot Protection;
+  - add a rate-limit rule for `POST` to `/sign-in`, `/sign-up`, `/forgot-password` and `/api/v1/auth/*`, for example 10 requests a minute per IP;
+  - Attack Challenge Mode is the switch to flip during an attack.
+- **Vercel → Spend Management:** set a cap, so a traffic flood can't run up a bill.
+- **Vercel → Environment Variables:** mark secrets as Sensitive, and never add `DATABASE_URL_ADMIN`.
+- **GitHub:**
+  - branch protection on `main` (no force pushes; changes through pull requests);
+  - Dependabot alerts and secret scanning turned on.
+- **Neon:** rotate the admin role's password if it was ever shared, and keep the website on `lanternway_app`.
+- **HSTS preload** (optional): add `preload` and submit the domain at hstspreload.org, once every subdomain is HTTPS-only for good.
+
 ## Before a wider launch
 - Real sharing links (hashed tokens, expiry, revoke, view log)
 - Audit log of who viewed or changed a child's record

@@ -4,6 +4,7 @@
  * Server-only.
  */
 
+import "server-only";
 import { asUser } from "@/lib/db";
 import { POLICY_VERSIONS } from "@/lib/policies";
 

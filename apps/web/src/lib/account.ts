@@ -4,6 +4,7 @@
  * The export covers kids in families they're an admin of; shared families' admins export those.
  */
 
+import "server-only";
 import { asUser } from "@/lib/db";
 
 /** Everything Lanternway stores for this account, as plain JSON. */

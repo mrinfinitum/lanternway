@@ -11,6 +11,7 @@
  * Lists are returned oldest-first unless noted.
  */
 
+import "server-only";
 import { isSavedChildId } from "@/lib/child-profile";
 import { loadChildCheckIns } from "@/lib/checkins";
 import { loadChildRecords } from "@/lib/records";

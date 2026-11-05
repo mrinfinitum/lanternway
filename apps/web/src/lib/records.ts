@@ -5,6 +5,7 @@
  * writes come from the persistRecord server action and /api/v1.
  */
 
+import "server-only";
 import { cache } from "react";
 import { isSavedChildId } from "@/lib/child-profile";
 import { asUser } from "@/lib/db";

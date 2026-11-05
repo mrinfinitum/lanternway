@@ -7,3 +7,15 @@ allowBuilds:
   unrs-resolver: false
   # Only prints a funding message; nothing to build.
   core-js: false
+
+# Security patches for packages pinned inside @neondatabase/auth 0.7.0-beta, which
+# pins better-auth 1.7.6 (GHSA critical/high OAuth sign-in advisories, fixed in 1.7.7).
+# 1.7.14 is the newest patched release past pnpm's minimum release age. Remove these
+# once Neon's SDK ships a patched better-auth itself.
+overrides:
+  better-auth: 1.7.14
+  "@better-auth/core": 1.7.14
+  "@better-auth/oauth-provider": 1.7.14
+  "@better-fetch/fetch": 1.3.3
+  "better-call@1.4.0": 1.4.4
+  "zod@<4.6.6": ^4.6.6

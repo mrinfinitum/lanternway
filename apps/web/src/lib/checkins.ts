@@ -7,6 +7,7 @@
  * functions that check the link and return or save only what the form needs.
  */
 
+import "server-only";
 import { createHash, randomBytes } from "node:crypto";
 import { cache } from "react";
 import { isSavedChildId } from "@/lib/child-profile";
