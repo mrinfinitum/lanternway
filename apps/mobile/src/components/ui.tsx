@@ -1,7 +1,8 @@
 /**
- * Small building blocks for the phone screens, in the Lanternway style: white
- * page, paper cards with a warm outline, cream for things you tap, teal text and
- * buttons, coral for problems. Every tap target is at least 44 points.
+ * Small building blocks for the phone screens, in the Lanternway style: a warm
+ * wash behind the page, frosted paper cards with a soft warm shadow, cream for
+ * things you tap, teal text and buttons, coral for problems. Every tap target is
+ * at least 44 points.
  */
 import type { ComponentRef, ReactNode, Ref } from "react";
 import {
@@ -16,18 +17,28 @@ import {
   type TextInputProps,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { colors, fonts, minTap, radius } from "@/theme";
+import { Wash } from "@/components/warm";
+import { useHeaderSpace } from "@/lib/header";
+import { colors, fonts, minTap, radius, shadows } from "@/theme";
 
-/** A scrolling page that keeps fields above the keyboard. Pass `header` when a navigation bar already covers the top inset. */
+/** A scrolling page over the warm wash that keeps fields above the keyboard. Pass `header` under a (see-through) navigation bar. */
 export function Screen({ children, header = false }: { children: ReactNode; header?: boolean }) {
+  const headerSpace = useHeaderSpace(header);
   return (
-    <SafeAreaView style={styles.page} edges={header ? ["bottom"] : ["top", "bottom"]}>
-      <KeyboardAvoidingView style={styles.page} behavior={Platform.OS === "ios" ? "padding" : undefined}>
-        <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-          {children}
-        </ScrollView>
-      </KeyboardAvoidingView>
-    </SafeAreaView>
+    <View style={styles.page}>
+      <Wash />
+      <SafeAreaView style={styles.page} edges={header ? ["bottom"] : ["top", "bottom"]}>
+        <KeyboardAvoidingView style={styles.page} behavior={Platform.OS === "ios" ? "padding" : undefined}>
+          <ScrollView
+            contentContainerStyle={[styles.content, headerSpace.padding]}
+            contentInsetAdjustmentBehavior={headerSpace.insetBehavior}
+            keyboardShouldPersistTaps="handled"
+          >
+            {children}
+          </ScrollView>
+        </KeyboardAvoidingView>
+      </SafeAreaView>
+    </View>
   );
 }
 
@@ -43,7 +54,7 @@ export function Body({ children, center = true, muted = false }: { children: Rea
   return <Text style={[styles.body, !center && { textAlign: "left" }, muted && { color: colors.muted }]}>{children}</Text>;
 }
 
-/** A paper card holding a form. */
+/** A frosted paper card (the wash shows softly through it). */
 export function Card({ children }: { children: ReactNode }) {
   return <View style={styles.card}>{children}</View>;
 }
@@ -136,11 +147,19 @@ export function Checkbox({ checked, onChange, children }: { checked: boolean; on
 }
 
 export const styles = StyleSheet.create({
-  page: { flex: 1, backgroundColor: colors.white },
+  page: { flex: 1, backgroundColor: "transparent" },
   content: { padding: 24, gap: 16, flexGrow: 1 },
   title: { fontFamily: fonts.extrabold, fontSize: 26, lineHeight: 32, color: colors.teal, textAlign: "center" },
   body: { fontFamily: fonts.regular, fontSize: 16, lineHeight: 23, color: colors.teal, textAlign: "center" },
-  card: { backgroundColor: colors.paper, borderColor: colors.border, borderWidth: 1, borderRadius: radius.card, padding: 20, gap: 16 },
+  card: {
+    backgroundColor: colors.card,
+    borderColor: colors.border,
+    borderWidth: 1,
+    borderRadius: radius.card,
+    boxShadow: shadows.soft,
+    padding: 20,
+    gap: 16,
+  },
   label: { fontFamily: fonts.bold, fontSize: 16, color: colors.teal },
   hint: { fontFamily: fonts.regular, fontSize: 13, lineHeight: 18, color: colors.muted },
   input: {

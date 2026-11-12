@@ -1,18 +1,11 @@
 import { Stack } from "expo-router";
-import { colors, fonts } from "@/theme";
+import { stackHeader } from "@/lib/header";
 
 /** The More tab: a list of the other native screens, each opening inside this tab. */
 export default function MoreLayout() {
   return (
     <Stack
-      screenOptions={{
-        contentStyle: { backgroundColor: colors.white },
-        headerShadowVisible: false,
-        headerTintColor: colors.teal,
-        headerBackButtonDisplayMode: "minimal",
-        headerStyle: { backgroundColor: colors.white },
-        headerTitleStyle: { fontFamily: fonts.bold, color: colors.teal },
-      }}
+      screenOptions={{ ...stackHeader }}
     >
       <Stack.Screen name="index" options={{ headerShown: false }} />
       {/* Screens with their own big title keep only the back button in the bar. */}

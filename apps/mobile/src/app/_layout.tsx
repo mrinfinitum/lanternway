@@ -10,7 +10,7 @@ export default function RootLayout() {
   const [loaded, error] = useFonts({ Nunito_400Regular, Nunito_600SemiBold, Nunito_700Bold, Nunito_800ExtraBold });
 
   // A calm blank page for the moment the fonts load (no spinner, no flash of other fonts).
-  if (!loaded && !error) return <View style={{ flex: 1, backgroundColor: colors.white }} />;
+  if (!loaded && !error) return <View style={{ flex: 1, backgroundColor: colors.page }} />;
 
   return (
     <SessionProvider>
@@ -24,7 +24,7 @@ export default function RootLayout() {
 function RootNavigator() {
   const { session, reload, signOut } = useSession();
 
-  if (session.status === "loading") return <View style={{ flex: 1, backgroundColor: colors.white }} />;
+  if (session.status === "loading") return <View style={{ flex: 1, backgroundColor: colors.page }} />;
 
   if (session.status === "unreachable") {
     return (
@@ -41,7 +41,7 @@ function RootNavigator() {
 
   const signedIn = session.status === "signed-in";
   return (
-    <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.white } }}>
+    <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.page } }}>
       <Stack.Screen name="index" />
       <Stack.Protected guard={signedIn}>
         <Stack.Screen name="(app)" />
