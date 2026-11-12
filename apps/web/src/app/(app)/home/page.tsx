@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ChevronRight, HeartHandshake, Pill, School, Star } from "lucide-react";
+import { CalendarDays, ChevronRight, Clock, HeartHandshake, Pill, School, Star } from "lucide-react";
 import type { Metadata } from "next";
 import { LumiTip } from "@/components/lumi-tip";
 import { getSignedInUser } from "@/lib/auth/server";
@@ -92,9 +92,12 @@ export default async function HomePage() {
   return (
     <div className="space-y-8">
       <div>
-        <p className="text-sm font-semibold text-muted-foreground">{formatLongWeekday(today)}</p>
-        <h1 className="text-2xl font-extrabold md:text-3xl">Hi {user?.name.split(" ")[0] || "there"}</h1>
+        <p className="text-sm font-semibold text-muted-foreground">Welcome back · {formatLongWeekday(today)}</p>
+        <h1 className="text-3xl font-extrabold tracking-tight md:text-4xl">Hi {user?.name.split(" ")[0] || "there"}</h1>
       </div>
+
+      {/* Next up: the soonest thing coming, as a warm hero card */}
+      {soon[0] && <NextUp item={soon[0]} today={today} />}
 
       {/* Quick log (not for view-only family members) */}
       <section aria-labelledby="quick-log">
@@ -107,9 +110,9 @@ export default async function HomePage() {
                 <Link
                   key={kind}
                   href={`/log?kind=${kind}`}
-                  className="flex flex-col items-center gap-2 rounded-2xl bg-cream px-2 py-4 text-sm font-bold transition-colors hover:bg-amber/30"
+                  className="group flex flex-col items-center gap-2 rounded-2xl bg-gradient-to-b from-white/90 to-cream px-2 py-4 text-sm font-bold shadow-soft ring-1 ring-white/70 transition-shadow hover:shadow-lift"
                 >
-                  <span className="flex size-10 items-center justify-center rounded-full bg-white">
+                  <span className="flex size-11 items-center justify-center rounded-2xl bg-gradient-to-br from-butter to-peach shadow-sm">
                     <Icon className="size-5" aria-hidden />
                   </span>
                   {logKindLabels[kind]}
@@ -239,5 +242,41 @@ export default async function HomePage() {
         </LumiTip>
       )}
     </div>
+  );
+}
+
+/** The soonest upcoming item, styled like an appointment card: warm gradient, date and time in a white box. */
+function NextUp({ item, today }: { item: Upcoming; today: IsoDate }) {
+  return (
+    <section aria-labelledby="next-up">
+      <SectionHeading id="next-up">Next up</SectionHeading>
+      <Link
+        href={item.href}
+        className="relative block overflow-hidden rounded-3xl bg-gradient-to-br from-butter via-peach to-[#ffc09f] p-5 shadow-lift transition-shadow hover:shadow-soft"
+      >
+        <span aria-hidden className="absolute -top-16 -right-10 size-48 rounded-full bg-white/25" />
+        <span aria-hidden className="absolute -bottom-20 right-16 size-40 rounded-full bg-white/15" />
+        <span className="relative flex items-center gap-3">
+          <span className="flex size-12 shrink-0 items-center justify-center rounded-full bg-white/80 shadow-sm">
+            <item.icon className="size-5" aria-hidden />
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block text-lg leading-tight font-extrabold">{item.title}</span>
+            {item.detail && <span className="block truncate text-sm font-semibold">{item.detail}</span>}
+          </span>
+          <ChevronRight className="size-5 shrink-0" aria-hidden />
+        </span>
+        <span className="relative mt-4 flex flex-wrap items-center justify-between gap-x-4 gap-y-1 rounded-2xl bg-white/90 px-4 py-3 text-sm font-semibold shadow-sm">
+          <span className="flex items-center gap-2">
+            <CalendarDays className="size-4" aria-hidden />
+            {formatWeekdayDate(item.date)}
+          </span>
+          <span className="flex items-center gap-2">
+            <Clock className="size-4" aria-hidden />
+            {formatRelativeDays(item.date, today)}
+          </span>
+        </span>
+      </Link>
+    </section>
   );
 }

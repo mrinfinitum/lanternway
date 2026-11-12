@@ -37,14 +37,19 @@ Read `PRD.md` for the product and `BUILD_PLAN.md` for the current task list. Bra
 | `coral` | `#F4825B` | Accents, sparkles, celebrations; missed/alert markers |
 | `teal` | `#034251` | Text, outlines, primary buttons, headers, selected state |
 | `cream` | `#F7E7CD` | **Tappable** fills: quick-log tiles, option cards, chips, segmented tracks, hover |
-| `paper` | `#FDF3E6` | Cards and panels (`bg-card`), sidebar |
-| `white` | `#FFFFFF` | Page background (`bg-background`), dialogs, boxes nested inside cards, inputs |
+| `paper` | `#FDF3E6` | Cards and panels (`bg-card` is frosted paper, `rgb(255 249 241 / 0.82)`) |
+| `white` | `#FFFFFF` | Dialogs, boxes nested inside cards, inputs (the page itself is warm white `#FFFAF4` under the wash) |
+| `peach` / `butter` | `#FFD8BD` / `#FFE8A3` | Decoration only: the background wash, gradient tiles and hero cards. Never text |
+
+**Look:** soft and warm, like a modern healthcare app: a fixed peach/butter wash behind every page (`body::before` in `globals.css`), frosted cards with a soft warm shadow, and a floating pill tab bar on phones.
 
 **Surfaces (keep these consistent):**
-- Three levels: white page → paper card with a warm outline (`bg-card ring-1 ring-border`, or the `Card` component) → white boxes nested inside a card. Never nest a box in the same color as its parent.
-- A stronger fill (cream) means "you can tap this". Information containers stay paper.
+- Three levels: warm page wash → frosted paper card (`bg-card ring-1 ring-border`, or the `Card` component; the shadow and blur come from `globals.css` automatically) → white boxes nested inside a card. Never nest a box in the same color as its parent.
+- A stronger fill means "you can tap this": cream, or the cream gradient tile (`bg-gradient-to-b from-white/90 to-cream` + `shadow-soft`). Information containers stay paper.
+- Hero cards (one per screen at most, e.g. Home's "Next up"): `bg-gradient-to-br from-butter via-peach to-[#ffc09f]`, `rounded-3xl`, `shadow-lift`, teal text, white inner box for the details.
+- Shadows: `shadow-soft` (resting) and `shadow-lift` (hero, floating nav, hover). Warm-tinted; no hard dark shadows.
 - One border color (`border` / `ring-border`). Selected = teal fill or teal border. Amber = highlight/progress. Coral = alert.
-- Keep text at WCAG AA: body text is teal, secondary text `text-muted-foreground` (#42636b, ≥ 5:1 on white, paper, and cream).
+- Keep text at WCAG AA: body text is teal, secondary text `text-muted-foreground` (#42636b, ≥ 5:1 on white, paper, cream and the wash). Never put text in white on amber, peach or butter.
 
 Font: a rounded, friendly sans-serif — **Nunito** (Google Fonts via `next/font`).
 Corners: generous rounding (`rounded-2xl` on cards). Calm UI: no flashing animations; respect `prefers-reduced-motion`.
