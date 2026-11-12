@@ -3,44 +3,58 @@
  * offline / "Last updated" note, a segmented control, section titles, and the
  * record-keeping disclaimer.
  */
-import { useState, type ReactNode } from "react";
+import { useContext, useState, type ReactNode } from "react";
 import { Alert, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { DISCLAIMER } from "@lanternway/shared/disclaimer";
+import { BottomTabBarHeightContext } from "expo-router/tabs";
 import { Card, Notice } from "@/components/ui";
+import { GradientFill, tileStops, Wash } from "@/components/warm";
 import { useCurrentChild } from "@/lib/current-child";
+import { useHeaderSpace } from "@/lib/header";
 import { updatedAgo } from "@/lib/use-cached-screen";
-import { colors, fonts, minTap, radius } from "@/theme";
+import { colors, fonts, minTap, radius, shadows } from "@/theme";
 
-/** A scrolling page with pull-to-refresh. `edges` is "top" for tab screens without a navigation bar. */
+/**
+ * A scrolling page over the warm wash, with pull-to-refresh. `edges` is "top" for tab screens without a
+ * navigation bar, and empty under a (see-through) bar. The end of the page stays clear of the floating tab bar.
+ */
 export function Page({ children, refreshing, onRefresh, edges = ["top"] }: {
   children: ReactNode;
   refreshing?: boolean;
   onRefresh?: () => void;
   edges?: ("top" | "bottom")[];
 }) {
+  const headerSpace = useHeaderSpace(!edges.includes("top"));
+  const tabBar = useContext(BottomTabBarHeightContext) ?? 0;
   return (
-    <SafeAreaView style={s.page} edges={edges}>
-      <ScrollView
-        contentContainerStyle={s.content}
-        refreshControl={onRefresh ? <RefreshControl refreshing={!!refreshing} onRefresh={onRefresh} tintColor={colors.teal} /> : undefined}
-      >
-        {children}
-      </ScrollView>
-    </SafeAreaView>
+    <View style={s.page}>
+      <Wash />
+      <SafeAreaView style={s.page} edges={edges}>
+        <ScrollView
+          contentContainerStyle={[s.content, headerSpace.padding, { paddingBottom: tabBar + 24 }]}
+          contentInsetAdjustmentBehavior={headerSpace.insetBehavior}
+          scrollIndicatorInsets={{ bottom: tabBar }}
+          refreshControl={onRefresh ? <RefreshControl refreshing={!!refreshing} onRefresh={onRefresh} tintColor={colors.teal} /> : undefined}
+        >
+          {children}
+        </ScrollView>
+      </SafeAreaView>
+    </View>
   );
 }
 
 /** The screen's title (with a small line above it) and the current child, who can be switched when there are several. */
-export function ChildHeader({ kicker, title }: { kicker?: string; title: string }) {
+export function ChildHeader({ kicker, title, big = false }: { kicker?: string; title: string; big?: boolean }) {
   const { kids, current, select } = useCurrentChild();
   const [picking, setPicking] = useState(false);
   return (
     <>
+      {/* The small line runs the full width, so a long date never wraps beside the child. */}
+      {kicker ? <Text style={[s.kicker, { marginTop: 8, marginBottom: -12 }]}>{kicker}</Text> : null}
       <View style={s.headerRow}>
         <View style={{ flex: 1 }}>
-          {kicker ? <Text style={s.kicker}>{kicker}</Text> : null}
-          <Text style={s.title} accessibilityRole="header">
+          <Text style={[s.title, big && s.bigTitle]} accessibilityRole="header">
             {title}
           </Text>
         </View>
@@ -134,15 +148,16 @@ export function Section({ children }: { children: ReactNode }) {
   );
 }
 
-/** A cream row that opens another screen (cream means "tap this"). */
+/** A row that opens another screen: the white-to-cream tile with a soft shadow ("tap this"). */
 export function NavRow({ label, hint, onPress }: { label: string; hint?: string; onPress: () => void }) {
   return (
     <Pressable
       onPress={onPress}
       accessibilityRole="button"
       accessibilityHint={hint}
-      style={({ pressed }) => [s.navRow, pressed && { backgroundColor: "rgba(247,179,65,0.3)" }]}
+      style={({ pressed }) => [s.navRow, pressed && { opacity: 0.8 }]}
     >
+      <GradientFill stops={tileStops} radius={radius.card} />
       <View style={{ flex: 1, gap: 2 }}>
         <Text style={s.navLabel}>{label}</Text>
         {hint ? <Text style={s.rowMuted}>{hint}</Text> : null}
@@ -202,11 +217,12 @@ export function Disclaimer() {
 }
 
 export const s = StyleSheet.create({
-  page: { flex: 1, backgroundColor: colors.white },
+  page: { flex: 1, backgroundColor: "transparent" },
   content: { padding: 20, gap: 14, paddingBottom: 40 },
   headerRow: { flexDirection: "row", alignItems: "center", gap: 12, marginTop: 8 },
   kicker: { fontFamily: fonts.semibold, fontSize: 14, color: colors.muted },
   title: { fontFamily: fonts.extrabold, fontSize: 28, color: colors.teal },
+  bigTitle: { fontSize: 34, lineHeight: 40, letterSpacing: -0.4 },
   childChip: { flexDirection: "row", alignItems: "center", gap: 8, minHeight: minTap, paddingHorizontal: 8 },
   avatar: { width: 40, height: 40, borderRadius: 20, backgroundColor: colors.amber, alignItems: "center", justifyContent: "center" },
   avatarText: { fontFamily: fonts.extrabold, fontSize: 18, color: colors.teal },
@@ -231,7 +247,9 @@ export const s = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderRadius: radius.card,
-    backgroundColor: colors.cream,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.7)",
+    boxShadow: shadows.soft,
   },
   navLabel: { fontFamily: fonts.bold, fontSize: 17, color: colors.teal },
   navChev: { fontFamily: fonts.bold, fontSize: 26, color: colors.teal },

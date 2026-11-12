@@ -4,7 +4,7 @@ import { AppState } from "react-native";
 import { CurrentChildProvider } from "@/lib/current-child";
 import { listOutbox, syncOutbox } from "@/lib/outbox";
 import { useSession } from "@/lib/session";
-import { colors, fonts } from "@/theme";
+import { stackHeader } from "@/lib/header";
 
 /** The signed-in app. Sends waiting logs when it opens, comes back to the front, and every 30 seconds while any wait. */
 export default function AppLayout() {
@@ -28,15 +28,7 @@ export default function AppLayout() {
   return (
     <CurrentChildProvider>
       <Stack
-        screenOptions={{
-          headerShown: false,
-          contentStyle: { backgroundColor: colors.white },
-          headerShadowVisible: false,
-          headerTintColor: colors.teal,
-          headerBackButtonDisplayMode: "minimal",
-          headerStyle: { backgroundColor: colors.white },
-          headerTitleStyle: { fontFamily: fonts.bold, color: colors.teal },
-        }}
+        screenOptions={{ ...stackHeader, headerShown: false }}
       >
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="log" options={{ headerShown: true }} />

@@ -1,22 +1,12 @@
 import { Stack } from "expo-router";
-import { colors, fonts } from "@/theme";
+import { stackHeader } from "@/lib/header";
 
 export const unstable_settings = { anchor: "sign-in" };
 
-/** Sign-in, sign-up, email code and forgot password, with a plain back button. */
+/** Sign-in, sign-up, email code and forgot password, with a plain back button over the warm wash. */
 export default function AuthLayout() {
   return (
-    <Stack
-      screenOptions={{
-        headerTitle: "",
-        headerShadowVisible: false,
-        headerTintColor: colors.teal,
-        headerBackButtonDisplayMode: "minimal",
-        headerStyle: { backgroundColor: colors.white },
-        headerTitleStyle: { fontFamily: fonts.bold },
-        contentStyle: { backgroundColor: colors.white },
-      }}
-    >
+    <Stack screenOptions={{ ...stackHeader, headerTitle: "" }}>
       <Stack.Screen name="sign-in" options={{ headerShown: false }} />
     </Stack>
   );

@@ -1,4 +1,4 @@
-import { router } from "expo-router";
+import { router, type Href } from "expo-router";
 import { useEffect, useRef } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import type { HomeResponse } from "@lanternway/shared/api";
@@ -8,6 +8,7 @@ import { refillDueDate, summarizeCheckIns, summarizeLogs } from "@lanternway/sha
 import { appetiteLabels, logKindLabels, moodLabels, ratingLabel } from "@lanternway/shared/labels";
 import type { IsoDate, LogEntry } from "@lanternway/shared/types";
 import { ChildHeader, Page, UpdatedNote } from "@/components/screen-parts";
+import { GradientFill, heroStops, iconStops, tileStops } from "@/components/warm";
 import { Body, Button, Card, Notice } from "@/components/ui";
 import { getHome } from "@/lib/api";
 import { canLog, useCurrentChild } from "@/lib/current-child";
@@ -15,7 +16,7 @@ import { describeLog, logKindOrder, logKindSymbols, phoneToday } from "@/lib/log
 import { discardOutboxItem, retryOutboxItem, syncOutbox, useOutbox, type OutboxItem } from "@/lib/outbox";
 import { useSession } from "@/lib/session";
 import { useCachedScreen } from "@/lib/use-cached-screen";
-import { colors, fonts, radius } from "@/theme";
+import { colors, fonts, radius, shadows } from "@/theme";
 
 /** Today: quick log, what's logged today (including what's waiting to sync), this week, coming up. */
 export default function Today() {
@@ -40,7 +41,7 @@ export default function Today() {
 
   return (
     <Page refreshing={refreshing} onRefresh={() => refresh(() => Promise.all([refreshMe(), syncOutbox(userId)]))}>
-      <ChildHeader kicker={formatLongWeekday(today)} title={`Hi ${user.name.split(" ")[0] || "there"}`} />
+      <ChildHeader big kicker={`Welcome back · ${formatLongWeekday(today)}`} title={`Hi ${user.name.split(" ")[0] || "there"}`} />
 
       {!current ? (
         <Card>
@@ -95,6 +96,8 @@ function TodayBody({ data, today, role, childName, outbox, userId }: {
         />
       )}
 
+      {soon[0] && <NextUp item={soon[0]} today={today} />}
+
       <Text style={s.section}>How’s {childName}’s day?</Text>
       {canLog(role) && (
         <View style={s.tiles}>
@@ -104,9 +107,11 @@ function TodayBody({ data, today, role, childName, outbox, userId }: {
               onPress={() => router.push({ pathname: "/log", params: { kind } })}
               accessibilityRole="button"
               accessibilityLabel={`Log ${logKindLabels[kind].toLowerCase()}`}
-              style={({ pressed }) => [s.tile, pressed && { backgroundColor: "rgba(247,179,65,0.3)" }]}
+              style={({ pressed }) => [s.tile, pressed && { opacity: 0.8 }]}
             >
+              <GradientFill stops={tileStops} radius={radius.card} />
               <View style={s.tileIcon}>
+                <GradientFill stops={iconStops} radius={16} direction="diagonal" />
                 <Text style={s.tileSymbol}>{logKindSymbols[kind]}</Text>
               </View>
               <Text style={s.tileLabel}>{logKindLabels[kind]}</Text>
@@ -191,6 +196,46 @@ function TodayBody({ data, today, role, childName, outbox, userId }: {
   );
 }
 
+/** The soonest thing coming up, as a warm hero card: teal text on butter and peach, the date in a white box. */
+function NextUp({ item, today }: { item: Upcoming; today: IsoDate }) {
+  const when = `${formatWeekdayDate(item.date)}, ${formatRelativeDays(item.date, today)}`;
+  return (
+    <>
+      <Text style={s.section} accessibilityRole="header">
+        Next up
+      </Text>
+      <Pressable
+        onPress={() => router.push(item.href)}
+        accessibilityRole="button"
+        accessibilityLabel={`${item.title}${item.detail ? `, ${item.detail}` : ""}. ${when}`}
+        style={({ pressed }) => [s.hero, pressed && { opacity: 0.85 }]}
+      >
+        <GradientFill stops={heroStops} radius={radius.hero} direction="diagonal" />
+        <View style={[s.heroGlow, { top: -64, right: -40, width: 192, height: 192, opacity: 0.25 }]} />
+        <View style={[s.heroGlow, { bottom: -80, right: 64, width: 160, height: 160, opacity: 0.15 }]} />
+        <View style={s.heroRow}>
+          <View style={s.heroIcon}>
+            <Text style={s.heroSymbol}>{item.symbol}</Text>
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={s.heroTitle}>{item.title}</Text>
+            {item.detail ? (
+              <Text style={s.heroDetail} numberOfLines={1}>
+                {item.detail}
+              </Text>
+            ) : null}
+          </View>
+          <Text style={s.heroChev}>›</Text>
+        </View>
+        <View style={s.heroWhen}>
+          <Text style={s.heroWhenText}>▦︎ {formatWeekdayDate(item.date)}</Text>
+          <Text style={s.heroWhenText}>◷︎ {formatRelativeDays(item.date, today)}</Text>
+        </View>
+      </Pressable>
+    </>
+  );
+}
+
 function Stat({ label, value, unit, hint }: { label: string; value: string; unit?: string; hint?: string }) {
   return (
     <View style={s.stat} accessible accessibilityLabel={`${label}: ${value} ${unit ?? ""}. ${hint ?? ""}`}>
@@ -206,19 +251,36 @@ function Stat({ label, value, unit, hint }: { label: string; value: string; unit
 
 const weekdayByName: Record<string, number> = { Mondays: 1, Tuesdays: 2, Wednesdays: 3, Thursdays: 4, Fridays: 5 };
 
+type Upcoming = { date: IsoDate; title: string; detail: string; symbol: string; href: Href };
+
 /** The next 30 days: IEP review, refills, weekly therapy (the same as the website's Home). */
 function comingUp(data: HomeResponse, today: IsoDate) {
-  const items: { date: IsoDate; title: string }[] = [];
-  if (data.iepPlan) items.push({ date: data.iepPlan.annualReviewDate, title: "IEP annual review" });
+  const items: Upcoming[] = [];
+  const plan = data.iepPlan;
+  if (plan) {
+    items.push({
+      date: plan.annualReviewDate,
+      title: "IEP annual review",
+      detail: `${plan.school} · with ${plan.caseManager}`,
+      symbol: "✎\uFE0E",
+      href: "/more/school",
+    });
+  }
   for (const med of data.medications) {
     const due = refillDueDate(med.lastFilledOn, med.daysSupply);
-    if (due) items.push({ date: due, title: `${med.name} refill` });
+    if (due) items.push({ date: due, title: `${med.name} refill`, detail: med.pharmacy ?? "", symbol: "℞", href: "/more/medications" });
   }
   for (const p of data.providers) {
     const day = weekdayByName[p.schedule?.split(" ")[0] ?? ""];
     if (day) {
       const diff = (day - dayOfWeek(today) + 7) % 7 || 7;
-      items.push({ date: addDays(today, diff), title: `${p.name.split(" ")[0]} · ${p.type === "ot" ? "OT" : "Speech"}` });
+      items.push({
+        date: addDays(today, diff),
+        title: `${p.name.split(" ")[0]} · ${p.type === "ot" ? "OT" : "Speech"}`,
+        detail: p.schedule ?? "",
+        symbol: "♡\uFE0E",
+        href: { pathname: "/more/therapy/[providerId]", params: { providerId: p.id } },
+      });
     }
   }
   return items.filter((u) => u.date >= today && daysBetween(today, u.date) <= 30).sort((a, b) => a.date.localeCompare(b.date));
@@ -232,12 +294,14 @@ const s = StyleSheet.create({
     flexGrow: 1,
     minHeight: 96,
     borderRadius: radius.card,
-    backgroundColor: colors.cream,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.7)",
+    boxShadow: shadows.soft,
     alignItems: "center",
     justifyContent: "center",
     gap: 8,
   },
-  tileIcon: { width: 40, height: 40, borderRadius: 20, backgroundColor: colors.white, alignItems: "center", justifyContent: "center" },
+  tileIcon: { width: 44, height: 44, borderRadius: 16, alignItems: "center", justifyContent: "center", boxShadow: "0px 1px 2px rgba(3,66,81,0.08)" },
   tileSymbol: { fontSize: 20, color: colors.teal },
   tileLabel: { fontFamily: fonts.bold, fontSize: 15, color: colors.teal },
   cardTitle: { fontFamily: fonts.bold, fontSize: 17, color: colors.teal },
@@ -259,10 +323,11 @@ const s = StyleSheet.create({
   stat: {
     width: "48%",
     flexGrow: 1,
-    backgroundColor: colors.paper,
+    backgroundColor: colors.card,
     borderColor: colors.border,
     borderWidth: 1,
     borderRadius: radius.card,
+    boxShadow: shadows.soft,
     padding: 14,
     gap: 2,
   },
@@ -271,4 +336,23 @@ const s = StyleSheet.create({
   statUnit: { fontFamily: fonts.regular, fontSize: 15, color: colors.muted },
   statHint: { fontFamily: fonts.regular, fontSize: 13, color: colors.muted },
   upRow: { gap: 2, minHeight: 40 },
+  hero: { borderRadius: radius.hero, padding: 20, gap: 16, overflow: "hidden", boxShadow: shadows.lift },
+  heroGlow: { position: "absolute", borderRadius: 999, backgroundColor: colors.white },
+  heroRow: { flexDirection: "row", alignItems: "center", gap: 12 },
+  heroIcon: { width: 48, height: 48, borderRadius: 24, backgroundColor: "rgba(255,255,255,0.8)", alignItems: "center", justifyContent: "center" },
+  heroSymbol: { fontSize: 22, color: colors.teal },
+  heroTitle: { fontFamily: fonts.extrabold, fontSize: 19, lineHeight: 24, color: colors.teal },
+  heroDetail: { fontFamily: fonts.semibold, fontSize: 14, color: colors.teal },
+  heroChev: { fontFamily: fonts.bold, fontSize: 26, color: colors.teal },
+  heroWhen: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "space-between",
+    gap: 4,
+    backgroundColor: "rgba(255,255,255,0.9)",
+    borderRadius: 18,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+  },
+  heroWhenText: { fontFamily: fonts.semibold, fontSize: 14, color: colors.teal },
 });
