@@ -21,4 +21,4 @@ export const POST = withUser(async (request, user) => {
       : fail(502, "We couldn't change your password. Please try again.");
   }
   return json({ ok: true, token: newToken() });
-});
+}, { agreementOptional: true });

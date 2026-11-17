@@ -336,6 +336,29 @@ try {
   r = await api("GET", "/api/v1/account/export", { token: B.token });
   check("B's export doesn't include A's child", r.status === 200 && !r.text.includes(childA) && !r.text.includes("Wren"));
 
+  // ---------------------------------------------------------------- pen test, Nov 17, 2026 (COMPLIANCE.md)
+  r = await api("PUT", `/api/v1/records/logs/${ids.med}`, { token: L.token, body: { childId: childA, date: today, kind: "mood", rating: 1 } });
+  check("L can't overwrite a medication by saving a log with its id → 404", r.status === 404, r.status);
+  let proxyClosed = true;
+  for (const [method, path] of [
+    ["GET", "/api/auth/reference"], ["GET", "/api/auth/token"], ["GET", "/api/auth/organization/list"],
+    ["POST", "/api/auth/sign-up/email"], ["POST", "/api/auth/organization/create"], ["POST", "/api/auth/update-user"], ["POST", "/api/auth/change-email"],
+  ]) {
+    const res = await fetch(base + path, { method, headers: { "Content-Type": "application/json", Origin: base }, body: method === "POST" ? "{}" : undefined });
+    if (res.status !== 404) {
+      proxyClosed = false;
+      check(`${method} ${path} → 404`, false, res.status);
+    }
+  }
+  check("the /api/auth proxy only passes email-link GETs (sign-up, organizations, tokens, reference → 404)", proxyClosed);
+  // An account with no sign-up agreements on record (made straight against Neon Auth).
+  await admin.query(`update consents set withdrawn_at = now() where user_id = $1 and withdrawn_at is null`, [B.id]);
+  r = await api("GET", "/api/v1/me", { token: B.token });
+  check("no agreements on record → 403 on data routes", r.status === 403, r.status);
+  r = await api("GET", "/api/v1/account/export", { token: B.token });
+  check("no agreements on record → export still works", r.status === 200, r.status);
+  await admin.query(`update consents set withdrawn_at = null where user_id = $1`, [B.id]);
+
   // ---------------------------------------------------------------- admin actions that work
   r = await api("PATCH", `/api/v1/children/${childA}?tz=${tz}`, { token: A.token, body: { firstName: "Wren", birthDate: "2017-03-09", likes: ["Trains"] } });
   check("A edits About Me", r.status === 200, `${r.status} ${r.json?.error ?? ""}`);

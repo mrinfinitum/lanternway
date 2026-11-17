@@ -1,8 +1,8 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { auth } from "@/lib/auth/server";
-import { recordConsents } from "@/lib/consents";
+import { auth, getSignedInUser } from "@/lib/auth/server";
+import { ACCOUNT_CONSENTS, hasAccountConsents, recordConsents } from "@/lib/consents";
 import { afterSignInPath } from "@/lib/join-cookie";
 import { passwordProblem } from "@lanternway/shared/password-policy";
 import { rememberEmailToVerify } from "./verify-cookie";
@@ -25,6 +25,17 @@ function friendly(error: { code?: string; message?: string; status?: number }): 
   if (error.status === 429 || has("rate_limit", "too_many")) return "Too many tries. Please wait a minute and try again.";
   if (error.status === 401) return "That email and password don't match. Please try again.";
   return "Something went wrong on our side. Please try again.";
+}
+
+/** The first sign-up agreement box left unticked, as a message, or null when all four are ticked. */
+function missingConsent(form: FormData): string | null {
+  const missing = [
+    ["adult", "confirm you're 18 or older and a parent or guardian"],
+    ["terms", "agree to the Terms of Use and Privacy Policy"],
+    ["healthData", "consent to Lanternway storing the health information you enter"],
+    ["testing", "confirm you'll use made-up details while we're testing"],
+  ].find(([key]) => form.get(key) !== "on");
+  return missing ? `Please tick the box to ${missing[1]}.` : null;
 }
 
 const isEmail = (v: string) => /^\S+@\S+\.\S+$/.test(v);
@@ -55,13 +66,8 @@ export async function signUp(_prev: AuthFormState, form: FormData): Promise<Auth
   if (!isEmail(email)) return { error: "Please enter your email address.", email, name };
   const weak = passwordProblem(password, email);
   if (weak) return { error: weak, email, name };
-  const missing = [
-    ["adult", "confirm you're 18 or older and a parent or guardian"],
-    ["terms", "agree to the Terms of Use and Privacy Policy"],
-    ["healthData", "consent to Lanternway storing the health information you enter"],
-    ["testing", "confirm you'll use made-up details while we're testing"],
-  ].find(([key]) => form.get(key) !== "on");
-  if (missing) return { error: `Please tick the box to ${missing[1]}.`, email, name };
+  const missing = missingConsent(form);
+  if (missing) return { error: missing, email, name };
 
   const { data, error } = await auth.signUp.email({ name, email, password });
   if (error) {
@@ -76,11 +82,24 @@ export async function signUp(_prev: AuthFormState, form: FormData): Promise<Auth
   // Keep a record of exactly what they agreed to, and which policy versions.
   const userId = (data as { user?: { id?: string } } | null)?.user?.id;
   if (userId) {
-    await recordConsents(userId, ["adult_guardian", "terms", "privacy", "health_data_collection", "test_data"]);
+    await recordConsents(userId, ACCOUNT_CONSENTS);
   }
   // Email verification is required: the code is emailed on sign-up.
   await rememberEmailToVerify(email);
   redirect("/verify-email");
+}
+
+/**
+ * /agree: records the sign-up agreements for an account that doesn't have them yet
+ * (one made straight against the sign-in service, skipping our sign-up form).
+ */
+export async function agree(_prev: AuthFormState, form: FormData): Promise<AuthFormState> {
+  const user = await getSignedInUser();
+  if (!user) redirect("/sign-in");
+  const missing = missingConsent(form);
+  if (missing) return { error: missing };
+  if (!(await hasAccountConsents(user.id))) await recordConsents(user.id, ACCOUNT_CONSENTS, { via: "agree" });
+  redirect(await afterSignInPath());
 }
 
 export async function signOut() {

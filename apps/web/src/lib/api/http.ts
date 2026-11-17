@@ -6,6 +6,7 @@
 import "server-only";
 import { AUTH_UNAVAILABLE, getBearerUser, type ApiUser } from "@/lib/api/auth";
 import { isSavedChildId } from "@/lib/child-profile";
+import { hasAccountConsents } from "@/lib/consents";
 import { asUser } from "@/lib/db";
 import { getAccessForChild, listMyFamilies, type Access, type Family, type FamilyRole } from "@/lib/sharing";
 import { todayIn } from "@lanternway/shared/dates";
@@ -47,18 +48,24 @@ function logFailure(request: Request, err: unknown) {
   console.error("[api/v1]", request.method, new URL(request.url).pathname, typeof code === "string" ? code : err instanceof Error ? err.name : "error");
 }
 
+export const AGREE_FIRST = "Please sign in at lanternway.co and accept the terms first.";
+
 /**
  * Wrap a route handler that needs a signed-in user (bearer token). Answers 401
- * without one, and a plain 500 if something throws.
+ * without one, 403 for an account with no sign-up agreements on record (made around
+ * our sign-up form), and a plain 500 if something throws. `agreementOptional` is for
+ * the routes such an account may still use: sign out, change password, export, delete.
  */
 export function withUser<P = Record<string, never>>(
   handler: (request: Request, user: ApiUser, params: P) => Promise<Response>,
+  { agreementOptional = false }: { agreementOptional?: boolean } = {},
 ) {
   return async (request: Request, context: { params: Promise<P> }): Promise<Response> => {
     try {
       const user = await getBearerUser(request);
       if (user === AUTH_UNAVAILABLE) return unavailable();
       if (!user) return fail(401, SIGN_IN_AGAIN);
+      if (!agreementOptional && !(await hasAccountConsents(user.id))) return fail(403, AGREE_FIRST);
       return await handler(request, user, await context.params);
     } catch (err) {
       logFailure(request, err);

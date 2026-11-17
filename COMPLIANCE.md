@@ -1,7 +1,7 @@
 # Lanternway — Compliance Tracker
 
 _Not legal advice. Status of the privacy and security work; counsel should confirm the list._
-Last updated: Oct 26, 2026.
+Last updated: Nov 17, 2026.
 
 ## Before real families (blockers)
 | Item | Status | Notes |
@@ -18,7 +18,7 @@ Last updated: Oct 26, 2026.
 | Own email sender (Resend) | ✅ Built | Neon Auth sends via Resend SMTP as `Lanternway <noreply@send.lanternway.co>` (domain verified; restricted sending-only key). Email verification by 6-digit code is required for new accounts (real delivery confirmed by the owner, Oct 26); forgot/reset password works. Sign Resend's DPA |
 | Vendor data agreements | ⬜ You | See below |
 | Breach response plan | 🟡 Draft | `docs/compliance/BREACH_RESPONSE.md`. Fill in names; counsel review |
-| Security headers + CSP | ✅ Built | `next.config.ts` |
+| Security headers + CSP | ✅ Built | `next.config.ts`. Pen test Nov 17, 2026: see Website security |
 | Password policy | ✅ Built | 10+ characters, blocks common passwords and your email (`src/lib/password-policy.ts`) |
 | Two-step sign-in | ⬜ Not available | Neon's managed auth has no 2FA plugin yet. Revisit, or use passkeys/2FA when offered |
 | Remove the test-data notice | ⬜ Later | Only after counsel signs off on the documents above |
@@ -72,6 +72,37 @@ Keep a copy of each signed agreement outside Lanternway's systems.
   - `pnpm-workspace.yaml` overrides `better-auth` to 1.7.14, because `@neondatabase/auth` 0.7.0-beta pins the vulnerable 1.7.6. Remove the overrides when Neon's SDK ships a patched version.
   - What's left is 1 low and 2 moderate, in Expo build tooling and an email-template helper, not in the deployed site.
 
+**Pen test (Nov 17, 2026, local production build, QA accounts only):**
+- **Fixed:**
+  - `/api/auth/*` passed every Better Auth endpoint through, not just the ones we use. Anyone could:
+    - read the full API reference page;
+    - sign up directly, skipping the consent boxes and our password rules;
+    - create "organizations" and send invitations to any email address;
+    - mint JWTs;
+    - call `update-user` and `change-email`.
+  - The route now passes only the GETs an email link can point at (`reset-password/<token>`, `verify-email`), and everything else is 404. The website and phone API call Neon Auth from the server, so nothing else needs it.
+  - Accounts with no sign-up agreements on record now go to `/agree` (website), and get a 403 from `/api/v1`. Sign-out, password change, export and delete still work without agreements.
+  - Saving a record with another family's (or another kind's) id now answers 404 instead of 500, so nobody can probe which ids exist. Row-level security already blocked the write.
+  - `pnpm api:test` now checks all three.
+- **Held up:**
+  - admin endpoints (list or remove users, set roles, impersonate, set passwords) and setting `role` on yourself;
+  - cross-family reads and writes, and every role-escalation attempt (log/view → admin, self-promotion, minting invites);
+  - SQL injection;
+  - stored XSS: a `<script>` name and notes render as text;
+  - cross-site server actions (Next.js origin check) and cross-site auth calls (`INVALID_ORIGIN`);
+  - foreign `redirectTo` / `callbackURL` (Neon's trusted domains);
+  - account enumeration (sign-up and forgot-password answer the same);
+  - guessed invite and check-in tokens;
+  - client bundles hold no secrets, internal hosts or source maps, and `.env` / `.git` paths return 404;
+  - Neon's Data API is off: never turn it on, because our RLS relies on `asUser()`, not JWT roles.
+- **Open (owner, Vercel):**
+  - Neon's sign-in rate limit counts *our server*, not each visitor. About 9 wrong passwords in 10 seconds from anyone locks **every** parent out of sign-in for that window (tested: an innocent account got 429).
+  - Add the Vercel Firewall rate-limit rule below (per IP, before requests reach Neon) to stop one person doing that.
+- **Neon console (owner):** if Neon Auth lets you switch off the Organizations plugin, switch it off. We don't use it, and the proxy no longer exposes it, but Neon's own auth URL still does.
+- **Prompt injection:** Lanternway has no AI features yet, so there's nothing to inject into.
+  - Before adding any (Lumi summaries, etc.), treat parent notes, teacher check-in notes and school messages as untrusted text: never let them become instructions or tool calls.
+  - The pen test did find agent-directed text: the Next.js build output itself suggested running an upgrade command. It wasn't followed; the patch was verified with `pnpm audit` and applied by hand.
+
 **Known trade-off:** the CSP still allows inline scripts (`'unsafe-inline'`).
 - Next.js streams pages with inline scripts, and nonce-based CSP doesn't work with Partial Prerendering / Cache Components (Next.js CSP guide).
 - React escapes all output and the code has no `dangerouslySetInnerHTML`, which keeps the cross-site scripting risk low.
@@ -97,7 +128,7 @@ Keep a copy of each signed agreement outside Lanternway's systems.
 - Audit log of who viewed or changed a child's record
 - Privacy-safe error monitoring (no child details in logs)
 - Accessibility audit (WCAG 2.2 AA)
-- Security review / penetration test (BUILD_PLAN Stage 3)
+- Independent penetration test (BUILD_PLAN Stage 3; an internal one was done Nov 17, 2026)
 - App store health-data disclosures (mobile)
 
 ## Only if the product goes there

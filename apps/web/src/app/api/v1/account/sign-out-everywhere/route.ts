@@ -7,4 +7,4 @@ export const POST = withUser(async (request) => {
   await server.revokeSessions();
   await server.signOut();
   return json({ ok: true });
-});
+}, { agreementOptional: true });

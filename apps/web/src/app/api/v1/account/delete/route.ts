@@ -25,4 +25,4 @@ export const POST = withUser(async (request, user) => {
     throw err;
   }
   return json({ ok: true });
-});
+}, { agreementOptional: true });

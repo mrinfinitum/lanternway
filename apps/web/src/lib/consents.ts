@@ -37,3 +37,21 @@ export async function listConsents(userId: string): Promise<ConsentRecord[]> {
     }));
   });
 }
+
+/** The agreements every account needs before using Lanternway (the sign-up boxes). */
+export const ACCOUNT_CONSENTS: ConsentKind[] = ["adult_guardian", "terms", "privacy", "health_data_collection", "test_data"];
+
+/**
+ * True when this person has agreed to everything sign-up asks for (and hasn't withdrawn it).
+ * Accounts made around our sign-up form (straight against the sign-in service) have none,
+ * so the app and the phone API send them to /agree first.
+ */
+export async function hasAccountConsents(userId: string): Promise<boolean> {
+  return asUser(userId, async (db) => {
+    const { rows } = await db.query<{ n: number }>(
+      "select count(distinct kind)::int as n from consents where user_id = $1 and kind = any($2::text[]) and withdrawn_at is null",
+      [userId, ACCOUNT_CONSENTS],
+    );
+    return rows[0]?.n === ACCOUNT_CONSENTS.length;
+  });
+}

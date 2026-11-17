@@ -20,6 +20,36 @@ function Consent({ name, children }: { name: string; children: React.ReactNode }
   );
 }
 
+/** The four agreements asked at sign-up (and on /agree for accounts that skipped them). */
+export function ConsentBoxes() {
+  return (
+    <fieldset className="space-y-2 rounded-xl bg-white p-3 text-sm ring-1 ring-border">
+      <legend className="sr-only">Agreements</legend>
+      <Consent name="adult">I&apos;m 18 or older and a parent or legal guardian of the children I&apos;ll add, or I have their permission.</Consent>
+      <Consent name="terms">
+        I agree to the{" "}
+        <Link href="/terms" target="_blank" className="font-semibold underline underline-offset-2">
+          Terms of Use
+        </Link>{" "}
+        and{" "}
+        <Link href="/privacy" target="_blank" className="font-semibold underline underline-offset-2">
+          Privacy Policy
+        </Link>
+        .
+      </Consent>
+      <Consent name="healthData">
+        I consent to Lanternway storing the health information I choose to enter about my child (like diagnoses,
+        medications, therapy, and school needs) to provide the service, as described in the{" "}
+        <Link href="/health-data-privacy" target="_blank" className="font-semibold underline underline-offset-2">
+          Consumer Health Data Privacy Policy
+        </Link>
+        .
+      </Consent>
+      <Consent name="testing">I understand this is a test version and I&apos;ll use made-up details, not real information about my child.</Consent>
+    </fieldset>
+  );
+}
+
 /** Email + password form for signing in or creating an account. */
 export function AuthForm({ mode, action }: { mode: Mode; action: (prev: AuthFormState, form: FormData) => Promise<AuthFormState> }) {
   const [state, formAction, pending] = useActionState(action, null);
@@ -68,32 +98,7 @@ export function AuthForm({ mode, action }: { mode: Mode; action: (prev: AuthForm
           </p>
         )}
       </div>
-      {signUp && (
-        <fieldset className="space-y-2 rounded-xl bg-white p-3 text-sm ring-1 ring-border">
-          <legend className="sr-only">Agreements</legend>
-          <Consent name="adult">I&apos;m 18 or older and a parent or legal guardian of the children I&apos;ll add, or I have their permission.</Consent>
-          <Consent name="terms">
-            I agree to the{" "}
-            <Link href="/terms" target="_blank" className="font-semibold underline underline-offset-2">
-              Terms of Use
-            </Link>{" "}
-            and{" "}
-            <Link href="/privacy" target="_blank" className="font-semibold underline underline-offset-2">
-              Privacy Policy
-            </Link>
-            .
-          </Consent>
-          <Consent name="healthData">
-            I consent to Lanternway storing the health information I choose to enter about my child (like diagnoses,
-            medications, therapy, and school needs) to provide the service, as described in the{" "}
-            <Link href="/health-data-privacy" target="_blank" className="font-semibold underline underline-offset-2">
-              Consumer Health Data Privacy Policy
-            </Link>
-            .
-          </Consent>
-          <Consent name="testing">I understand this is a test version and I&apos;ll use made-up details, not real information about my child.</Consent>
-        </fieldset>
-      )}
+      {signUp && <ConsentBoxes />}
       {state?.error && (
         <p id={errorId} role="alert" className="rounded-xl bg-coral/15 px-3 py-2 text-sm font-semibold">
           {state.error}

@@ -1,6 +1,9 @@
 import { Suspense } from "react";
 import { Eye } from "lucide-react";
 import { AccessProvider } from "@/components/access";
+import { redirect } from "next/navigation";
+import { getSignedInUser } from "@/lib/auth/server";
+import { hasAccountConsents } from "@/lib/consents";
 import { getCurrentAccess } from "@/lib/data";
 import { AppHeader } from "./_components/app-header";
 import { BottomNav } from "./_components/bottom-nav";
@@ -37,7 +40,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
 /** Shares the person's role for the viewed child with the page, and says what they can do. */
 async function WithAccess({ children }: { children: React.ReactNode }) {
-  const { role, adminNames } = await getCurrentAccess();
+  const [{ role, adminNames }, agreed] = await Promise.all([getCurrentAccess(), hasAgreed()]);
+  if (!agreed) redirect("/agree");
   const who = adminNames.length ? adminNames.join(" or ") : "A family admin";
   return (
     <AccessProvider role={role}>
@@ -53,6 +57,12 @@ async function WithAccess({ children }: { children: React.ReactNode }) {
       {children}
     </AccessProvider>
   );
+}
+
+/** Accounts made around our sign-up form have no agreements on record: they agree first (/agree). */
+async function hasAgreed(): Promise<boolean> {
+  const user = await getSignedInUser();
+  return !user || hasAccountConsents(user.id);
 }
 
 function PageSkeleton() {

@@ -78,16 +78,27 @@ export async function saveRecord(
     }
     if (!owner) return null; // not one of this family's children / records
 
-    const { rowCount } = await db.query(
-      `insert into records (id, family_id, child_id, kind, parent_id, occurred_on, data)
-       values ($1, $2, $3, $4, $5, $6, $7)
-       on conflict (id) do update
-         set data = excluded.data, occurred_on = excluded.occurred_on, parent_id = excluded.parent_id, updated_at = now()
-         where records.family_id = excluded.family_id and records.kind = excluded.kind`,
-      [id, owner.family_id, owner.child_id, spec.kind, spec.parent ? parentId : null, occurredOn, data],
-    );
-    // No row: the id belongs to another family's record or another kind, which is left alone.
-    return rowCount === 1 ? ("saved" as const) : null;
+    // A savepoint, so a refused write below doesn't spoil the rest of this transaction.
+    await db.query("savepoint save_record");
+    try {
+      const { rowCount } = await db.query(
+        `insert into records (id, family_id, child_id, kind, parent_id, occurred_on, data)
+         values ($1, $2, $3, $4, $5, $6, $7)
+         on conflict (id) do update
+           set data = excluded.data, occurred_on = excluded.occurred_on, parent_id = excluded.parent_id, updated_at = now()
+           where records.family_id = excluded.family_id and records.kind = excluded.kind`,
+        [id, owner.family_id, owner.child_id, spec.kind, spec.parent ? parentId : null, occurredOn, data],
+      );
+      // No row: the id belongs to another family's record or another kind, which is left alone.
+      return rowCount === 1 ? ("saved" as const) : null;
+    } catch (err) {
+      // Row-level security refused it (the id is another family's record, or a kind this
+      // role can't change). Answer "not found", the same as an unknown id, so nobody can
+      // probe which ids exist.
+      if ((err as { code?: string }).code !== "42501") throw err;
+      await db.query("rollback to savepoint save_record");
+      return null;
+    }
   });
 }
 

@@ -1,6 +1,6 @@
 import { authForRequest } from "@/lib/api/auth";
 import { fail, json, publicRoute, readBody, str } from "@/lib/api/http";
-import { recordConsents } from "@/lib/consents";
+import { ACCOUNT_CONSENTS, recordConsents } from "@/lib/consents";
 import { passwordProblem } from "@lanternway/shared/password-policy";
 
 const isEmail = (v: string) => /^\S+@\S+\.\S+$/.test(v);
@@ -37,6 +37,6 @@ export const POST = publicRoute(async (request) => {
     return fail(400, "We couldn't create an account with that email. If you already have one, try signing in.");
   }
   const userId = (data as { user?: { id?: string } } | null)?.user?.id;
-  if (userId) await recordConsents(userId, ["adult_guardian", "terms", "privacy", "health_data_collection", "test_data"], { via: "mobile" });
+  if (userId) await recordConsents(userId, ACCOUNT_CONSENTS, { via: "mobile" });
   return json({ status: "needs_verification" });
 });

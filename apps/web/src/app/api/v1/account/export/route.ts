@@ -12,4 +12,4 @@ export const GET = withUser(async (_request, user) => {
       "Cache-Control": "no-store",
     },
   });
-});
+}, { agreementOptional: true });
